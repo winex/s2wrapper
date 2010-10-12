@@ -371,23 +371,25 @@ class balancer(ConsolePlugin):
 	def ItemList(self, *args, **kwargs):
 		#The item list to get gold values. I had hoped to make this more dynamic, but the server won't return 'Consumable_Advanced_Sights' so it is difficult to get the value
 		#directly from game_settings.cfg
-		self.itemlist.append ({'name' : 'Advanced Sights', 'value' : 700})
-		self.itemlist.append ({'name' : 'Ammo Pack', 'value' : 500})
-		self.itemlist.append ({'name' : 'Ammo Satchel', 'value' : 200})
-		self.itemlist.append ({'name' : 'Chainmail', 'value' : 300})
-		self.itemlist.append ({'name' : 'Gust of Wind', 'value' : 450})
-		self.itemlist.append ({'name' : 'Magic Amplifier', 'value' : 700})
-		self.itemlist.append ({'name' : 'Brain of Maliken', 'value' : 750})
-		self.itemlist.append ({'name' : 'Heart of Maliken', 'value' : 950})
-		self.itemlist.append ({'name' : 'Lungs of Maliken', 'value' : 800})
-		self.itemlist.append ({'name' : 'Mana Crystal', 'value' : 500})
-		self.itemlist.append ({'name' : 'Mana Stone', 'value' : 200})
-		self.itemlist.append ({'name' : 'Platemail', 'value' : 650})
-		self.itemlist.append ({'name' : 'Power Absorption', 'value' : 350})
-		self.itemlist.append ({'name' : 'Shield of Wisdom', 'value' : 650})
-		self.itemlist.append ({'name' : 'Stone Hide', 'value' : 650})
-		self.itemlist.append ({'name' : 'Tough Skin', 'value' : 300})		 
-		self.itemlist.append ({'name' : 'Trinket of Restoration', 'value' : 575})	
+		self.itemlist = {
+			'Advanced Sights' : 700,
+			'Ammo Pack' : 500,
+			'Ammo Satchel' : 200,
+			'Chainmail' : 300,
+			'Gust of Wind' : 450,
+			'Magic Amplifier' : 700,
+			'Brain of Maliken' : 750,
+			'Heart of Maliken' : 950,
+			'Lungs of Maliken' : 800,
+			'Mana Crystal' : 500,
+			'Mana Stone' : 200,
+			'Platemail' : 650,
+			'Power Absorption' : 350,
+			'Shield of Wisdom' : 650,
+			'Stone Hide' : 650,
+			'Tough Skin' : 300,
+			'Trinket of Restoration' : 575,
+			}
 		
 			
 	def onItemTransaction(self, *args, **kwargs):
@@ -396,18 +398,17 @@ class balancer(ConsolePlugin):
 		trans = args[0][1]
 		newitem = args[0][2]
 		client = self.getPlayerByClientNum(cli)
-		
+
+		try:
+			value = self.itemlist[newitem]
+		except:
+			return
+
 		if (trans == 'BOUGHT'):
-			for item in self.itemlist:
-				if (item['name'] == newitem):
-					client ['value'] += item['value']
-					
-		if (trans == 'SOLD'):
-			for item in self.itemlist:
-				if (item['name'] == newitem):
-					client ['value'] -= item['value']
-					
-		
+			client['value'] += value
+		elif (trans == 'SOLD'):
+			client['value'] -= value
+
 
 	def onNewGamealt(self, *args, **kwargs):
 
