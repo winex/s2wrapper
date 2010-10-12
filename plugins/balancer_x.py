@@ -329,6 +329,10 @@ class balancer(ConsolePlugin):
 		
 		self.sendGameInfo(**kwargs)
 
+	def onCommandalt(self, *args, **kwargs):
+		
+		self.onCommand(*args, **kwargs)
+
 	def onNewGame(self, *args, **kwargs):
 		
 		print "clearing dictionary...."
@@ -370,7 +374,7 @@ class balancer(ConsolePlugin):
 
 	def ItemList(self, *args, **kwargs):
 		#The item list to get gold values. I had hoped to make this more dynamic, but the server won't return 'Consumable_Advanced_Sights' so it is difficult to get the value
-		#directly from game_settings.cfg
+		#directly from game_settings.cfg. Modification to remove appends from winex, 10/12.
 		self.itemlist = {
 			'Advanced Sights' : 700,
 			'Ammo Pack' : 500,
@@ -481,17 +485,17 @@ class balancer(ConsolePlugin):
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 
 		if (self.GAMESTARTED == 1):
-			if (TIME == 60000):
+			if (TIME == (1 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME == 180000):
+			if (TIME == (3 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME == 360000):
+			if (TIME == (6 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME >= 640000):
+			if (TIME >= (10 * 60 * 1000)):
 				self.DENY = 1
 				self.OPTION = 1
 				del self.switchlist[:]
-			if (TIME >= 640000) and (TIME % 300000 == 0):
+			if (TIME >= (10 * 60 * 1000)) and (TIME % 300000 == 0):
 				self.OPTION = 1
 				self.runBalancer (**kwargs)
 

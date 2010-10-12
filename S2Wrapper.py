@@ -227,6 +227,7 @@ class ConsoleParser:
 			self.onGameStartalt : re.compile ('SGame: SetGamePhase\(\): 5 start: (\d+) length: (\d+) now: (\d+)'),
 			self.onNewGamealt: re.compile ('SGame: NewGameStarted'),
 			self.onCommand : re.compile ('Sv: Client #(\d+) requested change to: Player_Commander'),
+			self.onCommandalt : re.compile ('SGame: Client #(\d+) requested change to: Player_Commander'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onPopulateTeams : re.compile ('CLIENT (\d+) on TEAM (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
@@ -289,6 +290,12 @@ class ConsoleParser:
 		pass
 
 	def onCommand(self, *args, **kwargs):
+		print "ON_COMMANDN\n"
+		print args
+		print "\n"
+		pass
+
+	def onCommandalt(self, *args, **kwargs):
 		print "ON_COMMANDN\n"
 		print args
 		print "\n"
