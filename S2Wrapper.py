@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-APPLICATION = "/home/david/Savage2/savage2.bin"
+APPLICATION = "/home/paul/Savage2/savage2.bin"
 OPTIONS = ""
 #OPTIONS = "; setconfig tournament"
 HOST, PORT = "localhost", 4242
@@ -104,7 +104,7 @@ class Savage2Thread(threading.Thread):
 		self.write (line)
 
 
-class Savage2ConsoleHandler():
+class Savage2ConsoleHandler:
 
 	def __init__(self):
 		Savage2ConsoleHandler.queue = deque()
@@ -140,7 +140,7 @@ class Savage2ConsoleHandler():
 		except:
 			return None
 
-class Savage2SocketHandler():
+class Savage2SocketHandler:
 
 	def __init__(self):
 		Savage2SocketHandler.queue = deque()
@@ -171,7 +171,7 @@ class Savage2SocketHandler():
 		except:
 			return None
 
-class Savage2DaemonHandler():
+class Savage2DaemonHandler:
 
 	def __init__(self):
 		Savage2DaemonHandler.queue = deque()
@@ -202,7 +202,7 @@ class Savage2DaemonHandler():
 		except:
 			return None
 
-class ConsoleParser():
+class ConsoleParser:
 
 	filters = []
 
@@ -213,13 +213,23 @@ class ConsoleParser():
 			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+.\d+.\d+.\d+):(\d+)'),
 			self.onSetName : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
 			self.onTeamChange : re.compile ('Sv: Client #(\d+) requested to join team: (\d)'),
+			self.onTeamChangealt : re.compile ('Client #(\d+) requested to join team: (\d)'),
+			self.onTeamChangeshuff : re.compile ('SGame: Client #(\d+) requested to join team: (\d)'),
 			self.onMessage : re.compile ('Sv: \[(.*)\] (.*): (.*)'),
 			self.onServerStatus : re.compile ('SGame: Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
 			self.onServerStatusResponse : re.compile ('Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
 			self.onDisconnect : re.compile ('SGame: Removed client #(\d+)'),
 			self.onConnected : re.compile ('Sv: (\S+) has connected.'),
+			self.onCommResign : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
-			self.onNewGame : re.compile ('NewGameStarted')
+			self.onNewGame : re.compile ('SGame: SetGamePhase\(\): 6 start: (\d+) length: (\d+) now: (\d+)'),
+			self.onGameStart : re.compile ('SetGamePhase\(\): 5 start: (\d+) length: (\d+) now: (\d+)'),
+			self.onGameStartalt : re.compile ('SGame: SetGamePhase\(\): 5 start: (\d+) length: (\d+) now: (\d+)'),
+			self.onNewGamealt: re.compile ('SGame: NewGameStarted'),
+			self.onCommand : re.compile ('Sv: Client #(\d+) requested change to: Player_Commander'),
+			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
+			self.onPopulateTeams : re.compile ('CLIENT (\d+) on TEAM (\d+)'),
+			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
 	def onLineRecieved(self, line, dh):
@@ -231,7 +241,7 @@ class ConsoleParser():
 			if (match is not None):
 				try:
 					handler(match.groups () , Broadcast=dh)
-				except Exception as e:
+				except Exception, e:
 					print "Error in: %s: %s" % (repr(handler), e)
 
 	#X Sv: New client connection: #203, ID: 8625, 83.226.95.135:51427
@@ -239,6 +249,10 @@ class ConsoleParser():
 		print "ON_CONNECT\n"
 		print args
 		print "\n"
+		pass
+	def onPopulateTeams(self, *args, **kwargs):
+		pass
+	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
 	def onRecievedAccountId(self, *args, **kwargs):
@@ -249,6 +263,33 @@ class ConsoleParser():
 
 	def onNewGame(self, *args, **kwargs):
 		print "ON_NEW_GAME\n"
+		print args
+		print "\n"
+		pass
+
+	def onGameStart(self, *args, **kwargs):
+		print "ON_GAME_START\n"
+		print args
+		print "\n"
+		pass
+
+	def onGameStartalt(self, *args, **kwargs):
+		print "ON_GAME_START\n"
+		print args
+		print "\n"
+		pass
+
+	def onItemTransaction(self, *args, **kwargs):
+		pass
+
+	def onCommResign(self, *args, **kwargs):
+		print "ON_COMM_RESIGN\n"
+		print args
+		print "\n"
+		pass
+
+	def onCommand(self, *args, **kwargs):
+		print "ON_COMMANDN\n"
 		print args
 		print "\n"
 		pass
@@ -281,6 +322,18 @@ class ConsoleParser():
 		print "\n"
 		pass
 
+	def onTeamChangealt (self, *args, **kwargs):
+		print "ON_TEAM_CHANGE\n"
+		print args
+		print "\n"
+		pass
+
+	def onTeamChangeshuff (self, *args, **kwargs):
+		print "ON_TEAM_CHANGE\n"
+		print args
+		print "\n"
+		pass
+
 	#X Sv: [TEAM 1] BeastSlayer`: need ammo
 	#X Sv: [TEAM 2] BeastSlayer`: need ammo
 	#X Sv: [ALL] bLu3_eYeS: is any 1 here ?
@@ -294,8 +347,8 @@ class ConsoleParser():
 	# SGame: Server Status: Map(ss2010_6) Timestamp(69180000) Active Clients(9) Disconnects(160) Entities(1700) Snapshots(34671)
 	#def onServerStatus(self, map, timestamp, activeClients, disconnects, entities, snapshots):
 	def onServerStatus(self, *args, **kwargs):
-		print "ON_SERVER_STATUS\n"
-		print args
+		#print "ON_SERVER_STATUS\n"
+		#print args
 		print "\n"
 		pass
 
@@ -317,7 +370,7 @@ class ConsoleParser():
 
 # Launches various threads, actual savage2 daemon and the inet server
 import PluginsManager
-class Savage2Daemon():
+class Savage2Daemon:
 
 	parser = None
 	server = None
@@ -346,7 +399,7 @@ class Savage2Daemon():
 
 	#print "\x1BE"
 	def onConsoleMessage (self, line):
-		print "(Debug)onConsoleMessage> %s" % line
+		print "onConsoleMessage> %s" % line
 	
 		for plugin in PluginsManager.getEnabled (PluginsManager.ConsoleParser):
 			plugin.onLineRecieved (line, self.dh)
