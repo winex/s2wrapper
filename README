@@ -1,0 +1,55 @@
+Wrapper for savage2.bin dedicated server.
+
+* The wrapper launches the savage2 binary as dedicated server, establishes a connection between the binary and the wrapper.
+  - Wrapper monitors if the server is up, may it have died the wrapper relaunches it.
+
+* The wrapper has a telnet interface as proof of concept. (default listening on port 4242)
+  - The telnet interface will display the server console
+  - has a input functionality to perform commands and see output.
+
+
+* May the wrapper be exitted the savage2 dedicated server will run as normal.
+
+
+* Plugins
+	"Plugins run in an instance, so you can store data and make applications on the savage2.bin binary, like autoshuffle."
+	- currently controllable by stdin interface
+	  - Commands:
+		plugins rediscover (loads new plugins when placed in /plugins/
+        	plugins list (discovered plugins)
+		>  Returns a list of Plugin Names
+		plugins enable <name> (enable discovered plugin)
+		plugins disable <name> (enable discovered plugin)
+		plugins reload <name> (reloads discovered plugin)
+
+        - ConsolePlugin(ConsoleParser)
+        * Inherits callbacks from the ConsoleParser
+
+
+	Directory relative of this file /plugins/
+	 TestPlugin.py
+	   class TestPlugin(ConsolePlugin)
+  	      def onRecievedAccountId (self, *args, **kwargs):
+		// do stuff
+
+* Library
+
+ - (Base)ConsoleParser
+	onRecievedAccountId (client_id , account_id)
+	onConnect (idx , client_id, ip, port)
+	onSetName (idx, nickname)
+	onTeamChange (nickname, team)
+	onMessage (channel[All,Team 1, Team 2], message)
+	onServerStatus (map, timestamp, client_num, disconnect_num, entries, snapshots)
+	onServerStatusResponse (map, timestamp, client_num, disconnect_num, entries, snapshots)
+	onDisconnect (idx)
+	onConnected (name)
+	onPlayerReady (idx)
+	onNewGame ()
+
+* For example purposes:
+ - TestParser(ConsoleParser)
+   - onRecievedAccountId (client_id , account_id)
+     * Retrieves the SF of a player from the account_id from the savage2 website. (useful for auto balance)
+       
+;D
