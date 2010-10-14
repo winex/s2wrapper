@@ -3,3 +3,5 @@
 *.orig
 *.pyc
 changes.txt
+# ignore local config
+s2wrapper.ini
