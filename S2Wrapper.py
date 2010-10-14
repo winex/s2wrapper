@@ -447,12 +447,12 @@ if __name__ == "__main__":
 		savage2Daemon.enableServer ()
 
 
-	os.system ('reset')
-	print "\nLoading plugins..."
-	PluginsManager.discover ()
-	AutoPlugins = ConfigParser.ConfigParser ()
-	AutoPlugins.read ('%s/plugins.ini' % os.path.dirname (os.path.realpath (__file__)))
-	for (name, value) in AutoPlugins.items ('plugins'):
+	os.system('reset')
+	print("Loading plugins...")
+	PluginsManager.discover()
+	AutoPlugins = ConfigParser.ConfigParser()
+	AutoPlugins.read ('%s/s2wrapper.ini' % os.path.dirname(os.path.realpath(__file__)))
+	for (name, value) in AutoPlugins.items('plugins'):
 
 		if (value != "true"):
 			continue
