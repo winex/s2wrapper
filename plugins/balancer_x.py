@@ -340,7 +340,7 @@ class balancer(ConsolePlugin):
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0][0])
-		print ('Current phase: %s' % (phase))
+		print ('Current phase: %d' % (phase))
 		if (phase == 7):
 			self.onGameEnd()
 		if (phase == 5):
@@ -517,19 +517,18 @@ class balancer(ConsolePlugin):
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 
 		if (self.GAMESTARTED == 1):
-			if (TIME == (60000)):
+			if (TIME == (1 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME == (180000)):
+			elif (TIME == (3 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME == (360000)):
+			elif (TIME == (6 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME >= (600000)):
+			if (TIME >= (10 * 60 * 1000)):
 				self.DENY = 1
 				self.OPTION = 1
 				del self.switchlist[:]
-			if (TIME >= (600000)) and (TIME % 300000 == 0):
-				self.OPTION = 1
-				self.runBalancer (**kwargs)
+				if (TIME % (5 * 60 * 1000)) == 0:
+					self.runBalancer (**kwargs)
 
 		self.sendGameInfo(**kwargs)
 
