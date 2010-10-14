@@ -7,13 +7,15 @@ HOST, PORT = "localhost", 4242
 ENABLE_INET = False
 
 import os
-from sys import stdout
+import sys
+import time
 import signal
 import readline, subprocess, re
 import threading, SocketServer
 from collections import deque
-import curses
 import ConfigParser
+import stty
+
 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -55,8 +57,21 @@ class Savage2Thread(threading.Thread):
 	def launchDaemon (self):
 		Savage2SocketHandler.addChannel (self.onSocketMessage)
 		Savage2DaemonHandler.addChannel (self.onDaemonMessage)
-		self.process = subprocess.Popen ([APPLICATION, "Set host_dedicatedServer true%s" % OPTIONS], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
-		print "Launched process(%s)" % self.process.pid 
+
+		termold = stty.getSize()
+		termnew = (100, 256)
+		stty.setSize(termnew)
+		try:
+			self.process = subprocess.Popen([APPLICATION, "Set host_dedicatedServer true%s" % OPTIONS], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
+			print("Launched process [%s]" % (self.process.pid))
+			# give some time for process to read new tty size
+			time.sleep(0.1)
+		finally:
+			# return old size in any case
+			stty.setSize(termold)
+
+		if not self.process:
+			return
 		self.read ()
 
 	def read(self):
@@ -90,6 +105,8 @@ class Savage2Thread(threading.Thread):
 		print "IOError: %s(pid: %s) stdin is closed." % (APPLICATION, self.process.pid)
 		Savage2SocketHandler.delChannel (self.onSocketMessage)
 		Savage2DaemonHandler.delChannel (self.onDaemonMessage)
+		# don't go crazy spawning process too fast, sleep some instead
+		time.sleep(1.0)
 		self.launchDaemon ()
 
 	def write(self, line):
@@ -502,8 +519,8 @@ if __name__ == "__main__":
 
 			# pass rest through the broadcaster
 			else:
-				Savage2DaemonHandler.put (line);
-				Savage2DaemonHandler.broadcast ();
+				Savage2DaemonHandler.put(line)
+				Savage2DaemonHandler.broadcast()
 	
 			pass
 	except KeyboardInterrupt:
