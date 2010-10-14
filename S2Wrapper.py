@@ -226,7 +226,7 @@ class ConsoleParser:
 	def __init__(self):
 		self.filters = dict({
 
-			self.onRecievedAccountId : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
+			self.onReceivedAccountId : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+.\d+.\d+.\d+):(\d+)'),
 			self.onSetName : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
 			self.onTeamChange : re.compile ('.*?Client #(\d+) requested to join team: (\d)'),
@@ -243,7 +243,7 @@ class ConsoleParser:
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
-	def onLineRecieved(self, line, dh):
+	def onLineReceived(self, line, dh):
 		for handler in self.filters:
 
 			filter = self.filters [handler]
@@ -265,8 +265,8 @@ class ConsoleParser:
 	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
-	def onRecievedAccountId(self, *args, **kwargs):
-		print "ON_RECIEVED_ACCOUNT_ID\n"
+	def onReceivedAccountId(self, *args, **kwargs):
+		print "ON_RECEIVED_ACCOUNT_ID\n"
 		print args
 		print "\n"
 		pass
@@ -409,7 +409,7 @@ class Savage2Daemon:
 		print "onConsoleMessage> %s" % line
 	
 		for plugin in PluginsManager.getEnabled (PluginsManager.ConsoleParser):
-			plugin.onLineRecieved (line, self.dh)
+			plugin.onLineReceived (line, self.dh)
 
 		pass
 

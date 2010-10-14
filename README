@@ -29,13 +29,13 @@ Wrapper for savage2.bin dedicated server.
 	Directory relative of this file /plugins/
 	 TestPlugin.py
 	   class TestPlugin(ConsolePlugin)
-  	      def onRecievedAccountId (self, *args, **kwargs):
+  	      def onReceivedAccountId (self, *args, **kwargs):
 		// do stuff
 
 * Library
 
  - (Base)ConsoleParser
-	onRecievedAccountId (client_id , account_id)
+	onReceivedAccountId (client_id , account_id)
 	onConnect (idx , client_id, ip, port)
 	onSetName (idx, nickname)
 	onTeamChange (nickname, team)
@@ -49,7 +49,7 @@ Wrapper for savage2.bin dedicated server.
 
 * For example purposes:
  - TestParser(ConsoleParser)
-   - onRecievedAccountId (client_id , account_id)
+   - onReceivedAccountId (client_id , account_id)
      * Retrieves the SF of a player from the account_id from the savage2 website. (useful for auto balance)
        
 ;D

@@ -1,30 +1,35 @@
-import os, re
+# -*- coding: utf-8 -*-
+
+import os
+import re
 import ConfigParser
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 
-class BanPlugin(ConsolePlugin):
+class banlist(ConsolePlugin):
 
+	reason = "BANNED! :P"
 	bans = {}
 	regex = {}
 
 	def onPluginLoad(self):
 
-		Config = ConfigParser.ConfigParser ()
-		Config.read ('%s/BanPlugin.ini' % os.path.dirname (os.path.realpath (__file__)))
-		for section in Config.sections ():
+		config = ConfigParser.ConfigParser()
+		config.read ('%s/banlist.ini' % os.path.dirname(os.path.realpath(__file__)))
+		for (name, value) in config.items('banlist'):
+			if name == "reason":
+				self.reason = value
+			elif name.startswith("regex:"):
+				name = name[6:]
+				print name
+				self.regex[re.compile(name)] = value
+			else:
+				self.bans[name] = value
 
-			for (name, value) in  Config.items (section):
-				if section == "nick":
-					self.bans [name] = value
-				elif section == "regex":
-					print name
-					self.regex [re.compile(name)] = value
+		print self.bans
+		print self.regex
 
-		print self.bans;
-		print self.regex;
-
-	def onSetName (self, *args, **kwargs):
+	def onSetName(self, *args, **kwargs):
 
 		success = False
 		id = args [0][0]

@@ -1,4 +1,7 @@
-import os, re
+# -*- coding: utf-8 -*-
+
+import os
+import re
 import math
 import time
 import ConfigParser
@@ -12,8 +15,6 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-
-	
 
 	ms = None
 	THRESHOLD = 10
@@ -37,7 +38,7 @@ class balancer(ConsolePlugin):
 		self.ms = MasterServer ()
 
 		Config = ConfigParser.ConfigParser ()
-		#Config.read ('%s/vetlimit.ini' % os.path.dirname (os.path.realpath (__file__)))
+		#Config.read ('%s/balancer.ini' % os.path.dirname (os.path.realpath (__file__)))
 		#for (name, value) in Config.items ('Restrict'):
 		#	if (name == "level"):
 		#		self._level = int(value)
@@ -92,7 +93,7 @@ class balancer(ConsolePlugin):
 		
 
 
-	def onRecievedAccountId (self, *args, **kwargs):
+	def onReceivedAccountId(self, *args, **kwargs):
 
 		doKick = False
 
