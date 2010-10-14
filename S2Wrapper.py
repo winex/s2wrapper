@@ -229,9 +229,7 @@ class ConsoleParser:
 			self.onRecievedAccountId : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+.\d+.\d+.\d+):(\d+)'),
 			self.onSetName : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
-			self.onTeamChange : re.compile ('Sv: Client #(\d+) requested to join team: (\d)'),
-			self.onTeamChangealt : re.compile ('Client #(\d+) requested to join team: (\d)'),
-			self.onTeamChangeshuff : re.compile ('SGame: Client #(\d+) requested to join team: (\d)'),
+			self.onTeamChange : re.compile ('.*?Client #(\d+) requested to join team: (\d)'),
 			self.onMessage : re.compile ('Sv: \[(.*)\] (.*): (.*)'),
 			self.onServerStatus : re.compile ('SGame: Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
 			self.onServerStatusResponse : re.compile ('Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
@@ -239,14 +237,9 @@ class ConsoleParser:
 			self.onConnected : re.compile ('Sv: (\S+) has connected.'),
 			self.onCommResign : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
-			self.onNewGame : re.compile ('SGame: SetGamePhase\(\): 6 start: (\d+) length: (\d+) now: (\d+)'),
-			self.onGameStart : re.compile ('SetGamePhase\(\): 5 start: (\d+) length: (\d+) now: (\d+)'),
-			self.onGameStartalt : re.compile ('SGame: SetGamePhase\(\): 5 start: (\d+) length: (\d+) now: (\d+)'),
-			self.onNewGamealt: re.compile ('SGame: NewGameStarted'),
-			self.onCommand : re.compile ('Sv: Client #(\d+) requested change to: Player_Commander'),
-			self.onCommandalt : re.compile ('SGame: Client #(\d+) requested change to: Player_Commander'),
+			self.onPhaseChange : re.compile ('.*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
+			self.onCommand : re.compile ('.*?: Client #(\d+) requested change to: Player_Commander'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
-			self.onPopulateTeams : re.compile ('CLIENT (\d+) on TEAM (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
@@ -268,8 +261,7 @@ class ConsoleParser:
 		print args
 		print "\n"
 		pass
-	def onPopulateTeams(self, *args, **kwargs):
-		pass
+	
 	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
@@ -283,6 +275,15 @@ class ConsoleParser:
 		print "ON_NEW_GAME\n"
 		print args
 		print "\n"
+		pass
+
+	def onPhaseChange(self, *args, **kwargs):
+		print "PHASE CHANGE\n"
+		print args
+		print "\n"
+		pass
+
+	def onGameEnd(self, *args, **kwargs):
 		pass
 
 	def onGameStart(self, *args, **kwargs):
@@ -312,12 +313,6 @@ class ConsoleParser:
 		print "\n"
 		pass
 
-	def onCommandalt(self, *args, **kwargs):
-		print "ON_COMMANDN\n"
-		print args
-		print "\n"
-		pass
-
 	def onConnected(self, *args, **kwargs):
 		print "ON_CONNECTED\n"
 		print args
@@ -341,18 +336,6 @@ class ConsoleParser:
 	#X SGame: Client #180 requested to join team: IDX
 	#def onTeamChange (self, clientId, teamIdx):
 	def onTeamChange (self, *args, **kwargs):
-		print "ON_TEAM_CHANGE\n"
-		print args
-		print "\n"
-		pass
-
-	def onTeamChangealt (self, *args, **kwargs):
-		print "ON_TEAM_CHANGE\n"
-		print args
-		print "\n"
-		pass
-
-	def onTeamChangeshuff (self, *args, **kwargs):
 		print "ON_TEAM_CHANGE\n"
 		print args
 		print "\n"

@@ -13,10 +13,10 @@ from S2Wrapper import Savage2DaemonHandler
 
 class balancer(ConsolePlugin):
 
-	reason = "This_Server_Has_Restrictions_On"
+	
 
 	ms = None
-	THRESHOLD = 15
+	THRESHOLD = 10
 	DIFFERENCE = -1
 	TARGET = -1
 	GAMESTARTED = 0
@@ -24,23 +24,26 @@ class balancer(ConsolePlugin):
 	DENY = 0
 	OPTION = 0
 	DENOM = 6
+	_level = 3
+	reason = ("You_must_be_level_%s_to_play_on_this_server" % (_level))
 	playerlist = []
 	itemlist = []
 	teamOne = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	teamTwo = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	game = {'size' : 0, 'avgBF' : -1}
 	switchlist = []
+
 	def onPluginLoad(self, **kwargs):
 		self.ms = MasterServer ()
 
 		Config = ConfigParser.ConfigParser ()
-		Config.read ('%s/vetlimit.ini' % os.path.dirname (os.path.realpath (__file__)))
-		for (name, value) in Config.items ('Restrict'):
-			if (name == "level"):
-				self._level = int(value)
+		#Config.read ('%s/vetlimit.ini' % os.path.dirname (os.path.realpath (__file__)))
+		#for (name, value) in Config.items ('Restrict'):
+		#	if (name == "level"):
+		#		self._level = int(value)
 
-			if (name == "sf"):
-				self._sf = int(value)
+		#	if (name == "sf"):
+		#		self._sf = int(value)
 		
 		pass
 
@@ -89,10 +92,9 @@ class balancer(ConsolePlugin):
 		
 
 
-        def onRecievedAccountId (self, *args, **kwargs):
+	def onRecievedAccountId (self, *args, **kwargs):
 
-		if (self._level == -1 and self._sf == -1):
-			return 
+		doKick = False
 
 		cli = args[0][0]
 		id = args[0][1]
@@ -110,8 +112,14 @@ class balancer(ConsolePlugin):
 		client ['sf'] = sf
 		client ['lf'] = lf
 		client ['exp'] += exp
+		
+		if (level < self._level):
+			doKick = True
 			
-	
+		if (doKick):
+			kwargs['Broadcast'].put ("kick %s %s" % (args[0][0], self.reason))
+			kwargs['Broadcast'].broadcast ()
+		
 	def checkForSpectator (self, cli):
 		player = self.getPlayerByClientNum(cli)
 
@@ -208,9 +216,6 @@ class balancer(ConsolePlugin):
 		return L
 		#don't think I need this but I am leaving it in
 		del L [0]
-
-	def onPopulateTeams(self, *args, **kwargs):
-		self.onTeamChange (*args, **kwargs)
 
 	def onTeamChange (self, *args, **kwargs):
 		
@@ -333,6 +338,39 @@ class balancer(ConsolePlugin):
 		
 		self.onCommand(*args, **kwargs)
 
+	def onPhaseChange(self, *args, **kwargs):
+		phase = int(args[0][0])
+		print ('Current phase: %s' % (phase))
+		if (phase == 7):
+			self.onGameEnd()
+		if (phase == 5):
+			self.onGameStart(*args, **kwargs)
+		if (phase == 6):
+			self.onNewGame(*args, **kwargs)
+		
+	def onGameEnd(self, *args, **kwargs):
+
+		print "clearing dictionary...."
+		#clear out the team dictionary info and globals when the map is reloaded
+		del self.teamOne ['players'][:]
+		del self.teamTwo ['players'][:]
+		self.teamOne ['size'] = 0
+		self.teamOne ['avgBF'] = -1
+		self.teamOne ['combinedBF'] = 0
+		self.teamTwo ['size'] = 0
+		self.teamTwo ['avgBF'] = -1
+		self.teamTwo ['combinedBF'] = 0
+		self.GAMESTARTED = 0
+		self.STARTSTAMP = 0
+		self.DENY = 0
+		self.OPTION = 0
+		#probably don't need this since the info is put in later, but just to be on the safe side
+		for player in self.playerlist:
+			player ['moved'] = 0
+			player ['team'] = 0
+			player ['value'] = 150
+			player ['prevent']= 0
+		
 	def onNewGame(self, *args, **kwargs):
 		
 		print "clearing dictionary...."
@@ -414,10 +452,6 @@ class balancer(ConsolePlugin):
 			client['value'] -= value
 
 
-	def onNewGamealt(self, *args, **kwargs):
-
-		self.onNewGame(*args, **kwargs)
-
 	def retrieveIndex(self, mover, action, **kwargs):
 		#Use this for any manipulations when you need to get the current player index from the server. This is used for MOVE, PREVENT, ALLOW
 		cli = mover['clinum']
@@ -458,7 +492,7 @@ class balancer(ConsolePlugin):
 	def onGameStart (self, *args, **kwargs):
 		
 		self.ItemList()
-		self.STARTSTAMP = args[0][0]
+		self.STARTSTAMP = args[0][1]
 		self.GAMESTARTED = 1
 		kwargs['Broadcast'].put ("echo GAMESTARTED")
 		kwargs['Broadcast'].broadcast ()
@@ -466,13 +500,13 @@ class balancer(ConsolePlugin):
 		self.sendGameInfo(**kwargs)
 		#self.runBalancer (**kwargs)
 		
-		kwargs['Broadcast'].put ("Serverchat If necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
+		kwargs['Broadcast'].put ("Serverchat ^cIf necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
 		kwargs['Broadcast'].broadcast ()
-		kwargs['Broadcast'].put ("Serverchat After 6 minutes, joining will be limited to players that do not generate imbalance.")
+		kwargs['Broadcast'].put ("Serverchat ^cAfter 10 minutes, joining will be limited to players that do not generate imbalance.")
 		kwargs['Broadcast'].broadcast ()
-		kwargs['Broadcast'].put ("Serverchat At 5 minute increments starting at minute 10, the server will check for imbalance and give players that can improve balance the option to switch")
+		kwargs['Broadcast'].put ("Serverchat ^cAt 5 minute increments starting at minute 10, the server will check for imbalance and give players that can improve balance the option to switch")
 		kwargs['Broadcast'].broadcast ()
-		kwargs['Broadcast'].put ("Serverchat You will receive a message. Send the message 'switch' to ALL, TEAM, or SQUAD to accept the change.")
+		kwargs['Broadcast'].put ("Serverchat ^cYou will receive a message. Send the message 'switch' to ALL, TEAM, or SQUAD to accept the change.")
 		kwargs['Broadcast'].broadcast ()
 		self.RegisterScripts(**kwargs)
 
@@ -480,35 +514,24 @@ class balancer(ConsolePlugin):
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[0][1])
 		
-		
-
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 
 		if (self.GAMESTARTED == 1):
-			if (TIME == (1 * 60 * 1000)):
+			if (TIME == (60000)):
 				self.runBalancer (**kwargs)
-			if (TIME == (3 * 60 * 1000)):
+			if (TIME == (180000)):
 				self.runBalancer (**kwargs)
-			if (TIME == (6 * 60 * 1000)):
+			if (TIME == (360000)):
 				self.runBalancer (**kwargs)
-			if (TIME >= (10 * 60 * 1000)):
+			if (TIME >= (600000)):
 				self.DENY = 1
 				self.OPTION = 1
 				del self.switchlist[:]
-			if (TIME >= (10 * 60 * 1000)) and (TIME % 300000 == 0):
+			if (TIME >= (600000)) and (TIME % 300000 == 0):
 				self.OPTION = 1
 				self.runBalancer (**kwargs)
 
 		self.sendGameInfo(**kwargs)
-
-	def onGameStartalt (self, *args, **kwargs):
-		self.onGameStart(*args, **kwargs)
-
-	def onTeamChangealt (self, *args, **kwargs):
-		self.onTeamChange(*args, **kwargs)
-
-	def onTeamChangeshuff (self, *args, **kwargs):
-		self.onTeamChange(*args, **kwargs)
 
 	def evaluateBalance (self, BF, **kwargs):
 		#This was written specifically for uneven balancing, but is essentially identical to checkStack, so they could potentially be combined
@@ -569,7 +592,7 @@ class balancer(ConsolePlugin):
 		SmallBF = (Small['combinedBF'] + pick['bf']) / (Small['size'] + 1) 
 		newdiff = abs((SmallBF / LargeBF) - ((Large['size'] - 1) / (Small['size'] + 1)) * 100)
 		
-		kwargs['Broadcast'].put ("echo UNEVEN balancer selections: Client %s with bf %s for a starting BF stacking of of %s to %s" % (pick['clinum'], pick['bf'], self.DIFFERENCE, lowest))
+		kwargs['Broadcast'].put ("echo UNEVEN balancer selections: Client %s with bf %s for a starting BF stacking of %s to %s" % (pick['clinum'], pick['bf'], self.DIFFERENCE, lowest))
 		kwargs['Broadcast'].broadcast ()
 		#if the selected option doesn't actually improve anything, terminate
 		if (lowest > self.DIFFERENCE):
@@ -653,7 +676,7 @@ class balancer(ConsolePlugin):
 	def giveOption(self, **kwargs):
 		print self.switchlist
 		index = -1
-		playermessage = "You have been selected to change teams to promote balance. To accept, send the message 'switch' to ALL, TEAM, or SQUAD. You will be reimbursed for your non-consumable items. If there are an even number of players on each team you will be switched only if both players accept the change. You have one minute to accept."
+		playermessage = "You have been selected to change teams to promote balance. To accept, send the message 'switch' to ALL, TEAM, or SQUAD. You will be reimbursed for your non-consumable items and your attributes will be reset. If there are an even number of players on each team you will be switched only if both players accept the change. You have one minute to accept."
 		for player in self.switchlist:
 			index += 1
 			kwargs['Broadcast'].put ("SendMessage %s %s" % (player['clinum'], playermessage))
@@ -710,6 +733,9 @@ class balancer(ConsolePlugin):
 		
 		kwargs['Broadcast'].put ("Serverchat ^r%s ^yhas switched teams to promote balance." % (name))
 		kwargs['Broadcast'].broadcast ()
+
+		kwargs['Broadcast'].put ("ResetAttributes %s" % (index))
+		kwargs['Broadcast'].broadcast ()
 		print 'moving player...'
 		
 		self.moveNotify(clinum, **kwargs)
@@ -746,7 +772,7 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put ("SendMessage %s You have automatically switched teams to promote balance." % (clinum))
 		kwargs['Broadcast'].broadcast ()
 		
-		kwargs['Broadcast'].put ("SendMessage %s You have been compensated %s gold for your non-consumable items." % (clinum, value))
+		kwargs['Broadcast'].put ("SendMessage %s You have been compensated %s gold for your non-consumable items and your attributes have been reset." % (clinum, value))
 		kwargs['Broadcast'].broadcast ()
 
 		kwargs['Broadcast'].put ("GiveGold %s %s" % (clinum, value))
