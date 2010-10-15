@@ -12,22 +12,26 @@ class banlist(ConsolePlugin):
 	bans = {}
 	regex = {}
 
-	def onPluginLoad(self):
+	def onPluginLoad(self, config):
+		# TODO: 20101015 winex: ConfigParser lowercases option names
+		# which kills regex part especially
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
+		for (name, value) in ini.items('banlist'):
+			print("%s: %s" % (__name__, (name, value)))
+			if not value:
+				value = self.reason
 
-		config = ConfigParser.ConfigParser()
-		config.read ('%s/banlist.ini' % os.path.dirname(os.path.realpath(__file__)))
-		for (name, value) in config.items('banlist'):
 			if name == "reason":
 				self.reason = value
-			elif name.startswith("regex:"):
-				name = name[6:]
-				print name
-				self.regex[re.compile(name)] = value
+			elif name.startswith("@"):
+				# skip '@'
+				self.regex[re.compile(name[1:])] = value
 			else:
 				self.bans[name] = value
 
-		print self.bans
-		print self.regex
+		print("bans : %s" % self.bans)
+		print("regex: %s" % self.regex)
 
 	def onSetName(self, *args, **kwargs):
 
@@ -39,9 +43,7 @@ class banlist(ConsolePlugin):
 		try:
 			reason = self.bans [nick]
 			success = True
-
 		except KeyError:
-
 			success = False
 			pass
 
@@ -55,5 +57,5 @@ class banlist(ConsolePlugin):
 		if success == False:
 			return
 
-		kwargs['Broadcast'].put ("kick %s %s" % (id, reason))
+		kwargs['Broadcast'].put ("kick %s \"%s\"" % (id, reason))
 		kwargs['Broadcast'].broadcast ()

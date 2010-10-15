@@ -20,17 +20,19 @@ class limit(ConsolePlugin):
 		'forcespec': False,
 	}
 
-	def onPluginLoad(self):
-		self.config = CONFIG_DEFAULT.copy()
+	def onPluginLoad(self, config):
+		self.config = self.CONFIG_DEFAULT.copy()
 		self.ms = MasterServer()
 
-		config = ConfigParser.ConfigParser()
-		config.read('%s/limit.ini' % os.path.dirname(os.path.realpath(__file__)))
+		print(self.config)
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
 		for name in self.config.keys():
 			try:
-				self.config[name] = config.get('limit', name)
+				self.config[name] = ini.get('limit', name)
 			except:
 				raise
+		print(self.config)
 
 		pass
 

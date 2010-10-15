@@ -34,12 +34,12 @@ class balancer(ConsolePlugin):
 	game = {'size' : 0, 'avgBF' : -1}
 	switchlist = []
 
-	def onPluginLoad(self, **kwargs):
+	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
-		Config = ConfigParser.ConfigParser ()
-		#Config.read ('%s/balancer.ini' % os.path.dirname (os.path.realpath (__file__)))
-		#for (name, value) in Config.items ('Restrict'):
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
+		#for (name, value) in config.items('balancer'):
 		#	if (name == "level"):
 		#		self._level = int(value)
 
