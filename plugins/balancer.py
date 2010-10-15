@@ -25,8 +25,7 @@ class balancer(ConsolePlugin):
 	DENY = 0
 	OPTION = 0
 	DENOM = 6
-	_level = 3
-	reason = ("You_must_be_level_%s_to_play_on_this_server" % (_level))
+	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
 	teamOne = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
@@ -114,11 +113,11 @@ class balancer(ConsolePlugin):
 		client ['lf'] = lf
 		client ['exp'] += exp
 		
-		if (level < self._level):
+		if sf != 0:
 			doKick = True
 			
-		if (doKick):
-			kwargs['Broadcast'].put ("kick %s %s" % (args[0][0], self.reason))
+		if doKick:
+			kwargs['Broadcast'].put ("kick %s \"%s\"" % (cli, self.reason))
 			kwargs['Broadcast'].broadcast ()
 		
 	def checkForSpectator (self, cli):
@@ -261,12 +260,8 @@ class balancer(ConsolePlugin):
 				#even if conditions are met. This just forcibly puts the player on the team they are are trying to join
 				#provided the above critera is not true.
 				if (prevented == 1):
-					print 'allow hit'
 					action = 'ALLOW'
-					#have to remove them first so we don't duplicate when we force them to join
 					team = 0
-					#self.removeTeamMember(client, fromteam, team, **kwargs)
-					print 'made it past remove'
 					self.retrieveIndex(client, action, **kwargs)
 					return
 		#if the player is going to spec, just remove them from the team
@@ -278,7 +273,7 @@ class balancer(ConsolePlugin):
 
 	def onDisconnect(self, *args, **kwargs):
 		
-		cli = args[0][0]			
+		cli = args[0][0]
 		client = self.getPlayerByClientNum(cli)
 
 		team = client ['team']
@@ -287,13 +282,10 @@ class balancer(ConsolePlugin):
 
 			teamlist = self.GetTeamLists(client, team)
 			fromteam = teamlist ['fromteam']
-			print fromteam
 			self.removeTeamMember(client, fromteam, team, **kwargs)
 
-		#self.playerlist.remove (client)
-		
 		self.sendGameInfo(**kwargs)
-		
+
 
 	def onCommResign(self, *args, **kwargs):
 		name = args[0][0]
@@ -432,9 +424,9 @@ class balancer(ConsolePlugin):
 			'Stone Hide' : 650,
 			'Tough Skin' : 300,
 			'Trinket of Restoration' : 575,
-			}
-		
-			
+		}
+
+
 	def onItemTransaction(self, *args, **kwargs):
 		#adjust 'value' in playerlist to reflect what the player has bought or sold
 		cli = args[0][0]
@@ -546,8 +538,7 @@ class balancer(ConsolePlugin):
 		largepercent = (float(newlargeBF / sumavg) + float(largesize/totalsize))
 		smallpercent = float(2.0 - (largepercent))
 		ratio = abs(((largepercent - smallpercent) * 100) - self.TARGET)
-		#ratio = abs(int((newsmallBF / newlargeBF) * 100) - self.TARGET)
-		print newlargeBF, newsmallBF,sumavg, largesize, smallsize, totalsize, largepercent, smallpercent, ratio
+
 		return ratio
  
 	def getClosestPersonToTarget (self, team, **kwargs):
@@ -652,8 +643,7 @@ class balancer(ConsolePlugin):
 		team1BF = team1['combinedBF'] - pick1['bf'] + pick2['bf']
 		team2BF = team2['combinedBF'] - pick2['bf'] + pick1['bf']
 		newdiff = math.fabs((team1BF / team1['size']) - (team2BF / team2['size']))
-		print diff
-		print newdiff
+
 		kwargs['Broadcast'].put ("echo EVEN balancer selections: Clients %s, %s with BF %s, %s for a starting BF difference of %s, ending BF difference %s" % (pick1['clinum'], pick2['clinum'], pick1['bf'], pick2['bf'], diff, newdiff))
 		kwargs['Broadcast'].broadcast ()
 
@@ -676,17 +666,17 @@ class balancer(ConsolePlugin):
 	def giveOption(self, **kwargs):
 		print self.switchlist
 		index = -1
-		playermessage = "You have been selected to change teams to promote balance. To accept, send the message 'switch' to ALL, TEAM, or SQUAD. You will be reimbursed for your non-consumable items and your attributes will be reset. If there are an even number of players on each team you will be switched only if both players accept the change. You have one minute to accept."
+		playermessage = "^cYou have been selected to change teams to promote balance. To accept, send the message 'switch' to ALL, TEAM, or SQUAD. You will be reimbursed for your non-consumable items and your attributes will be reset. If there are an even number of players on each team you will be switched only if both players accept the change. You have one minute to accept."
 		for player in self.switchlist:
 			index += 1
 			kwargs['Broadcast'].put ("SendMessage %s %s" % (player['clinum'], playermessage))
 			kwargs['Broadcast'].broadcast ()
 			
 		if (index == 0):
-			kwargs['Broadcast'].put ("ServerChat Teams are currently unbalanced. ^r%s ^yhas been selected to improve balance. Please encourage this player to switch by telling them to send the message 'switch' to ALL or TEAM" % (self.switchlist[0]['name']))
+			kwargs['Broadcast'].put ("ServerChat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. Please encourage this player to switch by telling them to send the message 'switch' to ALL or TEAM" % (self.switchlist[0]['name']))
 			kwargs['Broadcast'].broadcast ()
 		else:
-			kwargs['Broadcast'].put ("ServerChat Teams are currently unbalanced. ^r%s ^yand ^r%s ^yhave been selected to improve balance. Please encourage these players to switch by telling them to send the message 'switch' to ALL or TEAM" % (self.switchlist[0]['name'], self.switchlist[1]['name']))
+			kwargs['Broadcast'].put ("ServerChat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. Please encourage these players to switch by telling them to send the message 'switch' to ALL or TEAM" % (self.switchlist[0]['name'], self.switchlist[1]['name']))
 			kwargs['Broadcast'].broadcast ()
 
 	def onMessage (self, *args, **kwargs):
@@ -731,7 +721,7 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put ("SetTeam %s %s" % (index, newteam))
 		kwargs['Broadcast'].broadcast ()
 		
-		kwargs['Broadcast'].put ("Serverchat ^r%s ^yhas switched teams to promote balance." % (name))
+		kwargs['Broadcast'].put ("Serverchat ^r%s ^chas switched teams to promote balance." % (name))
 		kwargs['Broadcast'].broadcast ()
 
 		kwargs['Broadcast'].put ("ResetAttributes %s" % (index))
@@ -769,10 +759,10 @@ class balancer(ConsolePlugin):
 
 		value = client ['value']		
 
-		kwargs['Broadcast'].put ("SendMessage %s You have automatically switched teams to promote balance." % (clinum))
+		kwargs['Broadcast'].put ("SendMessage %s ^cYou have automatically switched teams to promote balance." % (clinum))
 		kwargs['Broadcast'].broadcast ()
 		
-		kwargs['Broadcast'].put ("SendMessage %s You have been compensated %s gold for your non-consumable items and your attributes have been reset." % (clinum, value))
+		kwargs['Broadcast'].put ("SendMessage %s ^cYou have been compensated ^g%s ^cgold for your non-consumable items and your attributes have been reset." % (clinum, value))
 		kwargs['Broadcast'].broadcast ()
 
 		kwargs['Broadcast'].put ("GiveGold %s %s" % (clinum, value))
@@ -782,7 +772,7 @@ class balancer(ConsolePlugin):
 
 	def preventNotify(self, clinum, **kwargs):
 		
-		kwargs['Broadcast'].put ("SendMessage %s You cannot join that team as it will create imbalance. Please wait for another player to join or leave." % (clinum))
+		kwargs['Broadcast'].put ("SendMessage %s ^cYou cannot join that team as it will create imbalance. Please wait for another player to join or leave." % (clinum))
 		kwargs['Broadcast'].broadcast ()
 
 	def getSmallTeam (self):
@@ -878,7 +868,7 @@ class balancer(ConsolePlugin):
 			self.getClosestTwoToTarget (self.getHighTeam (), self.getLowTeam (),  **kwargs)
 		else:
 			print 'threshold not met'
-			kwargs['Broadcast'].put ("Serverchat Even team balancer initiated but current balance ratio of %s does not meet the threshold of %s" % (self.DIFFERENCE, self.THRESHOLD))
+			kwargs['Broadcast'].put ("Serverchat ^cEven team balancer initiated but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 			kwargs['Broadcast'].broadcast ()
 	def UnEvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
@@ -900,6 +890,6 @@ class balancer(ConsolePlugin):
 				
 		else:
 			print 'threshold not met'
-			kwargs['Broadcast'].put ("Serverchat Uneven team balancer initiated, but current balance ratio of %s does not meet the threshold of %s" % (self.DIFFERENCE, self.THRESHOLD))
+			kwargs['Broadcast'].put ("Serverchat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 			kwargs['Broadcast'].broadcast ()
 		
