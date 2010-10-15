@@ -6,7 +6,7 @@ from S2Wrapper import ConsoleParser
 
 
 class Plugin(object):
-	def onPluginLoad(self):
+	def onPluginLoad(self, config):
 		pass
 
 	pass
@@ -18,48 +18,47 @@ class ConsolePlugin(Plugin, ConsoleParser, object):
 
 _imports = []
 _instances = []
-def discover ():
+_path = None
 
-	plugin_dir = "%s/plugins" % os.path.dirname (os.path.realpath (__file__))
-	plugins = [x[:-3] for x in os.listdir(plugin_dir) if x.endswith(".py")]
-	sys.path.insert (0, plugin_dir)
+def discover(path = None):
+	global _path
+	if path:
+		_path = path
+	if not _path:
+		print("%s: _path is not set" % (__name__))
+		return
 
-	for plugin in plugins:
+	print("%s: search path: %s" % (__name__, _path))
+	plugins = [x[:-3] for x in os.listdir(_path) if x.endswith(".py")]
+	sys.path.insert(0, _path)
+
+	for name in plugins:
 		try:
-			_imports.append (__import__(plugin))
-
+			_imports.append(__import__(name))
 		except Exception as e:
-			print "Loading the module %s has an error: %s" % (plugin , e)
+			print("%s: %s produced an error: %s" % (__name__, name , e))
+	return
 
-def name (module):
-	return module.__name__
-
-def getEnabled (type):
+def getEnabled(type):
 	return _instances
 
-def reload (pluginName):
+def reload(name):
 	mod = None
-
 	for module in _imports:
-		if name(module) == pluginName:
+		if module.__name__ == name:
 			mod = module
 			break
 
-	if mod is None:
+	if not mod:
 		return False
 
-	disable (pluginName)
-	imp.reload (mod)
-	enable (pluginName)
+	disable(name)
+	imp.reload(mod)
+
+	return enable(name)
 
 
-	print mod
-
-
-	return True
-
-
-def disable (name):
+def disable(name):
 
 	for inst in _instances:
 		if inst.__class__.__name__ == name:
@@ -71,8 +70,10 @@ def disable (name):
 			_instances.remove (inst)
 			del inst
 
+			print("%s: %s has been disabled" % (__name__, name))
 			return True
 
+	print("%s: %s is not enabled" % (__name__, name))
 	return False
 
 
@@ -85,30 +86,32 @@ def find (pluginName):
 
 	for type in Plugin.__subclasses__():
 		for plugin in type.__subclasses__():
-			if pluginName == name(plugin):
+			if pluginName == plugin.__name__:
 				_plugin = plugin
 
 	return _plugin
 
 def enable(name):
+	cls = find(name)
+	if not cls:
+		print("%s: %s not found" % (__name__, name))
+		return False
 
-	cls = find (name)
-	if cls is not None:
-		try:
-			inst = cls ()
-			_instances.append (inst)
-			inst.onPluginLoad ()
-			return True
+	try:
+		inst = cls()
+		_instances.append(inst)
+		config = "%s.ini" % os.path.join(_path, name)
+		print("%s: %s config: %s" % (__name__, name, config))
+		inst.onPluginLoad(config)
+	except Exception as e:
+		print("%s: %s error: %s" % (__name__, name , e))
+		return False
 
-		except Exception as e:
-			print "Enabling of plugin %s produced an error: %s\n" % (name , e)
+	print("%s: %s has been enabled" % (__name__, name))
+	return True
 
-	return False
-
-def list ():
-
-	rtn = ""
+def list():
+	rtn = []
 	for plugin in _imports:
-		rtn += (name(plugin) + " ")
-
+		rtn.append(plugin.__name__)
 	return rtn

@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-APPLICATION = "/home/paul/Savage2/savage2.bin"
-OPTIONS = ""
-#OPTIONS = "; setconfig tournament"
-HOST, PORT = "localhost", 4242
-ENABLE_INET = False
 
 import os
 import sys
@@ -51,6 +46,10 @@ class Savage2Thread(threading.Thread):
 	hack = 0
 	process = None
 
+	def __init__(self, config):
+		threading.Thread.__init__(self)
+		self.config = config
+
 	def run(self):
 		self.launchDaemon ()
 
@@ -58,12 +57,20 @@ class Savage2Thread(threading.Thread):
 		Savage2SocketHandler.addChannel (self.onSocketMessage)
 		Savage2DaemonHandler.addChannel (self.onDaemonMessage)
 
+		config = self.config
+		args = [config['exec']]
+		if config['args']:
+			args += [config['args']]
+		env = [config['env']]
+
+		print("starting: %s" % (args))
 		termold = stty.getSize()
 		termnew = (100, 256)
 		stty.setSize(termnew)
 		try:
-			self.process = subprocess.Popen([APPLICATION, "Set host_dedicatedServer true%s" % OPTIONS], stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
-			print("Launched process [%s]" % (self.process.pid))
+			self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
+			#self.process = subprocess.Popen(args, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
+			print("[%s] has started successfully" % (self.process.pid))
 			# give some time for process to read new tty size
 			time.sleep(0.1)
 		finally:
@@ -102,12 +109,14 @@ class Savage2Thread(threading.Thread):
 		print "Process dead?"
 
 	def clean (self):
-		print "IOError: %s(pid: %s) stdin is closed." % (APPLICATION, self.process.pid)
+		print("IOError: [%d] %s stdin is closed." % (self.process.pid, self.config['exec']))
 		Savage2SocketHandler.delChannel (self.onSocketMessage)
 		Savage2DaemonHandler.delChannel (self.onDaemonMessage)
 		# don't go crazy spawning process too fast, sleep some instead
 		time.sleep(1.0)
-		self.launchDaemon ()
+		if self.config['once']:
+			return
+		self.launchDaemon()
 
 	def write(self, line):
 		try:
@@ -261,7 +270,7 @@ class ConsoleParser:
 		print args
 		print "\n"
 		pass
-	
+
 	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
@@ -287,12 +296,6 @@ class ConsoleParser:
 		pass
 
 	def onGameStart(self, *args, **kwargs):
-		print "ON_GAME_START\n"
-		print args
-		print "\n"
-		pass
-
-	def onGameStartalt(self, *args, **kwargs):
 		print "ON_GAME_START\n"
 		print args
 		print "\n"
@@ -386,7 +389,8 @@ class Savage2Daemon:
 	debug = ""
 	dh = None
 
-	def __init__(self):
+	def __init__(self, config):
+		self.config = config
 
 		# Setup our broadcasters
 		Savage2ConsoleHandler ()
@@ -400,7 +404,7 @@ class Savage2Daemon:
 		# Launch savage2 thread
 		# this thread will run and handle savage2 dedicated server
 		# relaunching it on savage2.bin exit.
-		self.thread = Savage2Thread ()
+		self.thread = Savage2Thread(dict(config.items('core')))
 		self.thread.daemon = True
 		self.thread.start ()
 
@@ -424,7 +428,9 @@ class Savage2Daemon:
 		self.server.shutdown ()
 
 	def enableServer(self):
-		self.server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
+		config = self.config
+		addr = (config.get('inet', 'listen'), config.getint('inet', 'port'))
+		self.server = ThreadedTCPServer(addr, ThreadedTCPRequestHandler)
 
 		self.server_thread = threading.Thread(target=self.server.serve_forever)
 		self.server_thread.setDaemon(True)
@@ -435,80 +441,142 @@ class Savage2Daemon:
 
 
 
+def config_exists(name, suggestion=None):
+	if os.path.isfile(name):
+		return True
+	msg = "ERROR: File not found: %s\n" % (name)
+	sys.stderr.write(msg + suggestion + "\n")
+	return False
+
+def config_dump(config):
+	for sect in config.sections():
+		print(sect)
+		for item in config.items(sect):
+			print(item)
+	return
+
+def config_read(cfgs, config = None):
+	if not config:
+		config = ConfigParser.ConfigParser()
+
+	print("config_read(): %s" % (cfgs))
+	if config.read(cfgs):
+		#config_dump(config)
+		pass
+
+	return config
+
+def config_write(filename, config):
+	print("config_write(): %s" % (filename))
+	with open(os.path.expanduser(filename), "wb") as f:
+		config.write(f)
+	return
+
 
 
 # Main thread
 if __name__ == "__main__":
+	# prepare paths and names
+	path_install = os.path.dirname(os.path.realpath(__file__))
+	path_plugins = os.path.join(path_install, "plugins")
+	conf_def = "default.ini"
+	conf_loc = "s2wrapper.ini"
+	#dir_mod = "server"
 
-	# Launch and enable our daemon/wrapper.
-	savage2Daemon = Savage2Daemon ()
+	# read default config
+	cfgdef = os.path.join(path_install, conf_def)
+	if not config_exists(cfgdef, "Please get '%s' from upstream :)" % (conf_def)):
+		sys.exit(1)
+	config = config_read(cfgdef)
 
-	if ENABLE_INET:
-		savage2Daemon.enableServer ()
+	# read local config
+	path_home = config.get('core', 'home')
+	if path_home == ".":
+		path_home = path_install
+	else:
+		path_home = os.path.expanduser(path_home)
+	#path_home = os.path.join(path_home, dir_mod)
+	cfgloc    = os.path.join(path_home, conf_loc)
+	if not config_exists(cfgloc, "Read '%s' for instructions" % (conf_def)):
+		sys.exit(1)
+	config_read(cfgloc, config)
+
+	PluginsManager.discover(path_plugins)
+
+	# enable listed plugins
+	for name in config.options('plugins'):
+		if config.getboolean('plugins', name):
+			PluginsManager.enable(name)
+
+	# write local config
+	#config_write(cfgloc, config)
 
 
+	# reset our terminal
 	os.system('reset')
-	print("Loading plugins...")
-	PluginsManager.discover()
-	AutoPlugins = ConfigParser.ConfigParser()
-	AutoPlugins.read ('%s/s2wrapper.ini' % os.path.dirname(os.path.realpath(__file__)))
-	for (name, value) in AutoPlugins.items('plugins'):
 
-		if (value != "true"):
-			continue
-
-		if (PluginsManager.enable (name)):
-			print "Plugin %s successfully loaded" % name
-
-		else:
-			print "Plugin %s not found" % name
+	# launch daemon
+	daemon = Savage2Daemon(config)
+	# enable inet server
+	if config.getboolean('inet', 'enable'):
+		daemon.enableServer()
 
 
 	# Catch keyboard interrupts, while we run our main while.
 	try:
 		while True:
-
 			# block till user input
-			line = raw_input("")
+			try:
+				line = raw_input("")
+			except EOFError:
+				print("%s: caught EOF, what should i do?" % (__name__))
+				continue
 
-			# get first word
-			words = line.split (" ")
-			if (words [0] == "exit"):
+			# get command and argument as 2 strings
+			args = line.strip().split(None, 1)
+			if not args:
+				continue
+			arg = args[1] if (len(args) > 1) else None
+			cmd = args[0]
+
+			if cmd == "exit":
 				break
-			elif (words [0] == "plugins"):
 
-				if (words [1] == "rediscover"):
-					PluginsManager.discover ()
+			if cmd == "plugins":
+				if not arg:
+					print("Syntax: %s <command>" % (cmd))
+					continue
 
-				elif (words [1] == "list"):
-					print PluginsManager.list ()
-
-				elif (words [1] == "reload" and len(words) > 2):
-					PluginsManager.reload (words [2])
-
-				elif (words [1] == "enable" and len(words) > 2):
-					if (PluginsManager.enable (words [2])):
-						print "Plugin %s has been enabled\n" % words [2]
-
-				elif (words [1] == "disable" and len(words) > 2):
-					if (PluginsManager.disable (words [2])):
-						print "Plugin %s has been disabled\n" % words [2]
+				args = arg.split(None, 1)
+				arg  = args[1] if (len(args) > 1) else None
+				cmd2 = args[0]
+				if not arg:
+					if   cmd2 == "discover":
+						PluginsManager.discover()
+					elif cmd2 == "list":
+						print("\n".join(PluginsManager.list()))
+					else:
+						print("%s: %s: unknown command" % (cmd, cmd2))
 				else:
-					print "\nMissing parameter. Syntax: plugins <command> <name>\n"
-
-
-			elif (words [0] == "plugins" and len(words) <= 2):
-				print "\nMissing parameter. Syntax: plugins <command>\n"
+					if   cmd2 == "reload":
+						PluginsManager.reload(arg)
+					elif cmd2 == "enable":
+						PluginsManager.enable(arg)
+					elif cmd2 == "disable":
+						PluginsManager.disable(arg)
+					else:
+						print("%s: %s: unknown command" % (cmd, cmd2))
 
 			# pass rest through the broadcaster
 			else:
 				Savage2DaemonHandler.put(line)
 				Savage2DaemonHandler.broadcast()
-	
+
 			pass
 	except KeyboardInterrupt:
+		print("%s: caught SIGINT" % (__name__))
 		pass
 
 	# Clean.
-	#savage2Daemon.disableServer ()
-	print "Exit\n"
+	#daemon.disableServer()
+	print("%s: exiting..." % (__name__))
