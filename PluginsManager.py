@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+import traceback
 import sys
 import os
 import imp
@@ -50,10 +53,15 @@ def reload(name):
 			break
 
 	if not mod:
-		return False
+		print("%s: %s not found" % (__name__, name))
+		return
 
 	disable(name)
-	imp.reload(mod)
+	try:
+		imp.reload(mod)
+	except:
+		traceback.print_exc()
+		return
 
 	return enable(name)
 
