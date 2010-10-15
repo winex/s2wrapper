@@ -113,7 +113,7 @@ class balancer(ConsolePlugin):
 		client ['lf'] = lf
 		client ['exp'] += exp
 		
-		if sf != 0:
+		if sf == 0:
 			doKick = True
 			
 		if doKick:
