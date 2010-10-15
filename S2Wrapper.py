@@ -234,20 +234,19 @@ class ConsoleParser:
 
 	def __init__(self):
 		self.filters = dict({
-
 			self.onReceivedAccountId : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
-			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+.\d+.\d+.\d+):(\d+)'),
+			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+\.\d+\.\d+\.\d+):(\d+)'),
 			self.onSetName : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
-			self.onTeamChange : re.compile ('.*?Client #(\d+) requested to join team: (\d)'),
-			self.onMessage : re.compile ('Sv: \[(.*)\] (.*): (.*)'),
-			self.onServerStatus : re.compile ('SGame: Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
-			self.onServerStatusResponse : re.compile ('Server Status: Map\((.*)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
+			self.onTeamChange : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
+			self.onMessage : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
+			self.onServerStatus : re.compile ('SGame: Server Status: Map\((.*?)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
+			self.onServerStatusResponse : re.compile ('Server Status: Map\((.*?)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
 			self.onDisconnect : re.compile ('SGame: Removed client #(\d+)'),
 			self.onConnected : re.compile ('Sv: (\S+) has connected.'),
 			self.onCommResign : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
-			self.onPhaseChange : re.compile ('.*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
-			self.onCommand : re.compile ('.*?: Client #(\d+) requested change to: Player_Commander'),
+			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
+			self.onCommand : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: Player_Commander'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
