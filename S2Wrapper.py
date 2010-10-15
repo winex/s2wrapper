@@ -258,90 +258,61 @@ class ConsoleParser:
 			filter = self.filters [handler]
 			match = filter.match (line)
 
-			if (match is not None):
+			if match:
 				try:
-					handler(match.groups () , Broadcast=dh)
+					handler(match.groups(), Broadcast=dh)
 				except Exception, e:
 					print "Error in: %s: %s" % (repr(handler), e)
 
 	#X Sv: New client connection: #203, ID: 8625, 83.226.95.135:51427
 	def onConnect(self, *args, **kwargs):
-		print "ON_CONNECT\n"
-		print args
-		print "\n"
+		print "ON_CONNECT", args
 		pass
 
 	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
 	def onReceivedAccountId(self, *args, **kwargs):
-		print "ON_RECEIVED_ACCOUNT_ID\n"
-		print args
-		print "\n"
+		print "ON_RECEIVED_ACCOUNT_ID", args
 		pass
 
 	def onNewGame(self, *args, **kwargs):
-		print "ON_NEW_GAME\n"
-		print args
-		print "\n"
+		print "ON_NEW_GAME", args
 		pass
 
 	def onPhaseChange(self, *args, **kwargs):
-		print "PHASE CHANGE\n"
-		print args
-		print "\n"
-		pass
-
-	def onGameEnd(self, *args, **kwargs):
-		pass
-
-	def onGameStart(self, *args, **kwargs):
-		print "ON_GAME_START\n"
-		print args
-		print "\n"
+		print "ON_PHASE_CHANGE", args
 		pass
 
 	def onItemTransaction(self, *args, **kwargs):
 		pass
 
 	def onCommResign(self, *args, **kwargs):
-		print "ON_COMM_RESIGN\n"
-		print args
-		print "\n"
+		print "ON_COMM_RESIGN", args
 		pass
 
 	def onCommand(self, *args, **kwargs):
-		print "ON_COMMANDN\n"
-		print args
-		print "\n"
+		print "ON_COMMAND", args
 		pass
 
 	def onConnected(self, *args, **kwargs):
-		print "ON_CONNECTED\n"
-		print args
-		print "\n"	
+		print "ON_CONNECTED", args
 		pass
 
 	def onPlayerReady(self, *args, **kwargs):
-		print "ON_PLAYER_READY\n"
-		print args
-		print "\n"	
+		print "ON_PLAYER_READY", args
 		pass
 
 	#X Sv: Client #88 set name to Cicero23
 	#def onSetName(self , clientId, name):
 	def onSetName(self, *args, **kwargs):
-		print "ON_SET_NAME\n"
-		print args
-		print "\n"
+		print "ON_SET_NAME", args
 		pass
 
 	#X SGame: Client #180 requested to join team: IDX
 	#def onTeamChange (self, clientId, teamIdx):
 	def onTeamChange (self, *args, **kwargs):
-		print "ON_TEAM_CHANGE\n"
-		print args
-		print "\n"
+		print "ON_TEAM_CHANGE", args
 		pass
 
 	#X Sv: [TEAM 1] BeastSlayer`: need ammo
@@ -349,23 +320,17 @@ class ConsoleParser:
 	#X Sv: [ALL] bLu3_eYeS: is any 1 here ?
 	#def onMessage (self, channel, name):
 	def onMessage (self, *args, **kwargs):
-		print "ON_MESSAGE\n"
-		print args
-		print "\n"
+		print "ON_MESSAGE", args
 		pass
 
 	# SGame: Server Status: Map(ss2010_6) Timestamp(69180000) Active Clients(9) Disconnects(160) Entities(1700) Snapshots(34671)
 	#def onServerStatus(self, map, timestamp, activeClients, disconnects, entities, snapshots):
 	def onServerStatus(self, *args, **kwargs):
-		#print "ON_SERVER_STATUS\n"
-		#print args
-		print "\n"
+		print "ON_SERVER_STATUS", args
 		pass
 
 	def onServerStatusResponse(self, *args, **kwargs):
-		print "ON_SERVER_STATUS_RESPONSE\n"
-		print args
-		print "\n"
+		print "ON_SERVER_STATUS_RESPONSE", args
 		pass
 
 	# SGame: Removed client #195
