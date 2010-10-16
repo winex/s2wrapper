@@ -13,9 +13,9 @@ class limit(ConsolePlugin):
 
 	CONFIG_DEFAULT = {
 		'reason': "This server has restrictions on",
-		'level_min': 0,
+		'level_min': 10,
 		'level_max': 100,
-		'sf_min': 0,
+		'sf_min': 50,
 		'sf_max': 500,
 		'forcespec': False,
 	}
@@ -38,7 +38,7 @@ class limit(ConsolePlugin):
 
 	def onReceivedAccountId(self, *args, **kwargs):
 		config = self.config
-		reason = config.reason.copy()
+		reason = config['reason']
 
 		clnum = int(args[0][0])
 		id    = int(args[0][1])
@@ -64,7 +64,6 @@ class limit(ConsolePlugin):
 			kwargs['Broadcast'].put("kick %d \"%s\"" % (args[0][0], reason))
 		else:
 			kwargs['Broadcast'].put("SendMessage %d \"%s\"" % (clnum, reason))
-			kwargs['Broadcast'].broadcast()
 			kwargs['Broadcast'].put("SetTeam #GetIndexFromClientNum(%d)# 0" % (clnum))
 		kwargs['Broadcast'].broadcast()
 
