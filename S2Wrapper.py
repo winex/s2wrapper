@@ -25,9 +25,7 @@ class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 			if (line == ''):
 				break
 
-			Savage2SocketHandler.put (line);
-			Savage2SocketHandler.broadcast ();
-
+			Savage2SocketHandler.broadcast(line)
 
 		# clean up
 		print "\nLost connection: %s" % self.client_address[0]
@@ -102,8 +100,7 @@ class Savage2Thread(threading.Thread):
 
 			line = line.lstrip ('>')
 			# broadcast
-			Savage2ConsoleHandler.put (line)
-			Savage2ConsoleHandler.broadcast ()
+			Savage2ConsoleHandler.broadcast(line)
 
 		self.clean ()
 		print "Process dead?"
@@ -141,30 +138,22 @@ class Savage2ConsoleHandler:
 		Savage2ConsoleHandler.channel.append (cb)
 
 	@staticmethod
- 	def delChannel (cb):
+	def delChannel (cb):
 		Savage2ConsoleHandler.channel.remove (cb)
-
 
 	@staticmethod
 	def put (line):
 		Savage2ConsoleHandler.queue.append (line)
 
 	@staticmethod
-	def broadcast ():
-		line = Savage2ConsoleHandler.get ()
+	def broadcast(line=None):
+		if line:
+			Savage2ConsoleHandler.put(line)
+		for line in Savage2ConsoleHandler.queue:
+			for cb in Savage2ConsoleHandler.channel:
+				cb(line)
+		Savage2ConsoleHandler.queue.clear()
 
-		if (line is None):
-			return;
-
-		for cb in Savage2ConsoleHandler.channel:
-			cb (line)
-
-	@staticmethod
-	def get():
-		try:
-			return Savage2ConsoleHandler.queue.popleft ()
-		except:
-			return None
 
 class Savage2SocketHandler:
 
@@ -177,7 +166,7 @@ class Savage2SocketHandler:
 		Savage2SocketHandler.channel.append (cb)
 
 	@staticmethod
- 	def delChannel (cb):
+	def delChannel (cb):
 		Savage2SocketHandler.channel.remove (cb)
 
 	@staticmethod
@@ -185,17 +174,14 @@ class Savage2SocketHandler:
 		Savage2SocketHandler.queue.append (line)
 
 	@staticmethod
-	def broadcast ():
-		line = Savage2SocketHandler.get ()
-		for cb in Savage2SocketHandler.channel:
-			cb (line)
+	def broadcast(line=None):
+		if line:
+			Savage2SocketHandler.put(line)
+		for line in Savage2SocketHandler.queue:
+			for cb in Savage2SocketHandler.channel:
+				cb(line)
+		Savage2SocketHandler.queue.clear()
 
-	@staticmethod
-	def get():
-		try:
-			return Savage2SocketHandler.queue.popleft ()
-		except:
-			return None
 
 class Savage2DaemonHandler:
 
@@ -208,7 +194,7 @@ class Savage2DaemonHandler:
 		Savage2DaemonHandler.channel.append (cb)
 
 	@staticmethod
- 	def delChannel (cb):
+	def delChannel (cb):
 		Savage2DaemonHandler.channel.remove (cb)
 
 	@staticmethod
@@ -216,17 +202,14 @@ class Savage2DaemonHandler:
 		Savage2DaemonHandler.queue.append (line)
 
 	@staticmethod
-	def broadcast ():
-		line = Savage2DaemonHandler.get ()
-		for cb in Savage2DaemonHandler.channel:
-			cb (line)
+	def broadcast(line=None):
+		if line:
+			Savage2DaemonHandler.put(line)
+		for line in Savage2DaemonHandler.queue:
+			for cb in Savage2DaemonHandler.channel:
+				cb(line)
+		Savage2DaemonHandler.queue.clear()
 
-	@staticmethod
-	def get():
-		try:
-			return Savage2DaemonHandler.queue.popleft ()
-		except:
-			return None
 
 class ConsoleParser:
 
@@ -339,8 +322,8 @@ class ConsoleParser:
 
 
 	def cmd(self, string):
-		Savage2DaemonHandler.put (string);
-		Savage2DaemonHandler.broadcast ();
+		Savage2DaemonHandler.broadcast(string)
+
 
 # Launches various threads, actual savage2 daemon and the inet server
 import PluginsManager
@@ -533,8 +516,7 @@ if __name__ == "__main__":
 
 			# pass rest through the broadcaster
 			else:
-				Savage2DaemonHandler.put(line)
-				Savage2DaemonHandler.broadcast()
+				Savage2DaemonHandler.broadcast(line)
 
 			pass
 	except KeyboardInterrupt:
