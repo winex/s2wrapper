@@ -65,13 +65,15 @@ class balancer(ConsolePlugin):
 		del self.teamTwo ['players'][:]
 		
 		for client in self.playerlist:
-			kwargs['Broadcast'].put("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
-			kwargs['Broadcast'].broadcast()
+			if (client['active'] == 1):
+				kwargs['Broadcast'].put("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
+				kwargs['Broadcast'].broadcast()
 
 	def onRefreshTeams(self, *args, **kwargs):
 		
 		clinum = args[0][0]
 		team = int(args[0][1])
+		
 		if (team > 0):
 			client = self.getPlayerByClientNum(clinum)
 			teamlists = self.GetTeamLists(client, team)
@@ -90,6 +92,7 @@ class balancer(ConsolePlugin):
 				#but there is no team join message. This automatically adds them back to the balancer team list.
 				print 'already have entry with that clientnum!'
 				team = int(client['team'])
+				
 				if (team > 0):
 					teamlists = self.GetTeamLists(client, team)
 					toteam = teamlists ['toteam']
@@ -97,7 +100,7 @@ class balancer(ConsolePlugin):
 					self.addTeamMember(client, fromteam, team, **kwargs)
 					return
 				return
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'moved' : 0, 'index' : 0, 'exp' : 2, 'value' : 150, 'prevent' : 0})
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'moved' : 0, 'index' : 0, 'exp' : 2, 'value' : 150, 'prevent' : 0, 'active' : 0})
 		
 
 	def onSetName(self, *args, **kwargs):
@@ -134,7 +137,7 @@ class balancer(ConsolePlugin):
 		client ['sf'] = sf
 		client ['lf'] = lf
 		client ['exp'] += exp
-		
+		client ['active'] = 1
 		if sf == 0:
 			doKick = True
 			
@@ -309,7 +312,8 @@ class balancer(ConsolePlugin):
 			teamlist = self.GetTeamLists(client, team)
 			fromteam = teamlist ['fromteam']
 			self.removeTeamMember(client, fromteam, team, **kwargs)
-			print fromteam
+			if (self.GAMESTARTED == 0):
+				client ['active'] = 0
 		self.sendGameInfo(**kwargs)
 
 
@@ -396,6 +400,7 @@ class balancer(ConsolePlugin):
 			player ['team'] = 0
 			player ['value'] = 150
 			player ['prevent']= 0
+			player ['active'] = 0
 		
 	def onNewGame(self, *args, **kwargs):
 		
@@ -427,6 +432,7 @@ class balancer(ConsolePlugin):
 			player ['team'] = 0
 			player ['value'] = 150
 			player ['prevent']= 0
+			player ['active'] = 1
 
 		self.RegisterScripts(**kwargs)
 
