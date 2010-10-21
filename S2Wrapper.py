@@ -63,7 +63,7 @@ class Savage2Thread(threading.Thread):
 
 		print("starting: %s" % (args))
 		termold = stty.getSize()
-		termnew = (100, 256)
+		termnew = (2000, 256)
 		stty.setSize(termnew)
 		try:
 			self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
@@ -231,6 +231,8 @@ class ConsoleParser:
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onCommand : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: Player_Commander'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
+			self.onRefresh : re.compile ('refresh'),
+			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
@@ -256,6 +258,13 @@ class ConsoleParser:
 
 	def onReceivedAccountId(self, *args, **kwargs):
 		print "ON_RECEIVED_ACCOUNT_ID", args
+		pass
+
+	def onRefresh(self, *args, **kwargs):
+		pass
+	
+	def onRefreshTeams(self, *args, **kwargs):
+		print "ON_REFRESH_TEAMS", args
 		pass
 
 	def onNewGame(self, *args, **kwargs):
