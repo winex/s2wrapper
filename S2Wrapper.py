@@ -111,7 +111,7 @@ class Savage2Thread(threading.Thread):
 		Savage2DaemonHandler.delChannel (self.onDaemonMessage)
 		# don't go crazy spawning process too fast, sleep some instead
 		time.sleep(1.0)
-		if self.config['once']:
+		if self.config['once'] == "true":
 			return
 		self.launchDaemon()
 
