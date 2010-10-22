@@ -312,9 +312,9 @@ class balancer(ConsolePlugin):
 			teamlist = self.GetTeamLists(client, team)
 			fromteam = teamlist ['fromteam']
 			self.removeTeamMember(client, fromteam, team, **kwargs)
-			client ['active'] = 0
+			
 		self.sendGameInfo(**kwargs)
-
+		client ['active'] = 0
 
 	def onCommResign(self, *args, **kwargs):
 		name = args[0][0]
@@ -430,7 +430,7 @@ class balancer(ConsolePlugin):
 			player ['moved'] = 0
 			player ['team'] = 0
 			player ['value'] = 150
-			player ['prevent']= 0
+			player ['prevent'] = 0
 			
 
 		self.RegisterScripts(**kwargs)
@@ -549,7 +549,7 @@ class balancer(ConsolePlugin):
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		kwargs['Broadcast'].put("echo refresh")
 		kwargs['Broadcast'].broadcast()
-		self.getGameInfo(**kwargs)
+		
 
 		if (self.GAMESTARTED == 1):
 			if (TIME == (1 * 60 * 1000)):
