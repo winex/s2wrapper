@@ -63,7 +63,7 @@ class Savage2Thread(threading.Thread):
 
 		print("starting: %s" % (args))
 		termold = stty.getSize()
-		termnew = (2000, 256)
+		termnew = (500, 256)
 		stty.setSize(termnew)
 		try:
 			self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
