@@ -312,8 +312,7 @@ class balancer(ConsolePlugin):
 			teamlist = self.GetTeamLists(client, team)
 			fromteam = teamlist ['fromteam']
 			self.removeTeamMember(client, fromteam, team, **kwargs)
-			if (self.GAMESTARTED == 0):
-				client ['active'] = 0
+			client ['active'] = 0
 		self.sendGameInfo(**kwargs)
 
 
@@ -432,7 +431,7 @@ class balancer(ConsolePlugin):
 			player ['team'] = 0
 			player ['value'] = 150
 			player ['prevent']= 0
-			player ['active'] = 1
+			
 
 		self.RegisterScripts(**kwargs)
 
