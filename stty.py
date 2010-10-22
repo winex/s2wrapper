@@ -14,10 +14,10 @@ def call(arg):
 
 def getSize():
 	ret = call("size").split(" ")
-	ret = (int(ret[0]), int(ret[1]))
+	ret = (int(ret[1]), int(ret[0]))
 	print("stty.getSize(): %s" % repr(ret))
 	return ret
 
 def setSize(size):
 	print("stty.setSize(%s)" % repr(size))
-	return call("rows %d cols %d" % (size[0], size[1]))
+	return call("cols %d rows %d" % (size[0], size[1]))
