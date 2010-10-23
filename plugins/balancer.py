@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 class balancer(ConsolePlugin):
 
 	ms = None
-	THRESHOLD = 15
+	THRESHOLD = 10
 	DIFFERENCE = -1
 	TARGET = -1
 	GAMESTARTED = 0
@@ -63,7 +63,9 @@ class balancer(ConsolePlugin):
 	def onRefresh(self, *args, **kwargs):
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
-		
+		self.teamOne ['size'] = 0
+		self.teamTwo ['size'] = 0
+		print "REFRESHING TEAMS"
 		for client in self.playerlist:
 			if (client['active'] == 1):
 				kwargs['Broadcast'].put("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
@@ -136,7 +138,7 @@ class balancer(ConsolePlugin):
 		client ['level'] = level
 		client ['sf'] = sf
 		client ['lf'] = lf
-		client ['exp'] += exp
+		client ['exp'] = exp
 		client ['active'] = 1
 		if sf == 0:
 			doKick = True
@@ -839,18 +841,18 @@ class balancer(ConsolePlugin):
 			team ['size'] += 1
 		if (team ['size'] > 0):
 			team ['avgBF'] = (team ['combinedBF'] / team ['size'])
-
+		else:
+			team ['avgBF'] = 0
 
 	def getGameInfo (self, **kwargs):
 
 		self.getTeamAvg (self.teamOne)
 		self.getTeamAvg (self.teamTwo)
-		print 'got averages'
 		self.game ['size'] = (self.teamOne ['size'] + self.teamTwo ['size'])
 		self.game ['avgBF'] = ((self.teamOne ['avgBF'] +  self.teamTwo ['avgBF']) / 2)
-		
+		print self.playerlist
+
 	def sendGameInfo (self, **kwargs):
-		print 'game info'
 		self.getGameInfo(**kwargs)
 
 		if (self.GAMESTARTED == 1):
@@ -878,7 +880,7 @@ class balancer(ConsolePlugin):
 		print largeshare, sizediff
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		self.THRESHOLD = 15
+		self.THRESHOLD = 10
 
 		self.checkStack()
 		absdiff = abs(self.DIFFERENCE)
@@ -892,7 +894,7 @@ class balancer(ConsolePlugin):
 
 	def UnEvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		self.THRESHOLD = 15
+		self.THRESHOLD = 10
 		fromteam = self.getLargeTeam ()
 		toteam = self.getSmallTeam ()
 

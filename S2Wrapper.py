@@ -235,7 +235,7 @@ class ConsoleParser:
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onCommand : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: Player_Commander'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
-			self.onRefresh : re.compile ('refresh'),
+			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
