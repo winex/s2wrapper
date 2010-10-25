@@ -38,7 +38,7 @@ def discover(path = None):
 	for name in plugins:
 		try:
 			_imports.append(__import__(name))
-		except Exception as e:
+		except Exception, e:
 			print("%s: %s produced an error: %s" % (__name__, name , e))
 	return
 
@@ -111,7 +111,7 @@ def enable(name):
 		config = "%s.ini" % os.path.join(_path, name)
 		print("%s: %s config: %s" % (__name__, name, config))
 		inst.onPluginLoad(config)
-	except Exception as e:
+	except Exception, e:
 		print("%s: %s error: %s" % (__name__, name , e))
 		return False
 

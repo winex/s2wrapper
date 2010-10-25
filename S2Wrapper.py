@@ -63,9 +63,19 @@ class Savage2Thread(threading.Thread):
 
 		termold = stty.getSize()
 		termcfg = (int(config['term_x']), int(config['term_y']))
-		termnew = (
-			termcfg[0] if termcfg[0] > 0 else termold[0],
-			termcfg[1] if termcfg[1] > 0 else termold[1] )
+		
+		
+		if (termcfg[0] > 0):
+			termnewX = termcfg[0]
+		else:
+			termnewX = termold[0]
+
+		if (termcfg[1] > 0):
+			termnewY = termcfg[1]
+		else:
+			termnewY = termold[1]
+		termnew = (termnewX, termnewY)
+		
 		stty.setSize(termnew)
 
 		print("starting: %s" % (args))
@@ -427,9 +437,9 @@ def config_read(cfgs, config = None):
 	return config
 
 def config_write(filename, config):
-	print("config_write(): %s" % (filename))
-	with open(os.path.expanduser(filename), "wb") as f:
-		config.write(f)
+	#print("config_write(): %s" % (filename))
+	#with open(os.path.expanduser(filename), "wb") as f:
+	#	config.write(f)
 	return
 
 
@@ -496,7 +506,10 @@ if __name__ == "__main__":
 			args = line.strip().split(None, 1)
 			if not args:
 				continue
-			arg = args[1] if (len(args) > 1) else None
+			if (len(args) > 1):
+				arg = args[1] 
+			else:
+				arg = None
 			cmd = args[0]
 
 			if cmd == "exit":
@@ -508,7 +521,10 @@ if __name__ == "__main__":
 					continue
 
 				args = arg.split(None, 1)
-				arg  = args[1] if (len(args) > 1) else None
+				if (len(args) > 1):
+					arg  = args[1] 
+				else:
+					arg = None
 				cmd2 = args[0]
 				if not arg:
 					if   cmd2 == "discover":
