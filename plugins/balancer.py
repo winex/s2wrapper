@@ -549,8 +549,8 @@ class balancer(ConsolePlugin):
 		CURRENTSTAMP = int(args[0][1])
 		
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
-		kwargs['Broadcast'].put("echo refresh")
-		kwargs['Broadcast'].broadcast()
+		#kwargs['Broadcast'].put("echo refresh")
+		#kwargs['Broadcast'].broadcast()
 		
 
 		if (self.GAMESTARTED == 1):
