@@ -18,7 +18,7 @@ class training(ConsolePlugin):
 
 	ms = None
 	playerlist = []
-	
+	unallowedlist = []
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -44,6 +44,7 @@ class training(ConsolePlugin):
 	def onGameStart(self, *args, **kwargs):
 
 		self.RegisterScripts(**kwargs)
+		self.unallowedunits(**kwargs)
 
 	def RegisterScripts(self, **kwargs):
 		#any extra scripts that need to go in can be done here
@@ -73,12 +74,25 @@ class training(ConsolePlugin):
 		
 		id = args[0][0]
 		
-		for client in self.playerlist:
-			if (client['clinum'] == id):
-				print 'already have entry with that clientnum!'
-				return
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1})
 		
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1})
+
+	def onDisconnect(self, *args, **kwargs):
+		
+		cli = args[0][0]
+		index = self.getPlayerIndex(cli)
+		#index = self.playerlist.index(clinum[cli])
+		print index
+		del self.playerlist[index]
+		print self.playerlist
+	def getPlayerIndex (self, cli):
+		
+		indice = -1
+		for player in self.playerlist:
+			indice += 1
+							
+			if (player['clinum'] == cli):
+				return indice	
 
 	def onSetName(self, *args, **kwargs):
 
@@ -92,7 +106,26 @@ class training(ConsolePlugin):
 
 		client ['name'] = playername
 		
+	def onChangeUnit(self, *args, **kwargs):
+		cli = args[0][0]
+		unit = args[0][1]
 
+		for badunit in self.unallowedlist:
+			if (badunit == unit):
+				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; ChangeUnit #_value# Player_Savage true false false false false false false; SendMessage %s ^cYou can't select that unit. Sorry!" % (cli, cli))
+				
+	def unallowedunits(self, *args, **kwargs):
+
+		self.unallowedlist = [
+			'Player_Malphas',
+			'Player_Maliken',
+			'Player_Behemoth',
+			'Player_Steambuchet',
+			'Player_BatteringRam',
+			'Player_Devourer',
+			'Player_Tempest'
+			
+		]	
 
 	def onReceivedAccountId(self, *args, **kwargs):
 

@@ -244,6 +244,7 @@ class ConsoleParser:
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onCommand : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: Player_Commander'),
+			self.onChangeUnit : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
@@ -270,6 +271,9 @@ class ConsoleParser:
 		pass
 
 	def onRetrieveIndex(self, *args, **kwargs):
+		pass
+
+	def onChangeUnit(self, *args, **kwargs):
 		pass
 
 	def onReceivedAccountId(self, *args, **kwargs):
