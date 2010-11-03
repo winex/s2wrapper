@@ -156,9 +156,9 @@ class training(ConsolePlugin):
 		arg = arg.split(None, 1)
 
 		if   func == "train" and arg:
-			self.trainingStart(name, arg, kwargs)
+			self.trainingStart(name, arg, **kwargs)
 		elif func == "end" and arg == "training":
-			return self.trainingEnd(name, kwargs)
+			return self.trainingEnd(name, **kwargs)
 
 	def trainingStart(self, name, trainee, **kwargs):
 		trainer = self.getPlayerByName(name)
