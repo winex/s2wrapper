@@ -227,9 +227,9 @@ class ConsoleParser:
 			self.onConnect     : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+\.\d+\.\d+\.\d+):(\d+)'),
 			self.onSetName     : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
+			self.onAccountId   : re.compile ('Sv: Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			#self.onConnected   : re.compile ('Sv: (\S+) has connected.'),
 			self.onMessage     : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
-			self.onAccountId   : re.compile ('SGame: Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
@@ -277,6 +277,10 @@ class ConsoleParser:
 		print("ON_PLAYER_READY", args)
 		pass
 
+	def onAccountId(self, *args, **kwargs):
+		print("ON_ACCOUNT_ID", args)
+		pass
+
 	#def onConnected(self, *args, **kwargs):
 	#	pass
 
@@ -285,10 +289,6 @@ class ConsoleParser:
 	#X Sv: [ALL] bLu3_eYeS: is any 1 here ?
 	def onMessage(self, *args, **kwargs):
 		print("ON_MESSAGE", args)
-		pass
-
-	def onAccountId(self, *args, **kwargs):
-		print("ON_ACCOUNT_ID", args)
 		pass
 
 	# SGame: Removed client #195
