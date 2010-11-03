@@ -221,128 +221,105 @@ class ConsoleParser:
 
 	def __init__(self):
 		self.filters = dict({
-			self.onReceivedAccountId : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
-			self.onConnect : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+\.\d+\.\d+\.\d+):(\d+)'),
-			self.onSetName : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
-			self.onTeamChange : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
-			self.onMessage : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
-			self.onServerStatus : re.compile ('SGame: Server Status: Map\((.*?)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
+			# listed in order of appearance, likeliness and sanity
+			self.onServerStatus  : re.compile ('SGame: Server Status: Map\((.*?)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
 			self.onServerStatusResponse : re.compile ('Server Status: Map\((.*?)\) Timestamp\((\d+)\) Active Clients\((\d+)\) Disconnects\((\d+)\) Entities\((\d+)\) Snapshots\((\d+)\)'),
-			self.onDisconnect : re.compile ('SGame: Removed client #(\d+)'),
-			self.onConnected : re.compile ('Sv: (\S+) has connected.'),
-			self.onCommResign : re.compile ('SGame: (\S+) has resigned as commander.'),
+			self.onConnect     : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+\.\d+\.\d+\.\d+):(\d+)'),
+			self.onSetName     : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
+			#self.onConnected   : re.compile ('Sv: (\S+) has connected.'),
+			self.onMessage     : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
+			self.onAccountId   : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
+			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
-			self.onCommand : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: Player_Commander'),
-			self.onChangeUnit : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
+			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
+			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
+			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
+			# custom filters
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
-			self.onTrain : re.compile ('Sv: \[(.+?)\] ([^\s]+?): train (.*)'),
-			self.onEndTrain : re.compile ('Sv: \[(.+?)\] ([^\s]+?): end training'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
 	def onLineReceived(self, line, dh):
 		for handler in self.filters:
+			filter = self.filters[handler]
+			match = filter.match(line)
+			if not match:
+				continue
 
-			filter = self.filters [handler]
-			match = filter.match (line)
+			try:
+				handler(match.groups(), Broadcast=dh)
+			except Exception, e:
+				print("Error in: %s: %s" % (repr(handler), e))
 
-			if match:
-				try:
-					handler(match.groups(), Broadcast=dh)
-				except Exception, e:
-					print "Error in: %s: %s" % (repr(handler), e)
+
+	# SGame: Server Status: Map(ss2010_6) Timestamp(69180000) Active Clients(9) Disconnects(160) Entities(1700) Snapshots(34671)
+	def onServerStatus(self, *args, **kwargs):
+		print("ON_SERVER_STATUS", args)
+		pass
+	def onServerStatusResponse(self, *args, **kwargs):
+		print("ON_SERVER_STATUS_RESPONSE", args)
+		pass
 
 	#X Sv: New client connection: #203, ID: 8625, 83.226.95.135:51427
 	def onConnect(self, *args, **kwargs):
-		print "ON_CONNECT", args
-		pass
-
-	def onRetrieveIndex(self, *args, **kwargs):
-		pass
-
-	def onChangeUnit(self, *args, **kwargs):
-		pass
-
-	def onReceivedAccountId(self, *args, **kwargs):
-		print "ON_RECEIVED_ACCOUNT_ID", args
-		pass
-
-	def onRefresh(self, *args, **kwargs):
-		pass
-	
-	def onTrain(self, *args, **kwargs):
-		pass
-
-	def onEndTrain(self, *args, **kwargs):
-		pass
-
-	def onRefreshTeams(self, *args, **kwargs):
-		print "ON_REFRESH_TEAMS", args
-		pass
-
-	def onNewGame(self, *args, **kwargs):
-		print "ON_NEW_GAME", args
-		pass
-
-	def onPhaseChange(self, *args, **kwargs):
-		print "ON_PHASE_CHANGE", args
-		pass
-
-	def onItemTransaction(self, *args, **kwargs):
-		pass
-
-	def onCommResign(self, *args, **kwargs):
-		print "ON_COMM_RESIGN", args
-		pass
-
-	def onCommand(self, *args, **kwargs):
-		print "ON_COMMAND", args
-		pass
-
-	def onConnected(self, *args, **kwargs):
-		print "ON_CONNECTED", args
-		pass
-
-	def onPlayerReady(self, *args, **kwargs):
-		print "ON_PLAYER_READY", args
+		print("ON_CONNECT", args)
 		pass
 
 	#X Sv: Client #88 set name to Cicero23
-	#def onSetName(self , clientId, name):
 	def onSetName(self, *args, **kwargs):
-		print "ON_SET_NAME", args
+		print("ON_SET_NAME", args)
 		pass
 
-	#X SGame: Client #180 requested to join team: IDX
-	#def onTeamChange (self, clientId, teamIdx):
-	def onTeamChange (self, *args, **kwargs):
-		print "ON_TEAM_CHANGE", args
+	def onPlayerReady(self, *args, **kwargs):
+		print("ON_PLAYER_READY", args)
 		pass
+
+	#def onConnected(self, *args, **kwargs):
+	#	pass
 
 	#X Sv: [TEAM 1] BeastSlayer`: need ammo
 	#X Sv: [TEAM 2] BeastSlayer`: need ammo
 	#X Sv: [ALL] bLu3_eYeS: is any 1 here ?
-	#def onMessage (self, channel, name):
-	def onMessage (self, *args, **kwargs):
-		print "ON_MESSAGE", args
+	def onMessage(self, *args, **kwargs):
+		print("ON_MESSAGE", args)
 		pass
 
-	# SGame: Server Status: Map(ss2010_6) Timestamp(69180000) Active Clients(9) Disconnects(160) Entities(1700) Snapshots(34671)
-	#def onServerStatus(self, map, timestamp, activeClients, disconnects, entities, snapshots):
-	def onServerStatus(self, *args, **kwargs):
-		print "ON_SERVER_STATUS", args
-		pass
-
-	def onServerStatusResponse(self, *args, **kwargs):
-		print "ON_SERVER_STATUS_RESPONSE", args
+	def onAccountId(self, *args, **kwargs):
+		print("ON_ACCOUNT_ID", args)
 		pass
 
 	# SGame: Removed client #195
-	#def onDisconnect(self, clientId, message):
 	def onDisconnect(self, *args, **kwargs):
+		print("ON_DISCONNECT", args)
+		pass
+
+	def onPhaseChange(self, *args, **kwargs):
+		print("ON_PHASE_CHANGE", args)
+		pass
+
+	#X SGame: Client #180 requested to join team: IDX
+	def onTeamChange(self, *args, **kwargs):
+		print("ON_TEAM_CHANGE", args)
+		pass
+
+	def onUnitChange(self, *args, **kwargs):
+		pass
+
+	def onCommResign(self, *args, **kwargs):
+		print("ON_COMM_RESIGN", args)
+		pass
+
+	# custom filters - TO BE REMOVED
+	def onItemTransaction(self, *args, **kwargs):
+		pass
+	def onRefresh(self, *args, **kwargs):
+		pass
+	def onRefreshTeams(self, *args, **kwargs):
+		pass
+	def onRetrieveIndex(self, *args, **kwargs):
 		pass
 
 
