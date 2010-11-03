@@ -229,7 +229,7 @@ class ConsoleParser:
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
 			#self.onConnected   : re.compile ('Sv: (\S+) has connected.'),
 			self.onMessage     : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
-			self.onAccountId   : re.compile ('SGame: Recieved persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
+			self.onAccountId   : re.compile ('SGame: Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
