@@ -850,7 +850,6 @@ class balancer(ConsolePlugin):
 		self.getTeamAvg (self.teamTwo)
 		self.game ['size'] = (self.teamOne ['size'] + self.teamTwo ['size'])
 		self.game ['avgBF'] = ((self.teamOne ['avgBF'] +  self.teamTwo ['avgBF']) / 2)
-		print self.playerlist
 
 	def sendGameInfo (self, **kwargs):
 		self.getGameInfo(**kwargs)
