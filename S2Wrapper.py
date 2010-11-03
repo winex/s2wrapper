@@ -227,7 +227,7 @@ class ConsoleParser:
 			self.onConnect     : re.compile ('Sv: New client connection: #(\d+), ID: (\d+), (\d+\.\d+\.\d+\.\d+):(\d+)'),
 			self.onSetName     : re.compile ('Sv: Client #(\d+) set name to (\S+)'),
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
-			self.onAccountId   : re.compile ('Sv: Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
+			self.onAccountId   : re.compile ('(?:Sv: )*?Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			#self.onConnected   : re.compile ('Sv: (\S+) has connected.'),
 			self.onMessage     : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
 			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
