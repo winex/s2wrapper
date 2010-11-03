@@ -73,8 +73,6 @@ class training(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0][0]
-		
-		
 		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1})
 
 	def onDisconnect(self, *args, **kwargs):
@@ -85,6 +83,7 @@ class training(ConsolePlugin):
 		print index
 		del self.playerlist[index]
 		print self.playerlist
+
 	def getPlayerIndex (self, cli):
 		
 		indice = -1
@@ -100,13 +99,12 @@ class training(ConsolePlugin):
 		
 		cli = args[0][0]
 		playername = args[0][1]
-		
 
 		client = self.getPlayerByClientNum(cli)
 
 		client ['name'] = playername
 		
-	def onChangeUnit(self, *args, **kwargs):
+	def onUnitChange(self, *args, **kwargs):
 		cli = args[0][0]
 		unit = args[0][1]
 
@@ -124,13 +122,9 @@ class training(ConsolePlugin):
 			'Player_BatteringRam',
 			'Player_Devourer',
 			'Player_Tempest'
-			
-		]	
+		]
 
-	def onReceivedAccountId(self, *args, **kwargs):
-
-	
-
+	def onAccountId(self, *args, **kwargs):
 		cli = args[0][0]
 		id = args[0][1]
 		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
@@ -151,23 +145,33 @@ class training(ConsolePlugin):
 		client['team'] = team	
 		print self.playerlist
 
-	def onTrain (self, *args, **kwargs):
+	def onMessage(self, *args, **kwargs):
+		# process only ALL chat messages
+		if args[0][0] != "ALL":
+			return
+
 		name = args[0][1]
-		trainer = self.getPlayerByName(args[0][1])
-		trainee = args[0][2]
-		
-		
+		(func, arg) = args[0][2].split(None, 1)
+		# only single person training is supported right now
+		arg = arg.split(None, 1)
+
+		if   func == "train" and arg:
+			self.trainingStart(name, arg, kwargs)
+		elif func == "end" and arg == "training":
+			return self.trainingEnd(name, kwargs)
+
+	def trainingStart(self, name, trainee, **kwargs):
+		trainer = self.getPlayerByName(name)
 		for player in self.playerlist:
 			if (player['name'] == trainee):
-				toteam = player['team']	
+				toteam = player['team']
 				trainer['oldteam'] = trainer['team']
 				trainer['team'] = toteam
 				trainer['trainee'] = player['clinum']
 				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s You are now in a training session with %s" % (trainer['clinum'], toteam, trainer['clinum'], trainee))
-					
-	def onEndTrain (self, *args, **kwargs):
-		name = args[0][1]
-		trainer = self.getPlayerByName(args[0][1])
+
+	def trainingEnd(self, name, **kwargs):
+		trainer = self.getPlayerByName(name)
 		if (trainer['trainee'] == -1):
 			return
 		kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s ^cYou have ended your training session.; SendMessage %s ^r%s ^chas ended their training session with you." % (trainer['clinum'], trainer['oldteam'], trainer['clinum'], trainer['trainee'], trainer['name']))

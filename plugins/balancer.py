@@ -119,7 +119,7 @@ class balancer(ConsolePlugin):
 		
 
 
-	def onReceivedAccountId(self, *args, **kwargs):
+	def onAccountId(self, *args, **kwargs):
 
 		doKick = False
 
@@ -340,8 +340,10 @@ class balancer(ConsolePlugin):
 
 		self.sendGameInfo(**kwargs)
 
-	def onCommand(self, *args, **kwargs):
-		
+	def onUnitChange(self, *args, **kwargs):
+		if args[0][1] != "Player_Commander":
+			return
+
 		cli = args[0][0]
 		client = self.getPlayerByClientNum(cli)
 		team = client['team']
@@ -357,10 +359,6 @@ class balancer(ConsolePlugin):
 		client['moved'] = 1
 		
 		self.sendGameInfo(**kwargs)
-
-	def onCommandalt(self, *args, **kwargs):
-		
-		self.onCommand(*args, **kwargs)
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0][0])
@@ -877,6 +875,7 @@ class balancer(ConsolePlugin):
 		self.DIFFERENCE = abs(1 - largepercent) * 100
 		print self.DIFFERENCE
 		print largeshare, sizediff
+
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
 		self.THRESHOLD = 10

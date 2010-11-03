@@ -36,7 +36,7 @@ class limit(ConsolePlugin):
 
 		pass
 
-	def onReceivedAccountId(self, *args, **kwargs):
+	def onAccountId(self, *args, **kwargs):
 		config = self.config
 		reason = config['reason']
 
