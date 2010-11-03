@@ -40,8 +40,8 @@ class limit(ConsolePlugin):
 		config = self.config
 		reason = config['reason']
 
-		clnum = int(args[0][0])
-		id    = int(args[0][1])
+		clnum = int(args[0])
+		id    = int(args[1])
 
 		stats = self.ms.getStatistics("%d" % (id)).get('all_stats').get(id)
 		lv = int(stats['level'])
@@ -61,7 +61,7 @@ class limit(ConsolePlugin):
 			return
 
 		if not config['forcespec']:
-			kwargs['Broadcast'].put("kick %d \"%s\"" % (args[0][0], reason))
+			kwargs['Broadcast'].put("kick %d \"%s\"" % (clnum, reason))
 		else:
 			kwargs['Broadcast'].put("SendMessage %d \"%s\"" % (clnum, reason))
 			kwargs['Broadcast'].put("SetTeam #GetIndexFromClientNum(%d)# 0" % (clnum))

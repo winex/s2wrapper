@@ -250,7 +250,7 @@ class ConsoleParser:
 				continue
 
 			try:
-				handler(match.groups(), Broadcast=dh)
+				handler(*match.groups(), Broadcast=dh)
 			except Exception, e:
 				print("Error in: %s: %s" % (repr(handler), e))
 

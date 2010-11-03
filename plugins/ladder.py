@@ -20,7 +20,7 @@ class ladder(ConsolePlugin):
 		pass
 
 	def onSGame (self, *args, **kwargs):
-		self.saveLadder (args[0][0]);
+		self.saveLadder (args[0]);
 
 
 	def saveLadder (self, serverstring):

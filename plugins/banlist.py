@@ -32,8 +32,8 @@ class banlist(ConsolePlugin):
 
 
 	def onSetName(self, *args, **kwargs):
-		id   = args[0][0]
-		name = args[0][1]
+		id   = args[0]
+		name = args[1]
 		reason = self.reason
 
 		if name in self.bans:

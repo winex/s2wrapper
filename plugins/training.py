@@ -35,7 +35,7 @@ class training(ConsolePlugin):
 		pass
 
 	def onPhaseChange(self, *args, **kwargs):
-		phase = int(args[0][0])
+		phase = int(args[0])
 		print ('Current phase: %d' % (phase))
 		if (phase == 5):
 			self.onGameStart(*args, **kwargs)
@@ -72,12 +72,12 @@ class training(ConsolePlugin):
 
 	def onConnect(self, *args, **kwargs):
 		
-		id = args[0][0]
+		id = args[0]
 		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1})
 
 	def onDisconnect(self, *args, **kwargs):
 		
-		cli = args[0][0]
+		cli = args[0]
 		index = self.getPlayerIndex(cli)
 		#index = self.playerlist.index(clinum[cli])
 		print index
@@ -97,16 +97,16 @@ class training(ConsolePlugin):
 
 		print args
 		
-		cli = args[0][0]
-		playername = args[0][1]
+		cli = args[0]
+		playername = args[1]
 
 		client = self.getPlayerByClientNum(cli)
 
 		client ['name'] = playername
 		
 	def onUnitChange(self, *args, **kwargs):
-		cli = args[0][0]
-		unit = args[0][1]
+		cli = args[0]
+		unit = args[1]
 
 		for badunit in self.unallowedlist:
 			if (badunit == unit):
@@ -125,8 +125,8 @@ class training(ConsolePlugin):
 		]
 
 	def onAccountId(self, *args, **kwargs):
-		cli = args[0][0]
-		id = args[0][1]
+		cli = args[0]
+		id = args[1]
 		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
 		
 		level = int(stats['level'])
@@ -139,19 +139,19 @@ class training(ConsolePlugin):
 		client ['sf'] = sf
 		
 	def onTeamChange (self, *args, **kwargs):
-		team = int(args[0][1])
-		cli = args[0][0]
+		team = int(args[1])
+		cli = args[0]
 		client = self.getPlayerByClientNum(cli)
 		client['team'] = team	
 		print self.playerlist
 
 	def onMessage(self, *args, **kwargs):
 		# process only ALL chat messages
-		if args[0][0] != "ALL":
+		if args[0] != "ALL":
 			return
 
-		name = args[0][1]
-		(func, arg) = args[0][2].split(None, 1)
+		name = args[1]
+		(func, arg) = args[2].split(None, 1)
 		# only single person training is supported right now
 		arg = arg.split(None, 1)
 

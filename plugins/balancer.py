@@ -73,8 +73,8 @@ class balancer(ConsolePlugin):
 
 	def onRefreshTeams(self, *args, **kwargs):
 		
-		clinum = args[0][0]
-		team = int(args[0][1])
+		clinum = args[0]
+		team = int(args[1])
 		
 		if (team > 0):
 			client = self.getPlayerByClientNum(clinum)
@@ -86,7 +86,7 @@ class balancer(ConsolePlugin):
 
 	def onConnect(self, *args, **kwargs):
 		
-		id = args[0][0]
+		id = args[0]
 		
 		for client in self.playerlist:
 			if (client['clinum'] == id):
@@ -109,8 +109,8 @@ class balancer(ConsolePlugin):
 
 		print args
 		
-		cli = args[0][0]
-		playername = args[0][1]
+		cli = args[0]
+		playername = args[1]
 		
 
 		client = self.getPlayerByClientNum(cli)
@@ -123,8 +123,8 @@ class balancer(ConsolePlugin):
 
 		doKick = False
 
-		cli = args[0][0]
-		id = args[0][1]
+		cli = args[0]
+		id = args[1]
 		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
 		
 		level = int(stats['level'])
@@ -246,8 +246,8 @@ class balancer(ConsolePlugin):
 	def onTeamChange (self, *args, **kwargs):
 		
 		spec = -1
-		team = int(args[0][1])
-		cli = args[0][0]
+		team = int(args[1])
+		cli = args[0]
 		client = self.getPlayerByClientNum(cli)
 		currentteam = client ['team']
 		prevented = int(client ['prevent'])
@@ -304,7 +304,7 @@ class balancer(ConsolePlugin):
 
 	def onDisconnect(self, *args, **kwargs):
 		
-		cli = args[0][0]
+		cli = args[0]
 		client = self.getPlayerByClientNum(cli)
 
 		team = client ['team']
@@ -319,7 +319,7 @@ class balancer(ConsolePlugin):
 		client ['active'] = 0
 
 	def onCommResign(self, *args, **kwargs):
-		name = args[0][0]
+		name = args[0]
 		
 		client = self.getPlayerByName(name)
 		team = client['team']
@@ -341,10 +341,10 @@ class balancer(ConsolePlugin):
 		self.sendGameInfo(**kwargs)
 
 	def onUnitChange(self, *args, **kwargs):
-		if args[0][1] != "Player_Commander":
+		if args[1] != "Player_Commander":
 			return
 
-		cli = args[0][0]
+		cli = args[0]
 		client = self.getPlayerByClientNum(cli)
 		team = client['team']
 		teamlist = self.GetTeamLists(client, team)
@@ -361,7 +361,7 @@ class balancer(ConsolePlugin):
 		self.sendGameInfo(**kwargs)
 
 	def onPhaseChange(self, *args, **kwargs):
-		phase = int(args[0][0])
+		phase = int(args[0])
 		print ('Current phase: %d' % (phase))
 		if (phase == 7):
 			self.onGameEnd()
@@ -472,9 +472,9 @@ class balancer(ConsolePlugin):
 
 	def onItemTransaction(self, *args, **kwargs):
 		#adjust 'value' in playerlist to reflect what the player has bought or sold
-		cli = args[0][0]
-		trans = args[0][1]
-		newitem = args[0][2]
+		cli = args[0]
+		trans = args[1]
+		newitem = args[2]
 		client = self.getPlayerByClientNum(cli)
 
 		try:
@@ -497,9 +497,9 @@ class balancer(ConsolePlugin):
 
 	def onRetrieveIndex(self, *args, **kwargs):
 		#get stuff from parser
-		clinum = args[0][0]
-		index = args[0][1]
-		action = args[0][2]
+		clinum = args[0]
+		index = args[1]
+		action = args[2]
 		if (action == 'MOVE'):
 			self.move(clinum, index, **kwargs)
 		if (action == 'PREVENT'):
@@ -528,7 +528,7 @@ class balancer(ConsolePlugin):
 	def onGameStart (self, *args, **kwargs):
 		
 		self.ItemList()
-		self.STARTSTAMP = args[0][1]
+		self.STARTSTAMP = args[1]
 		self.GAMESTARTED = 1
 		kwargs['Broadcast'].broadcast("echo GAMESTARTED")
 
@@ -544,7 +544,7 @@ class balancer(ConsolePlugin):
 
 	#Run balancer at 1, 3 and 6 minutes. Deny phase begins at 8 minutes
 	def onServerStatus(self, *args, **kwargs):
-		CURRENTSTAMP = int(args[0][1])
+		CURRENTSTAMP = int(args[1])
 		
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		#kwargs['Broadcast'].put("echo refresh")
@@ -721,8 +721,8 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].broadcast()
 
 	def onMessage (self, *args, **kwargs):
-		name = args[0][1]
-		message = args[0][2]
+		name = args[1]
+		message = args[2]
 		
 		if (self.OPTION == 1) and (message == 'reject'):
 
