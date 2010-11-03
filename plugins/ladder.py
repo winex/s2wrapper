@@ -11,10 +11,11 @@ from S2Wrapper import Savage2DaemonHandler
 class ladder(ConsolePlugin):
 
 	debug = True
-	version = 1.0
+	version = "1.0"
 
-	def onPluginLoad(self):
-		print "LadderPlugin %s loaded \n" % self.version;
+	def onPluginLoad(self, config):
+		self.config = config
+		print("ladder version: %s" % (self.version))
 
 	def onMessage (self, *args, **kwargs):
 		pass
