@@ -26,6 +26,8 @@ class balancer(ConsolePlugin):
 	OPTION = 0
 	DENOM = 6
 	PICKING = 0
+	CHAT_INTERVAL = 10
+	CHAT_STAMP = 0
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
@@ -727,6 +729,13 @@ class balancer(ConsolePlugin):
 
 		name = args[1]
 		message = args[2]
+
+		if re.match(".*tell\s+(?:me\s+)?(?:the\s+)?(?:SFs?|balance)(?:\W.*)?$", message, flags=re.IGNORECASE):
+			tm = time.time()
+			if (tm - self.CHAT_STAMP) < self.CHAT_INTERVAL:
+				return
+			self.CHAT_STAMP = tm
+			return self.sendGameInfo(**kwargs)
 
 		if (self.OPTION == 1) and (message == 'reject'):
 			for player in self.switchlist:
