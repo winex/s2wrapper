@@ -55,7 +55,7 @@ class training(ConsolePlugin):
 	
 	def onServerStatus(self, *args, **kwargs):
 		
-		kwargs['Broadcast'].put("SendMessage -1 ^cThis server allows training of players. Send the message: ^ytrain <playername> ^cto begin training. This will allow you to use in-game chat to communicate. End training by sending the message: ^yend training")
+		kwargs['Broadcast'].put("SendMessage -1 \"^cThis server allows training of players. Send the message: ^ytrain <playername> ^cto ^bALL^c chat to begin training. This will allow you to use in-game chat to communicate. End training by sending the message: ^yend training\"")
 		kwargs['Broadcast'].broadcast()
 
 	def getPlayerByClientNum(self, cli):

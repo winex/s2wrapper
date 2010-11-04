@@ -538,7 +538,7 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put("ServerChat ^cIf necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
 		kwargs['Broadcast'].put("ServerChat ^cAfter 6 minutes, joining will be limited to players that do not generate imbalance.")
 		kwargs['Broadcast'].put("ServerChat ^cAt 5 minute increments starting at minute 10, the server will check for imbalance and notify players that they will be switched in one minute unless they reject the move.")
-		kwargs['Broadcast'].put("ServerChat ^cSelected players may send the message 'reject' to ALL, TEAM, or SQUAD to prevent the change.")
+		kwargs['Broadcast'].put("ServerChat ^cSelected players may send the message 'reject' to ^bALL ^cchat to prevent the change.")
 		kwargs['Broadcast'].broadcast()
 		self.RegisterScripts(**kwargs)
 
@@ -709,23 +709,26 @@ class balancer(ConsolePlugin):
 	def giveOption(self, **kwargs):
 		print self.switchlist
 		index = -1
-		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ALL, TEAM, or SQUAD."
+		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ^bALL ^cchat."
 		for player in self.switchlist:
 			index += 1
 			kwargs['Broadcast'].put("SendMessage %s %s" % (player['clinum'], playermessage))
 
 		if (index == 0):
-			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ALL, TEAM, or SQUAD." % (self.switchlist[0]['name']))
+			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat." % (self.switchlist[0]['name']))
 		else:
-			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ALL, TEAM, or SQUAD." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
+			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ^bALL ^cchat." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
 		kwargs['Broadcast'].broadcast()
 
-	def onMessage (self, *args, **kwargs):
+	def onMessage(self, *args, **kwargs):
+		# process only ALL chat messages
+		if args[0] != "ALL":
+			return
+
 		name = args[1]
 		message = args[2]
-		
-		if (self.OPTION == 1) and (message == 'reject'):
 
+		if (self.OPTION == 1) and (message == 'reject'):
 			for player in self.switchlist:
 				if (player['name'] == name):
 					kwargs['Broadcast'].put("ServerChat ^r%s ^chas rejected a move to promote balance between the teams." % (name))
