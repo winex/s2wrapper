@@ -49,13 +49,17 @@ class training(ConsolePlugin):
 	def RegisterScripts(self, **kwargs):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
-		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"echo changing team....; KillEntity #GetScriptParam(index)#; MakeOfficer #GetScriptParam(clientid)#;  ChangeUnit #GetScriptParam(index)# Player_Savage true false false false false false false; ForceSpawn #GetScriptParam(changedindex)#; echo\" changeteam")
+		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"echo changing team....;MakeOfficer #GetScriptParam(clientid)#;  ChangeUnit #GetScriptParam(index)# Player_Savage true false false false false false false; ForceSpawn #GetScriptParam(changedindex)#;echo\" changeteam")
 		kwargs['Broadcast'].put("set sv_squadsize 1")
+		kwargs['Broadcast'].put("set _team 0")
+		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"CreateVar int _player_#GetScriptParam(clientid)#_duel -1;Set _maxteams #GetMaxTeams()#;Set _curclients #GetNumClients()#;if [_maxteams <= _curclients + 1] SetMaxTeams [_maxteams + 1];Set _maxteams #GetMaxTeams()#;Set _team [_team + 1];echo #_team#;Set _player_joining 1;SetTeam #GetScriptParam(index)# #_team#;ChangeUnit #GetScriptParam(index)# Player_Savage true false false false false false false;ForceSpawn #GetScriptParam(changedindex)#;Set _playerteam #GetTeam(|#GetScriptParam(changedindex)|#)#;Set _loop 1;Set _max #GetMaxTeams()#;ExecScript ally1;Set _player_joining 0;GiveExperience #GetScriptParam(index)# 1073741824;ResetAttributes #GetScriptParam(index)#;Set _message \\\"This is a duel arena that allows players to join the same team. By joining the same team you can use VOIP to communicate and help newer players. This also allows players to have team duels!\\\";Set _image /ui/commander/attack_down.tga;Set _header Welcome to the duel arena!;ClientExecScript #GetScriptParam(clientid)# Welcome header #_header# content #_message# texture #_image#;ClientExecScript #GetScriptParam(clientid)# SetupMusic; echo\" playerjoin")
+		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"if [_loop != _playerteam] AddAlliedTeam #_playerteam# #_loop#';if [_loop != _playerteam] AddAlliedTeam #_loop# #_playerteam#;Set _loop [_loop + 1];if [_loop < _max] ExecScript ally2; echo\" ally1")
+		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"if [_loop != _playerteam] AddAlliedTeam #_playerteam# #_loop#';if [_loop != _playerteam] AddAlliedTeam #_loop# #_playerteam#;Set _loop [_loop + 1];if [_loop < _max] ExecScript ally1; echo\" ally2")
 		kwargs['Broadcast'].broadcast()
 	
 	def onServerStatus(self, *args, **kwargs):
 		
-		kwargs['Broadcast'].put("SendMessage -1 \"^cThis server allows training of players. Send the message: ^ytrain <playername> ^cto ^bALL^c chat to begin training. This will allow you to use in-game chat to communicate. End training by sending the message: ^yend training\"")
+		kwargs['Broadcast'].put("SendMessage -1 \"^cThis server allows training of players. Send the message: ^ytrain <playername> ^cto ^bALL^c chat to begin training. This will allow you to use in-game VOIP to communicate. End training by sending the message: ^yend training\"")
 		kwargs['Broadcast'].broadcast()
 
 	def getPlayerByClientNum(self, cli):
@@ -73,7 +77,7 @@ class training(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1})
+		self.playerlist.append({'clinum' : id, 'acctid' : 0, 'level'  : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1, 'unit' : 'Player_Savage'})
 
 	def onDisconnect(self, *args, **kwargs):
 		
@@ -108,10 +112,13 @@ class training(ConsolePlugin):
 		cli = args[0]
 		unit = args[1]
 
+		client = self.getPlayerByClientNum(cli)
 		for badunit in self.unallowedlist:
 			if (badunit == unit):
-				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; ChangeUnit #_value# Player_Savage true false false false false false false; SendMessage %s ^cYou can't select that unit. Sorry!" % (cli, cli))
-				
+				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; ChangeUnit #_value# %s true false false false false false false; SendMessage %s ^cYou can't select that unit. Sorry!" % (cli, client['unit'], cli))
+				return
+		client['unit'] = unit
+
 	def unallowedunits(self, *args, **kwargs):
 
 		self.unallowedlist = [
@@ -162,19 +169,26 @@ class training(ConsolePlugin):
 
 	def trainingStart(self, name, trainee, **kwargs):
 		trainer = self.getPlayerByName(name)
-		for player in self.playerlist:
-			if (player['name'] == trainee):
+
+		if (int(trainer['trainee']) > -1):
+			kwargs['Broadcast'].broadcast("SendMessage %s You are currently in a training session. End that session first." % (trainer['clinum']))
+			return
+
+			if (player['name'].lower() == trainee.lower()):
 				toteam = player['team']
 				trainer['oldteam'] = trainer['team']
 				trainer['team'] = toteam
 				trainer['trainee'] = player['clinum']
-				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s You are now in a training session with %s" % (trainer['clinum'], toteam, trainer['clinum'], trainee))
+
+				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; set X #GetPosX(|#_value|#)#; set Y #GetPosY(|#_value|#)#; set Z #GetPosZ(|#_value|#)#; echo CLIENT %s POSITION #X# #Y# #Z#" % (trainer['clinum'], trainer['clinum']))
+				client = self.getPlayerByClientNum(trainer['clinum'])
+				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s You are now in a training session with %s; ChangeUnit #GetIndexFromClientNum(%s)# %s; SetPosition #_value# #X# #Y# #Z#" % (client['clinum'], toteam, client['clinum'], trainee, client['clinum'], client['unit']))
 
 	def trainingEnd(self, name, **kwargs):
 		trainer = self.getPlayerByName(name)
-		if (trainer['trainee'] == -1):
+		if (int(trainer['trainee']) == -1):
 			return
 		kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s ^cYou have ended your training session.; SendMessage %s ^r%s ^chas ended their training session with you." % (trainer['clinum'], trainer['oldteam'], trainer['clinum'], trainer['trainee'], trainer['name']))
 		trainer['team'] = trainer['oldteam']
-		trainer['trainee'] == -1
+		trainer['trainee'] = -1
 
