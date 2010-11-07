@@ -77,7 +77,18 @@ class training(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
-		self.playerlist.append({'clinum' : id, 'acctid' : 0, 'level'  : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'oldteam' : 0, 'trainee' : -1, 'unit' : 'Player_Savage'})
+		self.playerlist.append({
+			'clinum' : id,
+			'acctid' : 0,
+			'level'  : 0,
+			'sf' : 0,
+			'lf' : 0,
+			'name' : 'X',
+			'team' : 0,
+			'oldteam' : 0,
+			'trainee' : -1,
+			'unit' : 'Player_Savage'
+		})
 
 	def onDisconnect(self, *args, **kwargs):
 		
@@ -113,10 +124,9 @@ class training(ConsolePlugin):
 		unit = args[1]
 
 		client = self.getPlayerByClientNum(cli)
-		for badunit in self.unallowedlist:
-			if (badunit == unit):
-				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; ChangeUnit #_value# %s true false false false false false false; SendMessage %s ^cYou can't select that unit. Sorry!" % (cli, client['unit'], cli))
-				return
+		if unit in self.unallowedlist:
+			kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; ChangeUnit #_value# %s true false false false false false false; SendMessage %s ^cYou can't select that unit. Sorry!" % (cli, client['unit'], cli))
+			return
 		client['unit'] = unit
 
 	def unallowedunits(self, *args, **kwargs):
@@ -174,15 +184,15 @@ class training(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("SendMessage %s You are currently in a training session. End that session first." % (trainer['clinum']))
 			return
 
-			if (player['name'].lower() == trainee.lower()):
-				toteam = player['team']
-				trainer['oldteam'] = trainer['team']
-				trainer['team'] = toteam
-				trainer['trainee'] = player['clinum']
+		if (player['name'].lower() == trainee.lower()):
+			toteam = player['team']
+			trainer['oldteam'] = trainer['team']
+			trainer['team'] = toteam
+			trainer['trainee'] = player['clinum']
 
-				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; set X #GetPosX(|#_value|#)#; set Y #GetPosY(|#_value|#)#; set Z #GetPosZ(|#_value|#)#; echo CLIENT %s POSITION #X# #Y# #Z#" % (trainer['clinum'], trainer['clinum']))
-				client = self.getPlayerByClientNum(trainer['clinum'])
-				kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s You are now in a training session with %s; ChangeUnit #GetIndexFromClientNum(%s)# %s; SetPosition #_value# #X# #Y# #Z#" % (client['clinum'], toteam, client['clinum'], trainee, client['clinum'], client['unit']))
+			kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; set X #GetPosX(|#_value|#)#; set Y #GetPosY(|#_value|#)#; set Z #GetPosZ(|#_value|#)#; echo CLIENT %s POSITION #X# #Y# #Z#" % (trainer['clinum'], trainer['clinum']))
+			client = self.getPlayerByClientNum(trainer['clinum'])
+			kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; SetTeam #_value# %s; SendMessage %s You are now in a training session with %s; ChangeUnit #GetIndexFromClientNum(%s)# %s; SetPosition #_value# #X# #Y# #Z#" % (client['clinum'], toteam, client['clinum'], trainee, client['clinum'], client['unit']))
 
 	def trainingEnd(self, name, **kwargs):
 		trainer = self.getPlayerByName(name)
