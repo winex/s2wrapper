@@ -551,7 +551,7 @@ class balancer(ConsolePlugin):
 		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		#kwargs['Broadcast'].put("echo refresh")
 		#kwargs['Broadcast'].broadcast()
-		
+		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
 
 		if (self.GAMESTARTED == 1):
 			if (TIME == (1 * 60 * 1000)):
