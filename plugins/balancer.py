@@ -259,7 +259,7 @@ class balancer(ConsolePlugin):
 
 		if (self.DENY == 1):
 			self.checkStack(**kwargs)
-			diff = self.DIFFERENCE
+			diff = abs(self.DIFFERENCE)
 			print diff
 
 		#check to see if the player is on a team and going to spectator. spec = -1 unless the player is already on a team
@@ -285,7 +285,7 @@ class balancer(ConsolePlugin):
 				self.checkStack(**kwargs)
 				print 'deny phase true'
 				print self.DIFFERENCE
-				if (self.DIFFERENCE > 15) and (self.DIFFERENCE > diff):
+				if (abs(self.DIFFERENCE) > 15) and (abs(self.DIFFERENCE) > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
 					return
@@ -585,8 +585,8 @@ class balancer(ConsolePlugin):
 		smallsize = float(small ['size'])
 		totalsize = largesize + smallsize
 		sizediff = largesize / totalsize
-		largepercent = ((smallshare/sizediff))
-		ratio = abs(1 - largepercent) * 100
+		largepercent = (largeshare + sizediff)
+		ratio = abs(largepercent - 1) * 100
 		
 		return ratio
  
@@ -867,7 +867,7 @@ class balancer(ConsolePlugin):
 		if (self.GAMESTARTED == 1):
 			self.checkStack(**kwargs)
 
-		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
+		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(abs(self.DIFFERENCE), 1) ))
 		kwargs['Broadcast'].broadcast()
 
 
@@ -883,8 +883,8 @@ class balancer(ConsolePlugin):
 		smallsize = float(small ['size'])
 		totalsize = largesize + smallsize
 		sizediff = largesize / totalsize
-		largepercent = ((largeshare/sizediff))
-		self.DIFFERENCE = abs(1 - largepercent) * 100
+		largepercent = (largeshare + sizediff)
+		self.DIFFERENCE = (largepercent - 1) * 100
 		print self.DIFFERENCE
 		print largeshare, sizediff
 
@@ -909,6 +909,11 @@ class balancer(ConsolePlugin):
 		toteam = self.getSmallTeam ()
 
 		self.checkStack()
+
+		if (self.DIFFERENCE < 0):
+			kwargs['Broadcast'].broadcast("echo Small team already has higher BF. Don't balance")
+			return
+
 		absdiff = abs(self.DIFFERENCE)
 		if (absdiff > self.THRESHOLD):
 			#self.TARGET = int(self.game['avgBF'] * (self.getSmallTeam () ['size']) - (self.getSmallTeam () ['combinedBF']))
