@@ -258,9 +258,9 @@ class balancer(ConsolePlugin):
 		fromteam = teamlists ['fromteam']
 
 		if (self.DENY == 1):
-			self.checkStack(**kwargs)
-			diff = abs(self.DIFFERENCE)
-			print diff
+			self.DIFFERENCE = self.evaluateBalance()
+			print(self.DIFFERENCE)
+			diff = self.DIFFERENCE
 
 		#check to see if the player is on a team and going to spectator. spec = -1 unless the player is already on a team
 		if (int(team) == 0):
@@ -282,7 +282,7 @@ class balancer(ConsolePlugin):
 			#Players are prevented from joining in the deny phase if they will cause greater than a 15% stack
 			#this applies to both even and uneven games. The player is forced back to team 0.
 			if (self.DENY == 1):
-				self.checkStack(**kwargs)
+				self.DIFFERENCE = self.evaluateBalance()
 				print 'deny phase true'
 				print self.DIFFERENCE
 				if (abs(self.DIFFERENCE) > 15) and (abs(self.DIFFERENCE) > diff):
@@ -570,25 +570,20 @@ class balancer(ConsolePlugin):
 
 		self.sendGameInfo(**kwargs)
 
-	def evaluateBalance (self, BF, **kwargs):
-		#This was written specifically for uneven balancing, but is essentially identical to checkStack, so they could potentially be combined
+	def evaluateBalance(self, BF=0.0, **kwargs):
 		large = self.getLargeTeam()
 		small = self.getSmallTeam()
-		
-				
 		largebf = float(large ['combinedBF'])
 		smallbf = float(small ['combinedBF'])
 		totalbf = largebf + smallbf
-		largeshare = ((largebf - BF)/totalbf)
-		smallshare = ((smallbf + BF)/totalbf)
+		largeshare = (largebf - BF) / totalbf
+		smallshare = (smallbf + BF) / totalbf
 		largesize = float(large ['size'])
 		smallsize = float(small ['size'])
 		totalsize = largesize + smallsize
 		sizediff = largesize / totalsize
-		largepercent = (largeshare + sizediff)
-		ratio = abs(largepercent - 1) * 100
-		
-		return ratio
+		largepercent = largeshare + sizediff
+		return abs(largepercent - 1) * 100
  
 	def getClosestPersonToTarget (self, team, **kwargs):
 		
@@ -865,34 +860,20 @@ class balancer(ConsolePlugin):
 		self.getGameInfo(**kwargs)
 
 		if (self.GAMESTARTED == 1):
-			self.checkStack(**kwargs)
+			self.DIFFERENCE = self.evaluateBalance()
+			print(self.DIFFERENCE)
 
 		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(abs(self.DIFFERENCE), 1) ))
 		kwargs['Broadcast'].broadcast()
 
 
-	def checkStack(self, **kwargs):
-		large = self.getLargeTeam ()
-		small = self.getSmallTeam ()
-		largebf = float(large ['combinedBF'])
-		smallbf = float(small ['combinedBF'])
-		totalbf = largebf + smallbf
-		largeshare = largebf/totalbf
-		smallshare = smallbf/totalbf
-		largesize = float(large ['size'])
-		smallsize = float(small ['size'])
-		totalsize = largesize + smallsize
-		sizediff = largesize / totalsize
-		largepercent = (largeshare + sizediff)
-		self.DIFFERENCE = (largepercent - 1) * 100
-		print self.DIFFERENCE
-		print largeshare, sizediff
-
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
 		self.THRESHOLD = 10
 
-		self.checkStack()
+		self.DIFFERENCE = self.evaluateBalance()
+		print(self.DIFFERENCE)
+
 		absdiff = abs(self.DIFFERENCE)
 		if (absdiff > self.THRESHOLD):
 			self.TARGET = abs(self.game['avgBF'] * (self.teamOne['size']) - self.teamOne['combinedBF'])
@@ -908,7 +889,8 @@ class balancer(ConsolePlugin):
 		fromteam = self.getLargeTeam ()
 		toteam = self.getSmallTeam ()
 
-		self.checkStack()
+		self.DIFFERENCE = self.evaluateBalance()
+		print(self.DIFFERENCE)
 
 		if (self.DIFFERENCE < 0):
 			kwargs['Broadcast'].broadcast("echo Small team already has higher BF. Don't balance")
