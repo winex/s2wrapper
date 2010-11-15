@@ -285,7 +285,7 @@ class balancer(ConsolePlugin):
 				self.DIFFERENCE = self.evaluateBalance()
 				print 'deny phase true'
 				print self.DIFFERENCE
-				if (abs(self.DIFFERENCE) > 15) and (abs(self.DIFFERENCE) > diff):
+				if (self.DIFFERENCE > 15) and (self.DIFFERENCE > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
 					return
@@ -863,7 +863,7 @@ class balancer(ConsolePlugin):
 			self.DIFFERENCE = self.evaluateBalance()
 			print(self.DIFFERENCE)
 
-		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(abs(self.DIFFERENCE), 1) ))
+		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
 		kwargs['Broadcast'].broadcast()
 
 
@@ -874,8 +874,7 @@ class balancer(ConsolePlugin):
 		self.DIFFERENCE = self.evaluateBalance()
 		print(self.DIFFERENCE)
 
-		absdiff = abs(self.DIFFERENCE)
-		if (absdiff > self.THRESHOLD):
+		if (self.DIFFERENCE > self.THRESHOLD):
 			self.TARGET = abs(self.game['avgBF'] * (self.teamOne['size']) - self.teamOne['combinedBF'])
 			print self.TARGET
 			self.getClosestTwoToTarget (self.getHighTeam (), self.getLowTeam (),  **kwargs)
@@ -892,12 +891,12 @@ class balancer(ConsolePlugin):
 		self.DIFFERENCE = self.evaluateBalance()
 		print(self.DIFFERENCE)
 
+		# TODO: 20101116 winex: this won't work because DIFFERENCE is absolute value now
 		if (self.DIFFERENCE < 0):
 			kwargs['Broadcast'].broadcast("echo Small team already has higher BF. Don't balance")
 			return
 
-		absdiff = abs(self.DIFFERENCE)
-		if (absdiff > self.THRESHOLD):
+		if (self.DIFFERENCE > self.THRESHOLD):
 			#self.TARGET = int(self.game['avgBF'] * (self.getSmallTeam () ['size']) - (self.getSmallTeam () ['combinedBF']))
 			#self.TARGET = int(self.game['avgBF']/2)
 			#self.TARGET = (float(toteam ['size']) / float(fromteam ['size']) * 100)
