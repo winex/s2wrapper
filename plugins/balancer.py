@@ -819,16 +819,14 @@ class balancer(ConsolePlugin):
 			return self.teamOne
 
 	def getHighTeam (self):
-		if (self.teamOne ['avgBF'] <= self.teamTwo ['avgBF']):
-			return self.teamOne 
-		else:
-			return self.teamTwo
+		if (self.teamOne ['avgBF'] > self.teamTwo ['avgBF']):
+			return self.teamOne
+		return self.teamTwo
 
 	def getLowTeam (self):
-		if (self.teamOne ['avgBF'] >= self.teamTwo ['avgBF']):
-			return self.teamOne 
-		else:
+		if (self.teamOne ['avgBF'] > self.teamTwo ['avgBF']):
 			return self.teamTwo
+		return self.teamOne
 
 	def getTeamOne (self):
 		return self.teamOne
