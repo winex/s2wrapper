@@ -239,6 +239,7 @@ class ConsoleParser:
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
+			self.onTeamCheck : re.compile ('^SERVER-SIDE client count, Team 1 (\d+), Team 2 (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)')
 		})
 
@@ -316,6 +317,8 @@ class ConsoleParser:
 	def onItemTransaction(self, *args, **kwargs):
 		pass
 	def onRefresh(self, *args, **kwargs):
+		pass
+	def onTeamCheck(self, *args, **kwargs):
 		pass
 	def onRefreshTeams(self, *args, **kwargs):
 		pass

@@ -28,6 +28,8 @@ class balancer(ConsolePlugin):
 	PICKING = 0
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
+	REFRESH1 = 0
+	REFRESH2 = 0
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
@@ -63,28 +65,39 @@ class balancer(ConsolePlugin):
 				return client
 
 	def onRefresh(self, *args, **kwargs):
-		del self.teamOne ['players'][:]
-		del self.teamTwo ['players'][:]
-		self.teamOne ['size'] = 0
-		self.teamTwo ['size'] = 0
+		#REMOVE till we figure out what is going on....
+		#del self.teamOne ['players'][:]
+		#del self.teamTwo ['players'][:]
+		#self.teamOne ['size'] = 0
+		#self.teamTwo ['size'] = 0
+		self.REFRESH1 = 0
+		self.REFRESH2 = 0
 		print "REFRESHING TEAMS"
 		for client in self.playerlist:
 			if (client['active'] == 1):
-				kwargs['Broadcast'].put("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
-				kwargs['Broadcast'].broadcast()
+				kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
+				
 
 	def onRefreshTeams(self, *args, **kwargs):
 		
 		clinum = args[0]
 		team = int(args[1])
 		
-		if (team > 0):
-			client = self.getPlayerByClientNum(clinum)
-			teamlists = self.GetTeamLists(client, team)
-			toteam = teamlists ['toteam']
-			fromteam = teamlists ['fromteam']
-			self.addTeamMember(client, fromteam, team, **kwargs)
-			return
+		#if (team > 0):
+		#	client = self.getPlayerByClientNum(clinum)
+		#	teamlists = self.GetTeamLists(client, team)
+		#	toteam = teamlists ['toteam']
+		#	fromteam = teamlists ['fromteam']
+			
+		#	self.addTeamMember(client, fromteam, team, **kwargs)
+		#	kwargs['Broadcast'].broadcast("echo Refresh team count: %s" % ())
+		#	return
+		if (team == 1):
+			self.REFRESH1 += 1
+		if (team == 2):
+			self.REFRESH2 += 2
+
+		kwargs['Broadcast'].broadcast("echo Refresh team count: Team 1, %s, Team 2, %s" % (self.REFRESH1, self.REFRESH2))
 
 	def onConnect(self, *args, **kwargs):
 		
@@ -905,3 +918,20 @@ class balancer(ConsolePlugin):
 			print 'threshold not met'
 			kwargs['Broadcast'].broadcast("ServerChat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
+	def onTeamCheck(self, *args, **kwargs):
+		print args
+
+				
+		if (self.teamOne ['size'] == int(args[0])):
+			kwargs['Broadcast'].broadcast("echo BALANCER: Team 1 count is correct")
+
+		if (self.teamTwo ['size'] == int(args[1])):
+			kwargs['Broadcast'].broadcast("echo BALANCER: Team 2 count is correct") 
+
+		else:
+			kwargs['Broadcast'].broadcast("echo BALANCER: Team count is off! Crap!") 
+			kwargs['Broadcast'].broadcast("echo refresh")
+			#TODO: 20101116 Old55: for now, these are here to shut down balancing if teams are off, though for now it will still try to refresh to fix teams.
+			self.GAMESTARTED = 0
+			self.DENY = 0
+			
