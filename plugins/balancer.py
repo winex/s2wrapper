@@ -95,7 +95,7 @@ class balancer(ConsolePlugin):
 		if (team == 1):
 			self.REFRESH1 += 1
 		if (team == 2):
-			self.REFRESH2 += 2
+			self.REFRESH2 += 1
 
 		kwargs['Broadcast'].broadcast("echo Refresh team count: Team 1, %s, Team 2, %s" % (self.REFRESH1, self.REFRESH2))
 
