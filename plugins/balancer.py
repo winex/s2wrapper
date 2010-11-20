@@ -17,6 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 class balancer(ConsolePlugin):
 
 	ms = None
+	TIME = 0
 	THRESHOLD = 10
 	DIFFERENCE = -1
 	TARGET = -1
@@ -33,6 +34,7 @@ class balancer(ConsolePlugin):
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
+	BalanceReport = []
 	teamOne = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	teamTwo = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	game = {'size' : 0, 'avgBF' : -1}
@@ -221,8 +223,8 @@ class balancer(ConsolePlugin):
 		#toteam ['size'] += 1
 		#BF = client['sf']
 		#LF = (client['lf'] + 20)
-		BF = int((client['sf'] * math.log10(client['exp'])/self.DENOM))
-		LF = int(((client['lf'] + 10) * math.log10(client['exp'])/self.DENOM))
+		BF = SF + level
+		LF = client['lf'] + 10 + level
 		moved = client['moved']
 		client ['team'] = team
 		
@@ -457,8 +459,6 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# BOUGHT #_item#; echo\" buyitem")
 		#this makes sure we get an update every minute. This is the startup.cfg default, but just to be sure we put it here as well
 		kwargs['Broadcast'].put("set sv_statusNotifyTime 60000")
-
-		#kwargs['Broadcast'].put ("RegisterGlobalScript -1 \"echo calling gamestart...; set _player_count 2000; set _i 0;@start_loop; if [_i == _player_count] goto end; set _idx = 0; set _idx #GetIndexFromClientNum(|#_i|#); set _team #GetTeam(|#_idx|#)#; if #EntityExists(|#_idx|#)# echo CLIENT #_i# on TEAM #_team#; set _i [_i + 1];  goto start_loop;@end; echo\" gamestart")
 		kwargs['Broadcast'].broadcast()
 
 	def ItemList(self, *args, **kwargs):
@@ -548,7 +548,7 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("echo GAMESTARTED")
 
 		self.sendGameInfo(**kwargs)
-		#self.runBalancer (**kwargs)
+		
 		
 		kwargs['Broadcast'].put("ServerChat ^cIf necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
 		kwargs['Broadcast'].put("ServerChat ^cAfter 6 minutes, joining will be limited to players that do not generate imbalance.")
@@ -561,24 +561,24 @@ class balancer(ConsolePlugin):
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
 		
-		TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
+		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		#kwargs['Broadcast'].put("echo refresh")
 		#kwargs['Broadcast'].broadcast()
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
 
 		if (self.GAMESTARTED == 1):
-			if (TIME == (1 * 60 * 1000)):
+			if (self.TIME == (1 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			elif (TIME == (3 * 60 * 1000)):
+			elif (self.TIME == (3 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			elif (TIME == (6 * 60 * 1000)):
+			elif (self.TIME == (6 * 60 * 1000)):
 				self.runBalancer (**kwargs)
-			if (TIME >= (6 * 60 * 1000)):
+			if (self.TIME >= (6 * 60 * 1000)):
 				self.DENY = 1
 				self.OPTION = 1
 				self.optionCheck(**kwargs)
 				
-				if (TIME % (5 * 60 * 1000)) == 0:
+				if (self.TIME % (5 * 60 * 1000)) == 0:
 					self.runBalancer (**kwargs)
 
 		self.sendGameInfo(**kwargs)
@@ -732,12 +732,20 @@ class balancer(ConsolePlugin):
 
 	def onMessage(self, *args, **kwargs):
 		# process only ALL chat messages
-		if args[0] != "ALL":
-			return
-
 		name = args[1]
 		message = args[2]
 
+		if (args[0] == "SQUAD") and (message == 'report balance please'):
+			print 'caught balance report message'
+			client = self.getPlayerByName(name)
+			for each in self.BalanceReport:
+				kwargs['Broadcast'].broadcast("SendMessage %s Balance Report time: %s client: %s" % (client['clinum'], report['time'], report['name']))
+
+		if args[0] != "ALL":
+			return
+
+		
+		
 		if re.match(".*tell\s+(?:me\s+)?(?:the\s+)?(?:SFs?|balance)(?:\W.*)?$", message, flags=re.IGNORECASE):
 			tm = time.time()
 			if (tm - self.CHAT_STAMP) < self.CHAT_INTERVAL:
@@ -751,6 +759,8 @@ class balancer(ConsolePlugin):
 					kwargs['Broadcast'].put("ServerChat ^r%s ^chas rejected a move to promote balance between the teams." % (name))
 					kwargs['Broadcast'].broadcast()
 					del self.switchlist[:]
+
+		
 
 	def optionCheck(self, **kwargs):
 		print 'doing move!'
@@ -776,6 +786,9 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put("ServerChat ^r%s ^chas switched teams to promote balance." % (name))
 		kwargs['Broadcast'].put("ResetAttributes %s" % (index))
 		kwargs['Broadcast'].broadcast()
+
+		self.BalanceReport.append ({'time' : self.TIME, 'client' : name})
+		
 		self.moveNotify(clinum, **kwargs)
 
 	def prevent(self, clinum, index, **kwargs):
