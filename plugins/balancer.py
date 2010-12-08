@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# 12/07/10 - Added all messages back in
 import os
 import re
 import math
@@ -13,28 +13,27 @@ from S2Wrapper import Savage2DaemonHandler
 #He does not know python so the goal was to make something functional, not something
 #efficient or pretty.
 
+#NORMAL VERSION
+
 
 class balancer(ConsolePlugin):
 
 	ms = None
 	TIME = 0
-	THRESHOLD = 10
+	THRESHOLD = 6
 	DIFFERENCE = -1
-	TARGET = -1
 	GAMESTARTED = 0
 	STARTSTAMP = 0
 	DENY = 0
 	OPTION = 0
-	DENOM = 6
 	PICKING = 0
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
-	REFRESH1 = 0
-	REFRESH2 = 0
+	PHASE = 0
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
-	BalanceReport = []
+	balancereport = []
 	teamOne = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	teamTwo = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	game = {'size' : 0, 'avgBF' : -1}
@@ -67,14 +66,13 @@ class balancer(ConsolePlugin):
 				return client
 
 	def onRefresh(self, *args, **kwargs):
-		#REMOVE till we figure out what is going on....
-		#del self.teamOne ['players'][:]
-		#del self.teamTwo ['players'][:]
-		#self.teamOne ['size'] = 0
-		#self.teamTwo ['size'] = 0
-		self.REFRESH1 = 0
-		self.REFRESH2 = 0
-		print "REFRESHING TEAMS"
+		
+		del self.teamOne ['players'][:]
+		del self.teamTwo ['players'][:]
+		self.teamOne ['size'] = 0
+		self.teamTwo ['size'] = 0
+		
+		
 		for client in self.playerlist:
 			if (client['active'] == 1):
 				kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#" % (client['clinum'], client['clinum']))
@@ -85,21 +83,17 @@ class balancer(ConsolePlugin):
 		clinum = args[0]
 		team = int(args[1])
 		
-		#if (team > 0):
-		#	client = self.getPlayerByClientNum(clinum)
-		#	teamlists = self.GetTeamLists(client, team)
-		#	toteam = teamlists ['toteam']
-		#	fromteam = teamlists ['fromteam']
+		if (team > 0):
+			client = self.getPlayerByClientNum(clinum)
+			teamlists = self.GetTeamLists(client, team)
+			fromteam = teamlists ['fromteam']
 			
-		#	self.addTeamMember(client, fromteam, team, **kwargs)
-		#	kwargs['Broadcast'].broadcast("echo Refresh team count: %s" % ())
-		#	return
-		if (team == 1):
-			self.REFRESH1 += 1
-		if (team == 2):
-			self.REFRESH2 += 1
+			self.addTeamMember(client, fromteam, team, **kwargs)
+			
+			return
+		
 
-		kwargs['Broadcast'].broadcast("echo Refresh team count: Team 1, %s, Team 2, %s" % (self.REFRESH1, self.REFRESH2))
+		
 
 	def onConnect(self, *args, **kwargs):
 		
@@ -117,6 +111,7 @@ class balancer(ConsolePlugin):
 					toteam = teamlists ['toteam']
 					fromteam = teamlists ['fromteam']
 					self.addTeamMember(client, fromteam, team, **kwargs)
+					client ['active'] = 1
 					return
 				return
 		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'moved' : 0, 'index' : 0, 'exp' : 2, 'value' : 150, 'prevent' : 0, 'active' : 0})
@@ -201,13 +196,8 @@ class balancer(ConsolePlugin):
 		cli = client ['clinum']
 		item = 'clinum'
 		PLAYER_INDICE = self.getTeamMember(item, cli, fromteam)
-		#fromteam ['size'] -= 1
+		
 		fromteam ['combinedBF'] -= fromteam['players'][PLAYER_INDICE]['bf']
-
-		#if (fromteam ['size'] <= 0):
-		#	fromteam ['avgBF'] = -1
-		#else:
-		#	fromteam ['avgBF'] = (fromteam['combinedBF'] / fromteam['size'])
 
 		del fromteam['players'][PLAYER_INDICE]
 		
@@ -217,20 +207,15 @@ class balancer(ConsolePlugin):
 		
 		print 'Adding player....'	
 		cli = client['clinum']
+		client ['active'] = 1
 		NAME = client['name']
 		level = client['level']
 		SF = client['sf']
-		#toteam ['size'] += 1
-		#BF = client['sf']
-		#LF = (client['lf'] + 20)
 		BF = SF + level
 		LF = client['lf'] + 10 + level
 		moved = client['moved']
 		client ['team'] = team
-		
-		#toteam ['combinedBF'] += int(BF)
 		toteam ['players'].append ({'clinum' : cli, 'name' : NAME, 'sf' : SF,  'lf' : LF, 'level' : level, 'moved' : moved, 'bf' : BF})
-		#toteam ['avgBF'] = (toteam['combinedBF'] / toteam['size'])
 		
 		self.getGameInfo(**kwargs)
 
@@ -273,7 +258,7 @@ class balancer(ConsolePlugin):
 		fromteam = teamlists ['fromteam']
 
 		if (self.DENY == 1):
-			self.DIFFERENCE = self.evaluateBalance()
+			self.DIFFERENCE = abs(self.evaluateBalance())
 			print(self.DIFFERENCE)
 			diff = self.DIFFERENCE
 
@@ -294,13 +279,13 @@ class balancer(ConsolePlugin):
 		elif (spec == -1):
 			self.addTeamMember(client, toteam, team, **kwargs)
 			self.getGameInfo(**kwargs)
-			#Players are prevented from joining in the deny phase if they will cause greater than a 15% stack
+			#Players are prevented from joining in the deny phase if they will cause greater than a 10% stack
 			#this applies to both even and uneven games. The player is forced back to team 0.
 			if (self.DENY == 1):
-				self.DIFFERENCE = self.evaluateBalance()
+				self.DIFFERENCE = abs(self.evaluateBalance())
 				print 'deny phase true'
 				print self.DIFFERENCE
-				if (self.DIFFERENCE > 15) and (self.DIFFERENCE > diff):
+				if (self.DIFFERENCE > 10) and (self.DIFFERENCE > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
 					return
@@ -311,12 +296,12 @@ class balancer(ConsolePlugin):
 					action = 'ALLOW'
 					team = 0
 					self.retrieveIndex(client, action, **kwargs)
-					return
+					
 		#if the player is going to spec, just remove them from the team
 		if (spec > -1):
 			self.removeTeamMember(client, fromteam, team, **kwargs)
 						
-		#self.getGameInfo(**kwargs)
+		self.OPTION = 0
 						
 
 	def onDisconnect(self, *args, **kwargs):
@@ -348,7 +333,7 @@ class balancer(ConsolePlugin):
 		PLAYER_INDICE = self.getTeamMember(item, cli, fromteam)
 		
 		#fromteam['players'][PLAYER_INDICE]['bf'] = client ['sf']
-		fromteam['players'][PLAYER_INDICE]['bf'] = int((client['sf'] * math.log10(client['exp'])/self.DENOM))
+		fromteam['players'][PLAYER_INDICE]['bf'] = int(client['sf'] + client['level'])
 		fromteam['players'][PLAYER_INDICE]['moved'] = 0
 		
 		client ['moved'] = 0	
@@ -379,6 +364,7 @@ class balancer(ConsolePlugin):
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
+		self.PHASE = phase
 		print ('Current phase: %d' % (phase))
 		if (phase == 7):
 			self.onGameEnd()
@@ -397,7 +383,9 @@ class balancer(ConsolePlugin):
 		#clear out the team dictionary info and globals when the map is reloaded
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
-		
+		for player in self.playerlist:
+			player ['active'] = 0
+			player ['team'] = 0
 		self.teamOne ['size'] = 0
 		self.teamOne ['avgBF'] = -1
 		self.teamOne ['combinedBF'] = 0
@@ -410,13 +398,8 @@ class balancer(ConsolePlugin):
 		self.OPTION = 0
 		self.DIFFERENCE = -1
 		self.PICKING = 0
-		#probably don't need this since the info is put in later, but just to be on the safe side
-		for player in self.playerlist:
-			player ['moved'] = 0
-			player ['team'] = 0
-			player ['value'] = 150
-			player ['prevent']= 0
-			player ['active'] = 0
+		self.balancereport = []
+		#self.playerlist = []		
 		
 	def onNewGame(self, *args, **kwargs):
 		
@@ -431,6 +414,9 @@ class balancer(ConsolePlugin):
 		#clear out the team dictionary info and globals when the map is reloaded
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
+		for player in self.playerlist:
+			player ['active'] = 0
+			player ['team'] = 0
 		self.teamOne ['size'] = 0
 		self.teamOne ['avgBF'] = -1
 		self.teamOne ['combinedBF'] = 0
@@ -442,13 +428,7 @@ class balancer(ConsolePlugin):
 		self.DENY = 0
 		self.OPTION = 0
 		self.DIFFERENCE = -1
-		#probably don't need this since the info is put in later, but just to be on the safe side
-		for player in self.playerlist:
-			player ['moved'] = 0
-			player ['team'] = 0
-			player ['value'] = 150
-			player ['prevent'] = 0
-			
+					
 
 		self.RegisterScripts(**kwargs)
 
@@ -507,7 +487,6 @@ class balancer(ConsolePlugin):
 		#Use this for any manipulations when you need to get the current player index from the server. This is used for MOVE, PREVENT, ALLOW
 		cli = mover['clinum']
 		client = self.getPlayerByClientNum(cli)
-		client ['moved'] = 1
 		kwargs['Broadcast'].broadcast("set _value #GetIndexFromClientNum(%s)#; echo Sv: Client %s index is #_value#. ACTION: %s" % (cli, cli, action))
 
 	def onRetrieveIndex(self, *args, **kwargs):
@@ -521,6 +500,8 @@ class balancer(ConsolePlugin):
 			self.prevent(clinum, index, **kwargs)
 		if (action == 'ALLOW'):
 			self.allow(clinum, index, **kwargs)
+		if (action == 'LEVEL'):
+			self.level(clinum, index, **kwargs)
 
 	def runBalancer (self, **kwargs):
 		#determines if it is even or uneven balancer
@@ -557,53 +538,38 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].broadcast()
 		self.RegisterScripts(**kwargs)
 
-	#Run balancer at 1, 3 and 6 minutes. Deny phase begins at 8 minutes
+	#Run balancer at 1, 3 and 6 minutes. Deny phase begins at 6 minutes
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
-		
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
-		#kwargs['Broadcast'].put("echo refresh")
-		#kwargs['Broadcast'].broadcast()
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
-
-		if (self.GAMESTARTED == 1):
-			if (self.TIME == (1 * 60 * 1000)):
-				self.runBalancer (**kwargs)
-			elif (self.TIME == (3 * 60 * 1000)):
-				self.runBalancer (**kwargs)
-			elif (self.TIME == (6 * 60 * 1000)):
-				self.runBalancer (**kwargs)
-			if (self.TIME >= (6 * 60 * 1000)):
-				self.DENY = 1
-				self.OPTION = 1
-				self.optionCheck(**kwargs)
-				
-				if (self.TIME % (5 * 60 * 1000)) == 0:
-					self.runBalancer (**kwargs)
-
 		self.sendGameInfo(**kwargs)
 
-	def evaluateBalance(self, BF=0.0, **kwargs):
+	def evaluateBalance(self, BF1=0.0, BF2=0.0, moving=False, **kwargs):
 		large = self.getLargeTeam()
 		small = self.getSmallTeam()
 		largebf = float(large ['combinedBF'])
 		smallbf = float(small ['combinedBF'])
 		totalbf = largebf + smallbf
-		largeshare = (largebf - BF) / totalbf
-		smallshare = (smallbf + BF) / totalbf
+		largeshare = (largebf - BF1 + BF2) / totalbf
+		smallshare = (smallbf + BF1 - BF2) / totalbf
 		largesize = float(large ['size'])
 		smallsize = float(small ['size'])
 		totalsize = largesize + smallsize
+		if moving:
+			largesize = float(large ['size']) - 1.0
+			smallsize = float(small ['size']) + 1.0
+		print moving
 		sizediff = largesize / totalsize
 		largepercent = largeshare + sizediff
-		return abs(largepercent - 1) * 100
+		return (largepercent - 1) * 100
  
 	def getClosestPersonToTarget (self, team, **kwargs):
 		
 		lowest = -1
 		pick = None
 		
-		print 'Target is %s' % self.TARGET
+		
 		for player1 in team ['players']:
 
 			if (player1['moved'] == 1):
@@ -611,7 +577,7 @@ class balancer(ConsolePlugin):
 				continue
 
 			
-			ltarget = self.evaluateBalance (float(player1 ['bf']))
+			ltarget = abs(self.evaluateBalance (float(player1 ['bf']), 0.0, True))
 			print ltarget
 			if (lowest < 0):
 				lowest = ltarget
@@ -629,21 +595,15 @@ class balancer(ConsolePlugin):
 		print pick
 
 		if (pick == None):
-			kwargs['Broadcast'].broadcast("echo UNEVEN balancer was not happy for some reason I can't figure out")
+			kwargs['Broadcast'].broadcast("echo BALANCER: UNEVEN balancer was not happy for some reason I can't figure out")
 			return
 
-		Large = self.getLargeTeam () 
-		Small = self.getSmallTeam ()
-		diff = Large['avgBF'] - Small['avgBF']
-		LargeBF = (Large['combinedBF'] - pick['bf']) / (Large['size'] - 1)
-		SmallBF = (Small['combinedBF'] + pick['bf']) / (Small['size'] + 1) 
-		newdiff = abs((SmallBF / LargeBF) - ((Large['size'] - 1) / (Small['size'] + 1)) * 100)
-		
-		kwargs['Broadcast'].broadcast("echo UNEVEN balancer selections: Client %s with bf %s for a starting BF stacking of %s to %s" % (pick['clinum'], pick['bf'], self.DIFFERENCE, lowest))
+				
+		kwargs['Broadcast'].broadcast("echo BALANCER: UNEVEN balancer selections: Client %s with bf %s for a starting BF stacking of %s to %s" % (pick['clinum'], pick['bf'], self.DIFFERENCE, lowest))
 		#if the selected option doesn't actually improve anything, terminate
 		if (lowest > self.DIFFERENCE):
 			print 'nonproductive. terminate'
-			kwargs['Broadcast'].broadcast("echo unproductive UNEVEN balance")
+			kwargs['Broadcast'].broadcast("echo BALANCER: unproductive UNEVEN balance")
 			return
 
 		if (self.OPTION == 0):	
@@ -656,7 +616,8 @@ class balancer(ConsolePlugin):
 			self.switchlist.append ({'name' : pick ['name'], 'clinum' : pick ['clinum'], 'accept' : 0})
 			print self.switchlist
 			self.giveOption (**kwargs)
-		
+	
+	
 	def getClosestTwoToTarget (self, team1, team2, **kwargs):
 		
 		lowest = -1
@@ -674,7 +635,7 @@ class balancer(ConsolePlugin):
 					print 'this player cannot be moved'
 					continue
 				
-				ltarget = math.fabs (int(player1['bf']) - int(player2['bf']) + int(self.TARGET))
+				ltarget = abs(self.evaluateBalance (float(player1 ['bf']), float(player2 ['bf'])))
 				
 				if (lowest < 0):
 					lowest = ltarget
@@ -693,14 +654,9 @@ class balancer(ConsolePlugin):
 		print pick1, pick2
 
 
-		diff = math.fabs((team1 ['avgBF']) - (team2 ['avgBF']))
-		team1BF = team1['combinedBF'] - pick1['bf'] + pick2['bf']
-		team2BF = team2['combinedBF'] - pick2['bf'] + pick1['bf']
-		newdiff = math.fabs((team1BF / team1['size']) - (team2BF / team2['size']))
+		kwargs['Broadcast'].broadcast("echo Balancer selections: Clients %s, %s with BF %s, %s." % (pick1['clinum'], pick2['clinum'], pick1['bf'], pick2['bf']))
 
-		kwargs['Broadcast'].broadcast("echo EVEN balancer selections: Clients %s, %s with BF %s, %s for a starting BF difference of %s, ending BF difference %s" % (pick1['clinum'], pick2['clinum'], pick1['bf'], pick2['bf'], diff, newdiff))
-
-		if (newdiff >= diff):
+		if (lowest >= self.DIFFERENCE):
 			print 'unproductive balance. terminate'
 			kwargs['Broadcast'].broadcast("echo unproductive EVEN balance")
 			return
@@ -710,6 +666,7 @@ class balancer(ConsolePlugin):
 			self.retrieveIndex(pick1, action, **kwargs)
 			self.retrieveIndex(pick2, action, **kwargs)
 			return
+
 		if (self.OPTION == 1):
 			self.switchlist.append ({'name' : pick1['name'], 'clinum' : pick1['clinum'], 'accept' : 0})
 			self.switchlist.append ({'name' : pick2['name'], 'clinum' : pick2['clinum'], 'accept' : 0})
@@ -722,25 +679,42 @@ class balancer(ConsolePlugin):
 		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ^bALL ^cchat."
 		for player in self.switchlist:
 			index += 1
-			kwargs['Broadcast'].put("SendMessage %s %s" % (player['clinum'], playermessage))
+			kwargs['Broadcast'].put("echo BALANCER: %s %s" % (player['clinum'], playermessage))
 
 		if (index == 0):
-			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat." % (self.switchlist[0]['name']))
+			kwargs['Broadcast'].put("Serverchat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name']))
 		else:
-			kwargs['Broadcast'].put("ServerChat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ^bALL ^cchat." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
+			kwargs['Broadcast'].put("Serverchat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
 		kwargs['Broadcast'].broadcast()
 
 	def onMessage(self, *args, **kwargs):
-		# process only ALL chat messages
+		
 		name = args[1]
 		message = args[2]
+		
+		client = self.getPlayerByName(name)
 
-		if (args[0] == "SQUAD") and (message == 'report balance please'):
-			print 'caught balance report message'
-			client = self.getPlayerByName(name)
-			for each in self.BalanceReport:
-				kwargs['Broadcast'].broadcast("SendMessage %s Balance Report time: %s client: %s" % (client['clinum'], report['time'], report['name']))
+		if (args[0] == "SQUAD") and (message == 'report balance'):
+			self.getGameInfo()
+			kwargs['Broadcast'].broadcast("SendMessage %s Balance Report: ^yTeam 1 combined: ^g%s (%s players, %s BF average), ^yTeam 2 combined: ^g%s (%s players, %s BF average). ^yStack percentage: ^r%s. ^yCurrent Phase: ^c%s. ^yCurrent time stamp: ^c%s. ^yBalancer active = ^r%s" % (client['clinum'], self.teamOne ['combinedBF'], self.teamOne ['size'], self.teamOne ['avgBF'], self.teamTwo ['combinedBF'], self.teamTwo ['size'], self.teamTwo ['avgBF'], round(self.evaluateBalance(), 1), self.PHASE, self.TIME, self.GAMESTARTED))
+			kwargs['Broadcast'].broadcast("echo BALANCER: %s" % (self.balancereport))
 
+		if (args[0] == "SQUAD") and (message == 'report team one'):
+			
+			for player in self.teamOne ['players']:
+				kwargs['Broadcast'].broadcast("SendMessage %s Team One Report: Player: ^c%s ^rBF: ^y%s" % (client['clinum'], player['name'], player['bf']))
+
+		if (args[0] == "SQUAD") and (message == 'report team two'):
+			
+			for player in self.teamTwo ['players']:
+				kwargs['Broadcast'].broadcast("SendMessage %s Team Two Report: Player: ^c%s ^rBF: ^y%s" % (client['clinum'], player['name'], player['bf']))
+
+		if (args[0] == "SQUAD") and (message == 'report playerlist'):
+			
+			for active in self.playerlist: 
+				if (active ['active'] == 1):
+					kwargs['Broadcast'].broadcast("SendMessage %s Active Player List: Player: ^c%s ^rSF: ^y%s" % (client['clinum'], active['name'], active['sf']))
+				
 		if args[0] != "ALL":
 			return
 
@@ -763,10 +737,10 @@ class balancer(ConsolePlugin):
 		
 
 	def optionCheck(self, **kwargs):
-		print 'doing move!'
-		for player in self.switchlist:
-			action = 'MOVE'
-			self.retrieveIndex(player, action, **kwargs)
+		if (self.OPTION == 1):
+			for player in self.switchlist:
+				action = 'MOVE'
+				self.retrieveIndex(player, action, **kwargs)
 		del self.switchlist[:]
 
 	def move(self, clinum, index, **kwargs):
@@ -775,19 +749,18 @@ class balancer(ConsolePlugin):
 		
 		client ['moved'] = 1
 		name = client ['name']
-		#only have to move players that are already on a team, and since they can only go to the other, team we can use this
+		#only have to move players that are already on a team, and since they can only go to the other team we can use this
 		if (int(client['team']) == 1):
 			newteam = 2
 		else:
 			newteam = 1
 
-		print 'moving player...'
 		kwargs['Broadcast'].put("SetTeam %s %s" % (index, newteam))
-		kwargs['Broadcast'].put("ServerChat ^r%s ^chas switched teams to promote balance." % (name))
+		kwargs['Broadcast'].put("Serverchat ^r%s ^chas switched teams to promote balance." % (name))
 		kwargs['Broadcast'].put("ResetAttributes %s" % (index))
 		kwargs['Broadcast'].broadcast()
 
-		self.BalanceReport.append ({'time' : self.TIME, 'client' : name})
+		self.balancereport.append ({'time' : self.TIME, 'client' : name})
 		
 		self.moveNotify(clinum, **kwargs)
 
@@ -808,6 +781,12 @@ class balancer(ConsolePlugin):
 		print 'allowing player...'
 		kwargs['Broadcast'].broadcast("SetTeam %s %s" % (index, team))
 		client ['prevent'] = 0
+
+	def level(self, clinum, index, **kwargs):
+		client = self.getPlayerByClientNum(clinum)
+		team = client ['team']		
+		kwargs['Broadcast'].broadcast("set _plevel #GetLevel(%s)#; set team%s_level [team%s_level + _plevel]" % (index, team, team))
+		
 
 	def moveNotify(self, clinum, **kwargs):
 		#this lets the player know the have been moved and compensates them for their purchased items. There is current no way to know
@@ -862,7 +841,7 @@ class balancer(ConsolePlugin):
 
 	def getTeamAvg (self, team):
 		#this updates the info for a team
-		print 'getting averages'
+		
 		team ['combinedBF'] = 0
 		team ['size'] = 0
 		for clients in team ['players']:
@@ -880,71 +859,100 @@ class balancer(ConsolePlugin):
 		self.game ['size'] = (self.teamOne ['size'] + self.teamTwo ['size'])
 		self.game ['avgBF'] = ((self.teamOne ['avgBF'] +  self.teamTwo ['avgBF']) / 2)
 
+
 	def sendGameInfo (self, **kwargs):
 		self.getGameInfo(**kwargs)
 
 		if (self.GAMESTARTED == 1):
-			self.DIFFERENCE = self.evaluateBalance()
-			print(self.DIFFERENCE)
+			self.DIFFERENCE = abs(self.evaluateBalance())
+			
 
-		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1: ^g%s (%s players), ^yTeam 2: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
+		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1 Avg. BF: ^g%s (%s players), ^yTeam 2 Avg. BF: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
 		kwargs['Broadcast'].broadcast()
 
 
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		self.THRESHOLD = 10
+		
 
-		self.DIFFERENCE = self.evaluateBalance()
+		self.DIFFERENCE = abs(self.evaluateBalance())
 		print(self.DIFFERENCE)
 
 		if (self.DIFFERENCE > self.THRESHOLD):
-			self.TARGET = abs(self.game['avgBF'] * (self.teamOne['size']) - self.teamOne['combinedBF'])
-			print self.TARGET
-			self.getClosestTwoToTarget (self.getHighTeam (), self.getLowTeam (),  **kwargs)
+			self.getClosestTwoToTarget (self.getLargeTeam (), self.getSmallTeam (),  **kwargs)
 		else:
 			print 'threshold not met'
-			kwargs['Broadcast'].broadcast("ServerChat ^cEven team balancer initiated but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
+			kwargs['Broadcast'].broadcast("Serverchat ^cEven team balancer initiated but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
 	def UnEvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		self.THRESHOLD = 10
+		
 		fromteam = self.getLargeTeam ()
 		toteam = self.getSmallTeam ()
-
-		self.DIFFERENCE = self.evaluateBalance()
-		print(self.DIFFERENCE)
-
-		# TODO: 20101116 winex: this won't work because DIFFERENCE is absolute value now
-		if (self.DIFFERENCE < 0):
-			kwargs['Broadcast'].broadcast("echo Small team already has higher BF. Don't balance")
+		overcheck = self.evaluateBalance()
+		self.DIFFERENCE = abs(self.evaluateBalance())
+		#In this scenario, the larger team has a much lower BF, so do a player swap instead of a single move.
+		if (overcheck < 0) and (self.DIFFERENCE > self.THRESHOLD):
+			self.getClosestTwoToTarget (self.getLargeTeam (), self.getSmallTeam (), **kwargs)
+			kwargs['Broadcast'].broadcast("echo BALANCER: ^cUneven team balancer with swap initiated")
 			return
-
-		if (self.DIFFERENCE > self.THRESHOLD):
-			#self.TARGET = int(self.game['avgBF'] * (self.getSmallTeam () ['size']) - (self.getSmallTeam () ['combinedBF']))
-			#self.TARGET = int(self.game['avgBF']/2)
-			#self.TARGET = (float(toteam ['size']) / float(fromteam ['size']) * 100)
-			#_IF_ we believe the stack percentage, we really want it to be as low as possible so we just make TARGET = 0
-			self.TARGET = 0.00
+		#In this scenario, the larger team has greater BF, so do a single mvoe.
+		if (overcheck > 0) and (self.DIFFERENCE > self.THRESHOLD):
 			self.getClosestPersonToTarget (self.getLargeTeam (), **kwargs)
 		else:
 			print 'threshold not met'
-			kwargs['Broadcast'].broadcast("ServerChat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
+			kwargs['Broadcast'].broadcast("Serverchat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
 	def onTeamCheck(self, *args, **kwargs):
-		print args
-
-				
-		if (self.teamOne ['size'] == int(args[0])):
+						
+		if (self.teamOne ['size'] == int(args[0])) and (self.teamTwo ['size'] == int(args[1])):
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 1 count is correct")
+			kwargs['Broadcast'].broadcast("echo BALANCER: Team 2 count is correct")
+			#self.getTeamLevels()
+			if (self.PHASE == 5):
 
-		if (self.teamTwo ['size'] == int(args[1])):
-			kwargs['Broadcast'].broadcast("echo BALANCER: Team 2 count is correct") 
+				self.GAMESTARTED = 1
 
+				if (self.TIME == (1 * 60 * 1000)):
+					self.runBalancer (**kwargs)
+				elif (self.TIME == (3 * 60 * 1000)):
+					self.runBalancer (**kwargs)
+				elif (self.TIME == (6 * 60 * 1000)):
+					self.runBalancer (**kwargs)
+				if (self.TIME >= (6 * 60 * 1000)):
+					self.DENY = 1
+					self.optionCheck(**kwargs)
+					self.OPTION = 1
+				
+					if (self.TIME % (5 * 60 * 1000)) == 0:
+						self.runBalancer (**kwargs)
+			return
 		else:
-			kwargs['Broadcast'].broadcast("echo BALANCER: Team count is off! Crap!") 
+			kwargs['Broadcast'].broadcast("Serverchat ^cBalancer is currently off until player counts can be verified.") 
 			kwargs['Broadcast'].broadcast("echo refresh")
-			#TODO: 20101116 Old55: for now, these are here to shut down balancing if teams are off, though for now it will still try to refresh to fix teams.
+			#this initiates turns balancer off and tries to refresh the teams to get the proper count
 			self.GAMESTARTED = 0
 			self.DENY = 0
-			
+
+	def getTeamLevels(self, *args, **kwargs):
+
+		if (self.GAMESTARTED == 1):
+			for player in self.teamOne ['players']:
+				action = 'LEVEL'
+				self.retrieveIndex(player, action, **kwargs)
+			for player in self.teamOne ['players']:
+				action = 'LEVEL'
+				self.retrieveIndex(player, action, **kwargs)
+				
+		kwargs['Broadcast'].broadcast("echo Team 1 total level: #team1level#, Team 2 total level: #team2level#; set team1level 0; set team2level 0")
+	
+	def onGetLevels(self, *args, **kwargs):
+		print args
+		team1level = args[0]
+		team2level = args[1]
+		totallevel = team1level + team2level
+
+		team1ratio = team1level/totallevel
+		print team1ratio
+
+				
