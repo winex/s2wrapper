@@ -5,6 +5,7 @@ import re
 import math
 import time
 import ConfigParser
+import threading
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
@@ -30,6 +31,8 @@ class balancer(ConsolePlugin):
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
 	PHASE = 0
+	TOTALLEVEL = 0
+	
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
@@ -114,7 +117,7 @@ class balancer(ConsolePlugin):
 					client ['active'] = 1
 					return
 				return
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'moved' : 0, 'index' : 0, 'exp' : 2, 'value' : 150, 'prevent' : 0, 'active' : 0})
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'bf' : 0, 'lf' : 0, 'name' : 'X', 'team' : 0, 'moved' : 0, 'index' : 0, 'exp' : 2, 'value' : 150, 'prevent' : 0, 'active' : 0, 'gamelevel' : 1})
 		
 
 	def onSetName(self, *args, **kwargs):
@@ -215,6 +218,7 @@ class balancer(ConsolePlugin):
 		LF = client['lf'] + 10 + level
 		moved = client['moved']
 		client ['team'] = team
+		client ['bf'] = BF + (client ['gamelevel'] * 4)
 		toteam ['players'].append ({'clinum' : cli, 'name' : NAME, 'sf' : SF,  'lf' : LF, 'level' : level, 'moved' : moved, 'bf' : BF})
 		
 		self.getGameInfo(**kwargs)
@@ -250,6 +254,7 @@ class balancer(ConsolePlugin):
 		spec = -1
 		team = int(args[1])
 		cli = args[0]
+		self.retrieveLevels(cli, **kwargs)
 		client = self.getPlayerByClientNum(cli)
 		currentteam = client ['team']
 		prevented = int(client ['prevent'])
@@ -386,6 +391,8 @@ class balancer(ConsolePlugin):
 		for player in self.playerlist:
 			player ['active'] = 0
 			player ['team'] = 0
+			player ['gamelevel'] = 0
+			player ['bf'] = int(player ['sf'] + player ['level'])
 		self.teamOne ['size'] = 0
 		self.teamOne ['avgBF'] = -1
 		self.teamOne ['combinedBF'] = 0
@@ -542,8 +549,10 @@ class balancer(ConsolePlugin):
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
+		self.getTeamLevels(**kwargs)
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
-		self.sendGameInfo(**kwargs)
+		
+		
 
 	def evaluateBalance(self, BF1=0.0, BF2=0.0, moving=False, **kwargs):
 		large = self.getLargeTeam()
@@ -904,11 +913,12 @@ class balancer(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("Serverchat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
 	def onTeamCheck(self, *args, **kwargs):
-						
+		self.sendGameInfo(**kwargs)
+					
 		if (self.teamOne ['size'] == int(args[0])) and (self.teamTwo ['size'] == int(args[1])):
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 1 count is correct")
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 2 count is correct")
-			#self.getTeamLevels()
+			
 			if (self.PHASE == 5):
 
 				self.GAMESTARTED = 1
@@ -928,31 +938,47 @@ class balancer(ConsolePlugin):
 						self.runBalancer (**kwargs)
 			return
 		else:
-			kwargs['Broadcast'].broadcast("Serverchat ^cBalancer is currently off until player counts can be verified.") 
+			kwargs['Broadcast'].broadcast("Serverchat ^cBalancer is currently off until player counts can be verified.")
+			kwargs['Broadcast'].broadcast("ListClients")
 			kwargs['Broadcast'].broadcast("echo refresh")
 			#this initiates turns balancer off and tries to refresh the teams to get the proper count
 			self.GAMESTARTED = 0
 			self.DENY = 0
 
-	def getTeamLevels(self, *args, **kwargs):
+	def retrieveLevels(self, cli, **kwargs):
 
-		if (self.GAMESTARTED == 1):
-			for player in self.teamOne ['players']:
-				action = 'LEVEL'
-				self.retrieveIndex(player, action, **kwargs)
-			for player in self.teamOne ['players']:
-				action = 'LEVEL'
-				self.retrieveIndex(player, action, **kwargs)
-				
-		kwargs['Broadcast'].broadcast("echo Team 1 total level: #team1level#, Team 2 total level: #team2level#; set team1level 0; set team2level 0")
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; set _plevel #GetLevel(|#_index|#)#;echo CLIENT %s is LEVEL #_plevel#; set _plevel 1" % (cli, cli))
+		
+
+	def getTeamLevels(self, **kwargs):
 	
-	def onGetLevels(self, *args, **kwargs):
-		print args
-		team1level = args[0]
-		team2level = args[1]
-		totallevel = team1level + team2level
-
-		team1ratio = team1level/totallevel
-		print team1ratio
-
+		if (self.GAMESTARTED == 1):
+					
+			for player1 in self.teamOne ['players']:
+				self.retrieveLevels(player1 ['clinum'], **kwargs)
+			for player2 in self.teamTwo ['players']:
+				self.retrieveLevels(player2 ['clinum'], **kwargs)
 				
+			
+	def onGetLevels(self, *args, **kwargs):
+		clinum = args[0]
+		level = int(args[1])
+		client = self.getPlayerByClientNum(clinum)
+		client ['gamelevel'] = level
+		client ['bf'] = client ['bf'] + 4*level
+		if (client ['team'] == 1):
+			for player in self.teamOne ['players']:
+				if client ['clinum'] == player ['clinum']:
+					player ['bf'] = client ['bf']
+		if (client ['team'] == 2):
+			for player in self.teamTwo ['players']:
+				if client ['clinum'] == player ['clinum']:
+					player ['bf'] = client ['bf']
+
+	def onListClients(self, *args, **kwargs):
+		clinum = args[0]
+		name = args[2]
+		print 'making client active'
+		client = self.getPlayerByName(name)
+		client ['active'] == 1
+		
