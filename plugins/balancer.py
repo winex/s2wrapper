@@ -161,6 +161,8 @@ class balancer(ConsolePlugin):
 		if doKick:
 			kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, self.reason))
 
+		self.retrieveLevels(cli, **kwargs)
+
 	def checkForSpectator (self, cli):
 		player = self.getPlayerByClientNum(cli)
 
