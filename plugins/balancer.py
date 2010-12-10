@@ -688,7 +688,7 @@ class balancer(ConsolePlugin):
 		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ^bALL ^cchat."
 		for player in self.switchlist:
 			index += 1
-			kwargs['Broadcast'].put("echo BALANCER: %s %s" % (player['clinum'], playermessage))
+			kwargs['Broadcast'].put("SendMessage %s %s" % (player['clinum'], playermessage))
 
 		if (index == 0):
 			kwargs['Broadcast'].put("Serverchat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name']))
