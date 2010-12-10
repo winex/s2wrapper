@@ -216,7 +216,7 @@ class balancer(ConsolePlugin):
 		NAME = client['name']
 		level = client['level']
 		SF = client['sf']
-		BF = SF + level
+		BF = SF + level + (client ['gamelevel'] * 4)
 		LF = client['lf'] + 10 + level
 		moved = client['moved']
 		client ['team'] = team
@@ -340,7 +340,7 @@ class balancer(ConsolePlugin):
 		PLAYER_INDICE = self.getTeamMember(item, cli, fromteam)
 		
 		#fromteam['players'][PLAYER_INDICE]['bf'] = client ['sf']
-		fromteam['players'][PLAYER_INDICE]['bf'] = int(client['sf'] + client['level'])
+		fromteam['players'][PLAYER_INDICE]['bf'] = int(client['sf'] + client['level'] + (client['gamelevel']*4))
 		fromteam['players'][PLAYER_INDICE]['moved'] = 0
 		
 		client ['moved'] = 0	
