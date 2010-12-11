@@ -147,7 +147,7 @@ class balancer(ConsolePlugin):
 		lf = int(stats['lf'])
 		exp = int(stats['exp'])
 
-		client = self.getPlayerByClientNum(cli)bab
+		client = self.getPlayerByClientNum(cli)
 
 		client ['acctid'] = int(id)
 		client ['level'] = level
