@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/07/10 - Added all messages back in
-import os
+# 12/11/10 - Fixed onListClients
 import re
 import math
 import time
