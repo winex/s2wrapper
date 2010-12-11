@@ -147,7 +147,7 @@ class balancer(ConsolePlugin):
 		lf = int(stats['lf'])
 		exp = int(stats['exp'])
 
-		client = self.getPlayerByClientNum(cli)
+		client = self.getPlayerByClientNum(cli)bab
 
 		client ['acctid'] = int(id)
 		client ['level'] = level
@@ -393,8 +393,9 @@ class balancer(ConsolePlugin):
 		for player in self.playerlist:
 			player ['active'] = 0
 			player ['team'] = 0
-			player ['gamelevel'] = 0
+			player ['gamelevel'] = 1
 			player ['bf'] = int(player ['sf'] + player ['level'])
+			player ['value'] = 150
 		self.teamOne ['size'] = 0
 		self.teamOne ['avgBF'] = -1
 		self.teamOne ['combinedBF'] = 0
