@@ -983,5 +983,5 @@ class balancer(ConsolePlugin):
 		name = args[2]
 		print 'making client active'
 		client = self.getPlayerByName(name)
-		client ['active'] == 1
+		client ['active'] = 1
 		
