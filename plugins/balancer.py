@@ -426,6 +426,9 @@ class balancer(ConsolePlugin):
 		for player in self.playerlist:
 			player ['active'] = 0
 			player ['team'] = 0
+			player ['gamelevel'] = 1
+			player ['bf'] = int(player ['sf'] + player ['level'])
+			player ['value'] = 150
 		self.teamOne ['size'] = 0
 		self.teamOne ['avgBF'] = -1
 		self.teamOne ['combinedBF'] = 0
@@ -446,8 +449,8 @@ class balancer(ConsolePlugin):
 		#these are for identifying bought and sold items
 		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# SOLD #_item#; echo\" sellitem")
 		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# BOUGHT #_item#; echo\" buyitem")
-		#this makes sure we get an update every minute. This is the startup.cfg default, but just to be sure we put it here as well
-		kwargs['Broadcast'].put("set sv_statusNotifyTime 60000")
+		#this makes sure we get an update every thirty seconds.
+		kwargs['Broadcast'].put("set sv_statusNotifyTime 30000")
 		kwargs['Broadcast'].broadcast()
 
 	def ItemList(self, *args, **kwargs):
@@ -708,7 +711,8 @@ class balancer(ConsolePlugin):
 		if (args[0] == "SQUAD") and (message == 'report balance'):
 			self.getGameInfo()
 			kwargs['Broadcast'].broadcast("SendMessage %s Balance Report: ^yTeam 1 combined: ^g%s (%s players, %s BF average), ^yTeam 2 combined: ^g%s (%s players, %s BF average). ^yStack percentage: ^r%s. ^yCurrent Phase: ^c%s. ^yCurrent time stamp: ^c%s. ^yBalancer active = ^r%s" % (client['clinum'], self.teamOne ['combinedBF'], self.teamOne ['size'], self.teamOne ['avgBF'], self.teamTwo ['combinedBF'], self.teamTwo ['size'], self.teamTwo ['avgBF'], round(self.evaluateBalance(), 1), self.PHASE, self.TIME, self.GAMESTARTED))
-			kwargs['Broadcast'].broadcast("echo BALANCER: %s" % (self.balancereport))
+			for moves in self.balancereport:
+				kwargs['Broadcast'].broadcast("echo BALANCER: Balanced move for: %s at time %s" % (moves ['name'], moves ['time']))
 
 		if (args[0] == "SQUAD") and (message == 'report team one'):
 			
@@ -725,7 +729,8 @@ class balancer(ConsolePlugin):
 			for active in self.playerlist: 
 				if (active ['active'] == 1):
 					kwargs['Broadcast'].broadcast("SendMessage %s Active Player List: Player: ^c%s ^rSF: ^y%s" % (client['clinum'], active['name'], active['sf']))
-				
+
+						
 		if args[0] != "ALL":
 			return
 
@@ -915,16 +920,17 @@ class balancer(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("Serverchat ^cUneven team balancer initiated, but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
 	def onTeamCheck(self, *args, **kwargs):
-		self.sendGameInfo(**kwargs)
+		if (self.TIME % (60 * 1000)) == 0:				
+					self.sendGameInfo(**kwargs)
 					
 		if (self.teamOne ['size'] == int(args[0])) and (self.teamTwo ['size'] == int(args[1])):
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 1 count is correct")
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 2 count is correct")
-			
+		
 			if (self.PHASE == 5):
 
 				self.GAMESTARTED = 1
-
+				
 				if (self.TIME == (1 * 60 * 1000)):
 					self.runBalancer (**kwargs)
 				elif (self.TIME == (3 * 60 * 1000)):
@@ -967,7 +973,7 @@ class balancer(ConsolePlugin):
 		level = int(args[1])
 		client = self.getPlayerByClientNum(clinum)
 		client ['gamelevel'] = level
-		client ['bf'] = client ['bf'] + 4*level
+		client ['bf'] = client ['sf'] + client ['level'] + (4*level)
 		if (client ['team'] == 1):
 			for player in self.teamOne ['players']:
 				if client ['clinum'] == player ['clinum']:
