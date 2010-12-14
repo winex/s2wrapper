@@ -921,7 +921,7 @@ class balancer(ConsolePlugin):
 
 	def onTeamCheck(self, *args, **kwargs):
 		if (self.TIME % (60 * 1000)) == 0:				
-					self.sendGameInfo(**kwargs)
+			self.sendGameInfo(**kwargs)
 					
 		if (self.teamOne ['size'] == int(args[0])) and (self.teamTwo ['size'] == int(args[1])):
 			kwargs['Broadcast'].broadcast("echo BALANCER: Team 1 count is correct")
