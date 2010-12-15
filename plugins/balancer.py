@@ -990,5 +990,8 @@ class balancer(ConsolePlugin):
 		client ['active'] = 1
 
 	def onMapReset(self, *args, **kwargs):
-		kwargs['Broadcast'].broadcast("prevphase")
-		self.GAMESTARTED = 0
+		if self.GAMESTARTED == 1
+			kwargs['Broadcast'].broadcast("prevphase")
+			self.GAMESTARTED = 0
+		else
+			return
