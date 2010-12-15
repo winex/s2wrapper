@@ -104,9 +104,15 @@ class Savage2Thread(threading.Thread):
 				continue
 
 			line = line.lstrip ('>')
-			# broadcast
-			Savage2ConsoleHandler.broadcast(line)
+			#ignore all the crap that clutters up the output
+			ignore = re.match('^Resource: |(SGame:)?\s?Spawned new |(SGame:)?\s?Adding Building |Error: CClientConnection|(\d+)$', line)
+			if ignore: 
+				continue
+			else:
+				# broadcast
+				Savage2ConsoleHandler.broadcast(line)
 
+			
 		self.clean ()
 		print "Process dead?"
 
@@ -236,6 +242,7 @@ class ConsoleParser:
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
 			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
+			self.onMapReset     : re.compile ('.*\(Prop_Scenery\).*\(Npc_Critter\).*'),
 			# custom filters
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
@@ -316,7 +323,9 @@ class ConsoleParser:
 	def onCommResign(self, *args, **kwargs):
 		print("ON_COMM_RESIGN", args)
 		pass
-
+	def onMapReset(self, *args, **kwargs):
+		print("SHUFFLE HAS BEEN CALLED, now DO SOMETHING")
+		pass
 	# custom filters - TO BE REMOVED
 	def onItemTransaction(self, *args, **kwargs):
 		pass

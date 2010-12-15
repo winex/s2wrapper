@@ -121,8 +121,7 @@ class balancer(ConsolePlugin):
 
 	def onSetName(self, *args, **kwargs):
 
-		print args
-		
+				
 		cli = args[0]
 		playername = args[1]
 		
@@ -989,4 +988,7 @@ class balancer(ConsolePlugin):
 		print 'making client active'
 		client = self.getPlayerByName(name)
 		client ['active'] = 1
+
+	def onMapReset(self, *args, **kwargs):
+		kwargs['Broadcast'].broadcast("prevphase")
 		
