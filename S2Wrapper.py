@@ -242,7 +242,7 @@ class ConsoleParser:
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
 			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
-			self.onMapReset     : re.compile ('.*\(Prop_Scenery\).*\(Npc_Critter\).*'),
+			self.onMapReset     : re.compile ('.*\d+\.\d+\s{3, 6}'),
 			# custom filters
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),

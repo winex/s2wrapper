@@ -40,7 +40,7 @@ class balancer(ConsolePlugin):
 	teamTwo = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
 	game = {'size' : 0, 'avgBF' : -1}
 	switchlist = []
-
+	followlist = []
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
@@ -64,7 +64,7 @@ class balancer(ConsolePlugin):
 	def getPlayerByName(self, name):
 
 		for client in self.playerlist:
-			if (client['name'] == name):
+			if (client['name'].lower() == name.lower()):
 				return client
 
 	def onRefresh(self, *args, **kwargs):
@@ -322,7 +322,7 @@ class balancer(ConsolePlugin):
 			fromteam = teamlist ['fromteam']
 			self.removeTeamMember(client, fromteam, team, **kwargs)
 			
-		self.sendGameInfo(**kwargs)
+		#self.sendGameInfo(**kwargs)
 		client ['active'] = 0
 
 	def onCommResign(self, *args, **kwargs):
@@ -548,6 +548,7 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].put("ServerChat ^cSelected players may send the message 'reject' to ^bALL ^cchat to prevent the change.")
 		kwargs['Broadcast'].broadcast()
 		self.RegisterScripts(**kwargs)
+		self.startFollow(**kwargs)
 
 	#Run balancer at 1, 3 and 6 minutes. Deny phase begins at 6 minutes
 	def onServerStatus(self, *args, **kwargs):
@@ -706,7 +707,7 @@ class balancer(ConsolePlugin):
 		message = args[2]
 		
 		client = self.getPlayerByName(name)
-
+		
 		if (args[0] == "SQUAD") and (message == 'report balance'):
 			self.getGameInfo()
 			kwargs['Broadcast'].broadcast("SendMessage %s Balance Report: ^yTeam 1 combined: ^g%s (%s players, %s BF average), ^yTeam 2 combined: ^g%s (%s players, %s BF average). ^yStack percentage: ^r%s. ^yCurrent Phase: ^c%s. ^yCurrent time stamp: ^c%s. ^yBalancer active = ^r%s" % (client['clinum'], self.teamOne ['combinedBF'], self.teamOne ['size'], self.teamOne ['avgBF'], self.teamTwo ['combinedBF'], self.teamTwo ['size'], self.teamTwo ['avgBF'], round(self.evaluateBalance(), 1), self.PHASE, self.TIME, self.GAMESTARTED))
@@ -728,7 +729,30 @@ class balancer(ConsolePlugin):
 			for active in self.playerlist: 
 				if (active ['active'] == 1):
 					kwargs['Broadcast'].broadcast("SendMessage %s Active Player List: Player: ^c%s ^rSF: ^y%s" % (client['clinum'], active['name'], active['sf']))
-
+		#Beginnings of a following script for spectators
+		followed = re.match("follow (\S+)", message, flags=re.IGNORECASE)
+		stopfollow = re.match("stop follow", message, flags=re.IGNORECASE)
+		if followed:
+			followed_player = self.getPlayerByName(followed.group(1))
+			if (followed_player ['team'] > 0) and (client ['team'] == 0):
+				for each in self.followlist:
+					if each ['follower'] == client['clinum']:
+						each ['followed'] = followed_player['clinum']
+						self.startFollow(**kwargs)
+						return
+					
+				self.followlist.append ({'follower' : client['clinum'], 'followed' : followed_player['clinum']})
+				
+				self.startFollow(**kwargs)
+				
+			else:
+				print 'conditions not met to follow'
+				return
+		if stopfollow:
+			for followings in self.followlist:
+				if followings ['follower'] == client ['clinum']:
+					followings ['follower'] = -1
+			
 						
 		if args[0] != "ALL":
 			return
@@ -995,3 +1019,11 @@ class balancer(ConsolePlugin):
 			self.GAMESTARTED = 0
 		else:
 			return
+
+	def startFollow(self, **kwargs):
+		
+		for followings in self.followlist:
+			kwargs['Broadcast'].broadcast("set _follower #GetIndexFromClientNum(%s)#; set _followed #GetIndexFromClientNum(%s)#; set _x #GetPosX(|#_followed|#)#; set _y #GetPosY(|#_followed|#)#; set _z #GetPosZ(|#_followed|#)#; SetPosition #_follower# [_x + 200] [_y + 200] [_z + 200]" % (followings ['follower'], followings ['followed']))
+
+		
+			
