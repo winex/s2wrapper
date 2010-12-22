@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/11/10 - Fixed onListClients
+# 12/22/10 - Added end of game balance report, VERSION 1.0.1 (first version stamp, so arbitrary)
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-
+	VERSION = "1.0.1"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -30,8 +30,9 @@ class balancer(ConsolePlugin):
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
 	PHASE = 0
-	TOTALLEVEL = 0
-	
+	TOTAL1 = 0
+	TOTAL2 = 0
+	STAMPS = 0
 	reason = "You must have non-zero SF to play on this server"
 	playerlist = []
 	itemlist = []
@@ -383,8 +384,11 @@ class balancer(ConsolePlugin):
 			
 		
 	def onGameEnd(self, *args, **kwargs):
-
-		print "clearing dictionary...."
+		
+		avg1 = int(self.TOTAL1/self.STAMPS)
+		avg2 = int(self.TOTAL2/self.STAMPS)
+		
+		kwargs['Broadcast'].broadcast("Serverchat ^cHow stacked was this game from start to finish? Humans had an average combined BF of ^r%s^c, Beasts had an average combined BF of ^r%s ^c(from a total of ^y%s ^ctime points)." % (avg1, avg2, self.STAMPS))
 		#clear out the team dictionary info and globals when the map is reloaded
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
@@ -408,7 +412,9 @@ class balancer(ConsolePlugin):
 		self.PICKING = 0
 		self.balancereport = []
 		#self.playerlist = []		
-		
+		self.TOTAL1 = 0
+		self.TOTAL2 = 0
+		self.STAMPS = 0
 	def onNewGame(self, *args, **kwargs):
 		
 		if (self.PICKING == 1):
@@ -418,7 +424,7 @@ class balancer(ConsolePlugin):
 			self.PICKING = 0
 			return
 
-		print "clearing dictionary...."
+		
 		#clear out the team dictionary info and globals when the map is reloaded
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
@@ -729,6 +735,10 @@ class balancer(ConsolePlugin):
 			for active in self.playerlist: 
 				if (active ['active'] == 1):
 					kwargs['Broadcast'].broadcast("SendMessage %s Active Player List: Player: ^c%s ^rSF: ^y%s" % (client['clinum'], active['name'], active['sf']))
+		if (args[0] == "SQUAD") and (message == 'report version'):
+			
+			kwargs['Broadcast'].broadcast("SendMessage %s Balancer version: ^y%s" % (self.VERSION))
+
 		#Beginnings of a following script for spectators
 		followed = re.match("follow (\S+)", message, flags=re.IGNORECASE)
 		stopfollow = re.match("stop follow", message, flags=re.IGNORECASE)
@@ -898,6 +908,10 @@ class balancer(ConsolePlugin):
 		self.game ['size'] = (self.teamOne ['size'] + self.teamTwo ['size'])
 		self.game ['avgBF'] = ((self.teamOne ['avgBF'] +  self.teamTwo ['avgBF']) / 2)
 
+		if (self.GAMESTARTED == 1):
+			self.TOTAL1 += self.teamOne ['totalBF']
+			self.TOTAL2 += self.teamTwo ['totalBF']
+			self.STAMPS += 1
 
 	def sendGameInfo (self, **kwargs):
 		self.getGameInfo(**kwargs)
@@ -1025,5 +1039,6 @@ class balancer(ConsolePlugin):
 		for followings in self.followlist:
 			kwargs['Broadcast'].broadcast("set _follower #GetIndexFromClientNum(%s)#; set _followed #GetIndexFromClientNum(%s)#; set _x #GetPosX(|#_followed|#)#; set _y #GetPosY(|#_followed|#)#; set _z #GetPosZ(|#_followed|#)#; SetPosition #_follower# [_x + 200] [_y + 200] [_z + 200]" % (followings ['follower'], followings ['followed']))
 
+		
 		
 			
