@@ -114,7 +114,7 @@ class Savage2Thread(threading.Thread):
 				Savage2ConsoleHandler.broadcast(line)
 
 			
-		#self.clean ()
+		self.clean ()
 		print "Process dead?"
 
 	def clean (self):
