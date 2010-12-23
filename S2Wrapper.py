@@ -12,6 +12,8 @@ import ConfigParser
 import stty
 from threading import Timer
 
+
+
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
 	def handle(self):
@@ -43,11 +45,11 @@ class Savage2Thread(threading.Thread):
 
 	hack = 0
 	process = None
-
+	alive = False
 	def __init__(self, config):
 		threading.Thread.__init__(self)
 		self.config = config
-
+		
 	def run(self):
 		self.launchDaemon ()
 
@@ -73,6 +75,7 @@ class Savage2Thread(threading.Thread):
 			self.process = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
 			#self.process = subprocess.Popen(args, env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE, universal_newlines=True)
 			print("[%s] has started successfully" % (self.process.pid))
+			self.alive = True
 			# give some time for process to read new tty size
 			time.sleep(0.1)
 		finally:
@@ -81,6 +84,7 @@ class Savage2Thread(threading.Thread):
 
 		if not self.process:
 			return
+		self.pingAlive()
 		self.checkAlive()
 		self.read ()
 		
@@ -98,13 +102,17 @@ class Savage2Thread(threading.Thread):
 
 			# process is dead
 			#if line == "" and self.process.poll () is not None:
-			if self.process.poll () is not None:
-				break
+			#if self.process.poll () is not None:
+			#	break
 
 			if (line == ">"):
 				continue
 
 			line = line.lstrip ('>')
+			#if it catches the ALIVE statement, set the local variable True
+			active = re.match('^ALIVE', line)
+			if active:
+				self.alive = True
 			#ignore all the crap that clutters up the output
 			ignore = re.match('^Resource: |(SGame:)?\s?Spawned new |(SGame:)?\s?Adding Building |Error: CClientConnection|(\d+)$', line)
 			if ignore: 
@@ -140,13 +148,29 @@ class Savage2Thread(threading.Thread):
 
 	def checkAlive (self):
 		
-		if self.process.poll () is not None:
+		print ('Is process alive: %s' % (self.alive))
+		#if self.process.poll () is not None:
 			
+		#	self.clean()
+		#	return
+
+		if self.alive == False:
+
 			self.clean()
 			return
-		r = threading.Timer(120.0, self.checkAlive)
-		r.start()
 
+		r = threading.Timer(60.0, self.checkAlive)
+		r.start()
+		self.alive = False
+		
+
+	def pingAlive (self):
+		
+		
+		Savage2SocketHandler.broadcast("echo ALIVE")
+		r = threading.Timer(30.0, self.pingAlive)
+		r.start()
+		
 class Savage2ConsoleHandler:
 
 	def __init__(self):
@@ -251,7 +275,7 @@ class ConsoleParser:
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
 			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
-			self.onMapReset     : re.compile ('.*\d+\.\d+\s{3, 6}'),
+			self.onMapReset    : re.compile ('.*\d+\.\d+\s{3, 6}'),
 			# custom filters
 			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
@@ -335,6 +359,8 @@ class ConsoleParser:
 	def onMapReset(self, *args, **kwargs):
 		print("SHUFFLE HAS BEEN CALLED, now DO SOMETHING")
 		pass
+
+		
 	# custom filters - TO BE REMOVED
 	def onItemTransaction(self, *args, **kwargs):
 		pass
