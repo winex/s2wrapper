@@ -101,9 +101,9 @@ class Savage2Thread(threading.Thread):
 			line = line.replace ('^[[?1049h^[[1;52r^[[m^[(B^[[4l^[[?7h^[[?25l^[[H^[[2J^[[41d', '').replace ("^[)0" , '')
 
 			# process is dead
-			#if line == "" and self.process.poll () is not None:
-			#if self.process.poll () is not None:
-			#	break
+			if line == "" and self.process.poll () is not None:
+			if self.process.poll () is not None:
+				break
 
 			if (line == ">"):
 				continue
@@ -149,10 +149,10 @@ class Savage2Thread(threading.Thread):
 	def checkAlive (self):
 		
 		print ('Is process alive: %s' % (self.alive))
-		#if self.process.poll () is not None:
+		if self.process.poll () is not None:
 			
-		#	self.clean()
-		#	return
+			self.clean()
+			return
 
 		if self.alive == False:
 
