@@ -101,7 +101,7 @@ class Savage2Thread(threading.Thread):
 			line = line.replace ('^[[?1049h^[[1;52r^[[m^[(B^[[4l^[[?7h^[[?25l^[[H^[[2J^[[41d', '').replace ("^[)0" , '')
 
 			# process is dead
-			if line == "" and self.process.poll () is not None:
+			#if line == "" and self.process.poll () is not None:
 			if self.process.poll () is not None:
 				break
 
