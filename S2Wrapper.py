@@ -10,7 +10,7 @@ import threading, SocketServer
 from collections import deque
 import ConfigParser
 import stty
-
+from threading import Timer
 
 class ThreadedTCPRequestHandler(SocketServer.BaseRequestHandler):
 
@@ -81,8 +81,9 @@ class Savage2Thread(threading.Thread):
 
 		if not self.process:
 			return
+		self.checkAlive()
 		self.read ()
-
+		
 	def read(self):
 
 		# annoying colors and stuff
@@ -113,7 +114,7 @@ class Savage2Thread(threading.Thread):
 				Savage2ConsoleHandler.broadcast(line)
 
 			
-		self.clean ()
+		#self.clean ()
 		print "Process dead?"
 
 	def clean (self):
@@ -137,6 +138,14 @@ class Savage2Thread(threading.Thread):
 	def onDaemonMessage (self, line):
 		self.write (line)
 
+	def checkAlive (self):
+		
+		if self.process.poll () is not None:
+			
+			self.clean()
+			return
+		r = threading.Timer(120.0, self.checkAlive)
+		r.start()
 
 class Savage2ConsoleHandler:
 

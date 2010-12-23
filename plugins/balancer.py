@@ -166,7 +166,7 @@ class balancer(ConsolePlugin):
 		player = self.getPlayerByClientNum(cli)
 
 		if (player['team'] > 0):
-			print 'client is changing to spectator!'
+			
 			return cli
 		else:
 			return -1
@@ -265,12 +265,10 @@ class balancer(ConsolePlugin):
 
 		if (self.DENY == 1):
 			self.DIFFERENCE = abs(self.evaluateBalance())
-			print(self.DIFFERENCE)
 			diff = self.DIFFERENCE
 
 		#check to see if the player is on a team and going to spectator. spec = -1 unless the player is already on a team
 		if (int(team) == 0):
-			print 'checking for spec'
 			spec = self.checkForSpectator(cli)
 		#need to have this to avoid having players added multiple times as I have seen happen
 		if (spec == -1) and (int(currentteam) == int(team)):
@@ -289,8 +287,6 @@ class balancer(ConsolePlugin):
 			#this applies to both even and uneven games. The player is forced back to team 0.
 			if (self.DENY == 1):
 				self.DIFFERENCE = abs(self.evaluateBalance())
-				print 'deny phase true'
-				print self.DIFFERENCE
 				if (self.DIFFERENCE > 10) and (self.DIFFERENCE > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
@@ -300,7 +296,6 @@ class balancer(ConsolePlugin):
 				#provided the above critera is not true.
 				if (prevented == 1):
 					action = 'ALLOW'
-					team = 0
 					self.retrieveIndex(client, action, **kwargs)
 					
 		#if the player is going to spec, just remove them from the team
@@ -344,9 +339,7 @@ class balancer(ConsolePlugin):
 		
 		client ['moved'] = 0	
 		
-		print fromteam['players'][PLAYER_INDICE]
-
-		self.sendGameInfo(**kwargs)
+		
 
 	def onUnitChange(self, *args, **kwargs):
 		if args[1] != "Player_Commander":
@@ -366,12 +359,12 @@ class balancer(ConsolePlugin):
 		#set moved to 1 to prevent the player from being auto-swapped as commander
 		client['moved'] = 1
 		
-		self.sendGameInfo(**kwargs)
+		
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
 		self.PHASE = phase
-		print ('Current phase: %d' % (phase))
+	
 		if (phase == 7):
 			self.onGameEnd()
 		if (phase == 5):
@@ -527,15 +520,13 @@ class balancer(ConsolePlugin):
 		diff = self.teamOne['size'] - self.teamTwo['size']
 		print diff
 		if (diff == 0):
-			print 'even balancer'
 			self.EvenTeamBalancer(**kwargs)
 		#uneven balancer if there is a difference between 1-3. if it more than that, it would be best to restart, but that has not been implemented
 		elif (abs(diff) > 0 and abs(diff) < 4):
-			print 'uneven balancer'
+			
 			self.UnEvenTeamBalancer(**kwargs)
 			
 		else:
-			print "SUGGESTION: RESTART"
 			return
 
 	def onGameStart (self, *args, **kwargs):
@@ -556,14 +547,17 @@ class balancer(ConsolePlugin):
 		self.RegisterScripts(**kwargs)
 		self.startFollow(**kwargs)
 
-	#Run balancer at 1, 3 and 6 minutes. Deny phase begins at 6 minutes
+	
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		self.getTeamLevels(**kwargs)
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
 		
-		
+		if (self.GAMESTARTED == 1):
+			self.TOTAL1 += self.teamOne ['totalBF']
+			self.TOTAL2 += self.teamTwo ['totalBF']
+			self.STAMPS += 1
 
 	def evaluateBalance(self, BF1=0.0, BF2=0.0, moving=False, **kwargs):
 		large = self.getLargeTeam()
@@ -579,7 +573,7 @@ class balancer(ConsolePlugin):
 		if moving:
 			largesize = float(large ['size']) - 1.0
 			smallsize = float(small ['size']) + 1.0
-		print moving
+		
 		sizediff = largesize / totalsize
 		largepercent = largeshare + sizediff
 		return (largepercent - 1) * 100
@@ -593,7 +587,6 @@ class balancer(ConsolePlugin):
 		for player1 in team ['players']:
 
 			if (player1['moved'] == 1):
-				print 'this player cannot be moved'
 				continue
 
 			
@@ -609,7 +602,6 @@ class balancer(ConsolePlugin):
 				continue
 			
 			lowest = ltarget
-			print 'lowest is %s' % lowest
 			pick = player1
 		
 		print pick
@@ -622,7 +614,6 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("echo BALANCER: UNEVEN balancer selections: Client %s with bf %s for a starting BF stacking of %s to %s" % (pick['clinum'], pick['bf'], self.DIFFERENCE, lowest))
 		#if the selected option doesn't actually improve anything, terminate
 		if (lowest > self.DIFFERENCE):
-			print 'nonproductive. terminate'
 			kwargs['Broadcast'].broadcast("echo BALANCER: unproductive UNEVEN balance")
 			return
 
@@ -647,12 +638,10 @@ class balancer(ConsolePlugin):
 
 		for player1 in team1 ['players']:
 			if (player1['moved'] == 1):
-				print 'this player cannot be moved'
 				continue
 			for player2 in team2 ['players']:
 
 				if (player2['moved'] == 1):
-					print 'this player cannot be moved'
 					continue
 				
 				ltarget = abs(self.evaluateBalance (float(player1 ['bf']), float(player2 ['bf'])))
@@ -694,7 +683,7 @@ class balancer(ConsolePlugin):
 			self.giveOption (**kwargs)
 	
 	def giveOption(self, **kwargs):
-		print self.switchlist
+		
 		index = -1
 		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ^bALL ^cchat."
 		for player in self.switchlist:
@@ -779,8 +768,7 @@ class balancer(ConsolePlugin):
 		if (self.OPTION == 1) and (message == 'reject'):
 			for player in self.switchlist:
 				if (player['name'] == name):
-					kwargs['Broadcast'].put("ServerChat ^r%s ^chas rejected a move to promote balance between the teams." % (name))
-					kwargs['Broadcast'].broadcast()
+					kwargs['Broadcast'].broadcast("ServerChat ^r%s ^chas rejected a move to promote balance between the teams." % (name))
 					del self.switchlist[:]
 
 		
@@ -817,8 +805,6 @@ class balancer(ConsolePlugin):
 		client = self.getPlayerByClientNum(clinum)
 		client ['prevent'] = 1
 		newteam = 0
-
-		print 'removing player...'
 		kwargs['Broadcast'].broadcast("SetTeam %s %s" % (index, newteam))
 
 		self.preventNotify(clinum, **kwargs)
@@ -826,8 +812,6 @@ class balancer(ConsolePlugin):
 	def allow(self, clinum, index, **kwargs):
 		client = self.getPlayerByClientNum(clinum)
 		team = client ['team']
-
-		print 'allowing player...'
 		kwargs['Broadcast'].broadcast("SetTeam %s %s" % (index, team))
 		client ['prevent'] = 0
 
@@ -908,10 +892,7 @@ class balancer(ConsolePlugin):
 		self.game ['size'] = (self.teamOne ['size'] + self.teamTwo ['size'])
 		self.game ['avgBF'] = ((self.teamOne ['avgBF'] +  self.teamTwo ['avgBF']) / 2)
 
-		if (self.GAMESTARTED == 1):
-			self.TOTAL1 += self.teamOne ['totalBF']
-			self.TOTAL2 += self.teamTwo ['totalBF']
-			self.STAMPS += 1
+		
 
 	def sendGameInfo (self, **kwargs):
 		self.getGameInfo(**kwargs)
@@ -934,14 +915,13 @@ class balancer(ConsolePlugin):
 		if (self.DIFFERENCE > self.THRESHOLD):
 			self.getClosestTwoToTarget (self.getLargeTeam (), self.getSmallTeam (),  **kwargs)
 		else:
-			print 'threshold not met'
+			
 			kwargs['Broadcast'].broadcast("Serverchat ^cEven team balancer initiated but current balance percentage of ^y%s ^cdoes not meet the threshold of ^y%s" % (round(self.DIFFERENCE, 1), self.THRESHOLD))
 
 	def UnEvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
 		
-		fromteam = self.getLargeTeam ()
-		toteam = self.getSmallTeam ()
+		
 		overcheck = self.evaluateBalance()
 		self.DIFFERENCE = abs(self.evaluateBalance())
 		#In this scenario, the larger team has a much lower BF, so do a player swap instead of a single move.
