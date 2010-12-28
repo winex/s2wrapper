@@ -150,12 +150,12 @@ class Savage2Thread(threading.Thread):
 		
 		print ('Is process alive: %s' % (self.alive))
 		if self.process.poll () is not None:
-			
+			self.process.kill()
 			self.clean()
 			return
 
 		if self.alive == False:
-
+			self.process.kill()
 			self.clean()
 			return
 
@@ -283,8 +283,11 @@ class ConsoleParser:
 			self.onTeamCheck : re.compile ('^SERVER-SIDE client count, Team 1 (\d+), Team 2 (\d+)'),
 			self.onRetrieveIndex : re.compile ('Sv: Client (\d+) index is (\d+). ACTION: (\S+)'),
 			self.onListClients : re.compile ('^.* #(\d+) .*: (\d+\.\d+\.\d+\.\d+).*\\"(\S+)\"'),
-			self.onGetLevels : re.compile ('^CLIENT (\d+) is LEVEL (\d+)')
-			
+			self.onGetLevels : re.compile ('^CLIENT (\d+) is LEVEL (\d+)'),
+			self.RegisterStart : re.compile ('^STARTTOURNEY'),
+			self.getNextDuel : re.compile ('^NEXTDUELROUND'),
+			self.waitForPlayer : re.compile ('.*MISSING: (\S+)'),
+			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)')
 		})
 
 	def onLineReceived(self, line, dh):
@@ -376,7 +379,14 @@ class ConsoleParser:
 		pass
 	def onGetLevels(self, *args, **kwargs):
 		pass
-	
+	def RegisterStart(self, *args, **kwargs):
+		pass
+	def getNextDuel(self, *args, **kwargs):
+		pass
+	def waitForPlayer(self, *args, **kwargs):
+		pass
+	def onDeath(self, *args, **kwargs):
+		pass
 	def cmd(self, string):
 		Savage2DaemonHandler.broadcast(string)
 
