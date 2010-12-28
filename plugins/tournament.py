@@ -347,20 +347,21 @@ class tournament(ConsolePlugin):
 		killer = args[0]
 		killed = args[1]
 		print args
-		
-		for each in self.activeduel:
-			
-			if (each['clinum'] == killed):
-				kwargs['Broadcast'].broadcast("set _DUELER1 -1; set _DUELER2 -1;")
-				kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; TakeItem #_idx# 9" % (each['clinum']))
-				each['loses'] += 1
-				if each['loses'] > 2:
-					self.endDuel(**kwargs)
-					return
-				if each['loses'] < 3:
-					kwargs['Broadcast'].broadcast("ExecScript nextduelround")
-					return
 
+		if self.STARTED == 1:
+			for each in self.activeduel:
+			
+				if (each['clinum'] == killed):
+					kwargs['Broadcast'].broadcast("set _DUELER1 -1; set _DUELER2 -1;")
+					kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; TakeItem #_idx# 9" % (each['clinum']))
+					each['loses'] += 1
+					if each['loses'] > 2:
+						self.endDuel(**kwargs)
+						return
+					if each['loses'] < 3:
+						kwargs['Broadcast'].broadcast("ExecScript nextduelround")
+						return
+	
 	def endDuel(self, **kwargs):
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#;" % (self.activeduel[0]['clinum']))
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#;" % (self.activeduel[1]['clinum']))

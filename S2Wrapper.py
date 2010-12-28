@@ -127,6 +127,7 @@ class Savage2Thread(threading.Thread):
 
 	def clean (self):
 		print("IOError: [%d] %s stdin is closed." % (self.process.pid, self.config['exec']))
+		self.process.kill()
 		Savage2SocketHandler.delChannel (self.onSocketMessage)
 		Savage2DaemonHandler.delChannel (self.onDaemonMessage)
 		# don't go crazy spawning process too fast, sleep some instead
@@ -150,12 +151,10 @@ class Savage2Thread(threading.Thread):
 		
 		print ('Is process alive: %s' % (self.alive))
 		if self.process.poll () is not None:
-			self.process.kill()
 			self.clean()
 			return
 
 		if self.alive == False:
-			self.process.kill()
 			self.clean()
 			return
 
