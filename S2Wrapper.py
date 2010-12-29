@@ -272,6 +272,7 @@ class ConsoleParser:
 			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
+			self.onHasKilled   : re.compile ('(?:SGame: |Sv: )*?(\S+) has been killed by (\S+)'),
 			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onMapReset    : re.compile ('.*\d+\.\d+\s{3, 6}'),
@@ -350,6 +351,9 @@ class ConsoleParser:
 	#X SGame: Client #180 requested to join team: IDX
 	def onTeamChange(self, *args, **kwargs):
 		print("ON_TEAM_CHANGE", args)
+		pass
+
+	def onHasKilled(self, *args, **kwargs):
 		pass
 
 	def onUnitChange(self, *args, **kwargs):

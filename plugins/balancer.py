@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/22/10 - Added end of game balance report, VERSION 1.0.1 (first version stamp, so arbitrary)
+# 12/28/10 - Minor fixes
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-	VERSION = "1.0.1"
+	VERSION = "1.0.2"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -707,7 +707,7 @@ class balancer(ConsolePlugin):
 			self.getGameInfo()
 			kwargs['Broadcast'].broadcast("SendMessage %s Balance Report: ^yTeam 1 combined: ^g%s (%s players, %s BF average), ^yTeam 2 combined: ^g%s (%s players, %s BF average). ^yStack percentage: ^r%s. ^yCurrent Phase: ^c%s. ^yCurrent time stamp: ^c%s. ^yBalancer active = ^r%s" % (client['clinum'], self.teamOne ['combinedBF'], self.teamOne ['size'], self.teamOne ['avgBF'], self.teamTwo ['combinedBF'], self.teamTwo ['size'], self.teamTwo ['avgBF'], round(self.evaluateBalance(), 1), self.PHASE, self.TIME, self.GAMESTARTED))
 			for moves in self.balancereport:
-				kwargs['Broadcast'].broadcast("echo BALANCER: Balanced move for: %s at time %s" % (moves ['name'], moves ['time']))
+				kwargs['Broadcast'].broadcast("SendMessage %s BALANCER: Balanced move for: %s at time %s" % (client['clinum'],moves ['name'], moves ['time']))
 
 		if (args[0] == "SQUAD") and (message == 'report team one'):
 			
@@ -726,7 +726,7 @@ class balancer(ConsolePlugin):
 					kwargs['Broadcast'].broadcast("SendMessage %s Active Player List: Player: ^c%s ^rSF: ^y%s" % (client['clinum'], active['name'], active['sf']))
 		if (args[0] == "SQUAD") and (message == 'report version'):
 			
-			kwargs['Broadcast'].broadcast("SendMessage %s Balancer version: ^y%s" % (self.VERSION))
+			kwargs['Broadcast'].broadcast("SendMessage %s Balancer version: ^y%s" % (client['clinum'], self.VERSION))
 
 		#Beginnings of a following script for spectators
 		followed = re.match("follow (\S+)", message, flags=re.IGNORECASE)

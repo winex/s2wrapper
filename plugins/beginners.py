@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/28/10 - Initial version of beginners server protection
+# 12/29/10 - Added kill count check after 5 minutes. If player has more than 3 times the Avg. number of kills, boot them. Turned off level check.
 import re
 import math
 import time
@@ -11,7 +11,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class beginners(ConsolePlugin):
-	VERSION = "0.0.1"
+	VERSION = "0.0.2"
 	ms = None
 	TIME = 0
 	GAMESTARTED = 0
@@ -59,7 +59,7 @@ class beginners(ConsolePlugin):
 				print 'already have entry with that clientnum!'
 				return
 
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'active' : 0, 'banned' : False, 'ip' : ip, 'banstamp' : 0})
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'active' : 0, 'banned' : False, 'ip' : ip, 'banstamp' : 0, 'kills' : 0})
 
 
 	def onDisconnect(self, *args, **kwargs):
@@ -80,9 +80,9 @@ class beginners(ConsolePlugin):
 	def onAccountId(self, *args, **kwargs):
 
 		doKick = False
-		reason1 = "This is a beginners server. Please go play on a more advanced server."
-		reason2 = "You (or someone at your IP address) have been temporarily banned from this server."
-		reason3 = "Please go play on a more advanced server."
+		reason1 = "This is a beginners server. Please go play on a normal server."
+		reason2 = "You (or someone at your IP address) have been temporarily prohibited from this server."
+		reason3 = "Please go play on normal server."
 		cli = args[0]
 		id = args[1]
 		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
@@ -91,7 +91,7 @@ class beginners(ConsolePlugin):
 		sf = int(stats['sf'])
 		wins = int(stats['wins'])
 		losses = int(stats['losses'])
-		dcs = int(stats['d_conns']
+		dcs = int(stats['d_conns'])
 		total = wins + losses + dcs
 
 		client = self.getPlayerByClientNum(cli)
@@ -138,6 +138,7 @@ class beginners(ConsolePlugin):
 		self.MATCHES += 1
 		#all players are unbanned after 15 matches
 		for each in self.playerlist:
+			each['kills'] = 0
 			duration = self.MATCHES - int(each['banstamp'])
 			if duration > 9:
 				each['banned'] = False
@@ -150,15 +151,16 @@ class beginners(ConsolePlugin):
 		
 		self.STARTSTAMP = args[1]
 		self.GAMESTARTED = 1
-		
+		for each in self.playerlist:
+			each['kills'] = 0
 	
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 			
-		if (self.TIME == (10 * 60 * 1000)):
-			self.getTeamLevels (**kwargs)
-			
+		if self.PHASE == 5:
+			if (self.TIME > (5 * 60 * 1000)):
+				self.smurfCheck (**kwargs)	
 
 	def onGetLevels(self, *args, **kwargs):
 		clinum = args[0]
@@ -193,5 +195,44 @@ class beginners(ConsolePlugin):
 		if doKick:
 			kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))	
 		
-	
+	def onHasKilled(self, *args, **kwargs):
+
+		killed = self.getPlayerByName(args[0])
+		killer = self.getPlayerByName(args[1])
+
+		killer['kills'] += 1
+
+	def smurfCheck(self, **kwargs):
 		
+		totalkills = 0
+		activeplayers = 0
+		avgkills = 0
+		reason = "Congratulations! You have done a great job and have graduated from this server."
+
+		for each in self.playerlist:
+			if each['active'] == 1:
+				activeplayers += 1
+				totalkills += each['kills']
+
+		avgkills = int(totalkills/activeplayers)
+
+		for players in self.playerlist:
+			if (players['kills'] > (avgkills * 3)):
+				cli = players['clinum']
+				players['banned'] = True
+				players['banstamp'] = self.MATCHES
+				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
+				
+	def onMessage(self, *args, **kwargs):
+		
+		name = args[1]
+		message = args[2]
+		
+		client = self.getPlayerByName(name)
+		
+		if (args[0] == "SQUAD") and (message == 'report bans'):
+			for bans in self.playerlist:
+				if bans['banned']:
+					kwargs['Broadcast'].broadcast("SendMessage %s Banned: %s, IP: %s" % (client['clinum'], bans['name'], bans['ip']))
+
+
