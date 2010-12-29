@@ -91,7 +91,8 @@ class beginners(ConsolePlugin):
 		sf = int(stats['sf'])
 		wins = int(stats['wins'])
 		losses = int(stats['losses'])
-		total = wins + losses
+		dcs = int(stats['d_conns']
+		total = wins + losses + dcs
 
 		client = self.getPlayerByClientNum(cli)
 
@@ -108,10 +109,9 @@ class beginners(ConsolePlugin):
 			if each['banned'] and (each['ip'] == client['ip']):
 				reason = reason2
 				doKick = True
-				client ['banned'] = True
-				client ['banstamp'] = self.MATCHES
+				
 
-		if (sf > 135) and (total > 4):
+		if (sf > 160) and (total > 4):
 			reason = reason1
 			doKick = True
 			client ['banned'] = True
@@ -139,7 +139,7 @@ class beginners(ConsolePlugin):
 		#all players are unbanned after 15 matches
 		for each in self.playerlist:
 			duration = self.MATCHES - int(each['banstamp'])
-			if duration > 14:
+			if duration > 9:
 				each['banned'] = False
 
 		self.GAMESTARTED = 0
