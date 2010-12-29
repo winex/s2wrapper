@@ -310,7 +310,7 @@ class tournament(ConsolePlugin):
 			print 'player missing'
 
 	def waitForPlayer(self, *args, **kwargs):
-		action = arg[0]
+		action = args[0]
 
 		if (action == 'Timeout'):
 			for each in self.activeduel:
@@ -371,7 +371,7 @@ class tournament(ConsolePlugin):
 				loser = each['name']
 				clinum = each['clinum']
 				self.removePlayer(each['clinum'])
-			if each['loses'] < 2:
+			if each['loses'] < 3:
 				winner = each['name']
 
 		kwargs['Broadcast'].broadcast("ServerChat ^r%s has defeated ^r%s and moves on to the next round; ClientExecScript -1 releasemove" % (winner, loser))
