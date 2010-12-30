@@ -122,6 +122,15 @@ class beginners(ConsolePlugin):
 
 		print client
 
+	def onTeamChange (self, *args, **kwargs):
+		
+		team = int(args[1])
+		cli = args[0]
+		client = self.getPlayerByClientNum(cli)
+		if (team > 0):
+			client['active'] = 1
+		if (team == 0):
+			client['active'] = 0
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
@@ -139,6 +148,7 @@ class beginners(ConsolePlugin):
 		#all players are unbanned after 15 matches
 		for each in self.playerlist:
 			each['kills'] = 0
+			each['active'] = 0
 			duration = self.MATCHES - int(each['banstamp'])
 			if duration > 9:
 				each['banned'] = False
@@ -196,12 +206,13 @@ class beginners(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))	
 		
 	def onHasKilled(self, *args, **kwargs):
-
+		print args
 		killed = self.getPlayerByName(args[0])
 		killer = self.getPlayerByName(args[1])
-
+		
 		killer['kills'] += 1
-
+		print killer
+		print killed
 	def smurfCheck(self, **kwargs):
 		
 		totalkills = 0
@@ -212,7 +223,7 @@ class beginners(ConsolePlugin):
 		for each in self.playerlist:
 			if each['active'] == 1:
 				activeplayers += 1
-				totalkills += each['kills']
+				totalkills += int(each['kills'])
 
 		avgkills = int(totalkills/activeplayers)
 
