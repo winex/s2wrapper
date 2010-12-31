@@ -182,7 +182,7 @@ class beginners(ConsolePlugin):
 			
 		if self.PHASE == 5:
 			if (self.TIME > (5 * 60 * 1000)):
-				#self.smurfCheck (**kwargs)
+				self.smurfCheck (**kwargs)
 				print 'check'	
 
 	def onGetLevels(self, *args, **kwargs):
@@ -226,6 +226,7 @@ class beginners(ConsolePlugin):
 		killer['kills'] += 1
 		print killer
 		print killed
+
 	def smurfCheck(self, **kwargs):
 		
 		totalkills = 0
@@ -239,13 +240,16 @@ class beginners(ConsolePlugin):
 				totalkills += int(each['kills'])
 
 		avgkills = int(totalkills/activeplayers)
-
+		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills)
 		for players in self.playerlist:
+			over = 'No'
 			if (players['kills'] > (avgkills * 3)):
-				cli = players['clinum']
-				players['banned'] = True
-				players['banstamp'] = self.MATCHES
-				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
+				over = 'Yes'
+			kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over)
+				#cli = players['clinum']
+				#players['banned'] = True
+				#players['banstamp'] = self.MATCHES
+				#kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
 				
 	def onMessage(self, *args, **kwargs):
 		
