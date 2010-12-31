@@ -182,7 +182,8 @@ class beginners(ConsolePlugin):
 			
 		if self.PHASE == 5:
 			if (self.TIME > (5 * 60 * 1000)):
-				self.smurfCheck (**kwargs)	
+				#self.smurfCheck (**kwargs)
+				print 'check'	
 
 	def onGetLevels(self, *args, **kwargs):
 		clinum = args[0]
