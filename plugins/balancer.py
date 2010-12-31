@@ -42,6 +42,7 @@ class balancer(ConsolePlugin):
 	game = {'size' : 0, 'avgBF' : -1}
 	switchlist = []
 	followlist = []
+
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
@@ -55,6 +56,32 @@ class balancer(ConsolePlugin):
 		#		self._sf = int(value)
 		
 		pass
+
+	def onStartServer(self, *args, **kwargs):
+		
+		self.TIME = 0
+		self.THRESHOLD = 6
+		self.DIFFERENCE = -1
+		self.GAMESTARTED = 0
+		self.STARTSTAMP = 0
+		self.DENY = 0
+		self.OPTION = 0
+		self.PICKING = 0
+		self.CHAT_INTERVAL = 10
+		self.CHAT_STAMP = 0
+		self.PHASE = 0
+		self.TOTAL1 = 0
+		self.TOTAL2 = 0
+		self.STAMPS = 0
+		self.playerlist = []
+		self.itemlist = []
+		self.balancereport = []
+		self.teamOne = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
+		self.teamTwo = {'size' : 0, 'avgBF' : -1, 'combinedBF' : 0, 'players' : []}
+		self.game = {'size' : 0, 'avgBF' : -1}
+		self.switchlist = []
+		self.followlist = []
+
 
 	def getPlayerByClientNum(self, cli):
 

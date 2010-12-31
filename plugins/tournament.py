@@ -49,6 +49,23 @@ class tournament(ConsolePlugin):
 		
 		pass
 
+	def onStartServer(self, *args, **kwargs):
+		print 'SERVER RESTARTED'
+		self.STARTED = 0
+		self.MINIMUM =  2
+		self.RECRUIT = False
+		self.ORGANIZER = -1
+		self.DUELROUND = 0
+		self.TOURNEYROUND = 0
+		self.MISSING = -1
+		self.playerlist = []
+		self.tourneylist = {'totalplayers' : 0, 'players' : []}
+		self.seededlist = []
+		self.activeduel = []
+		self.unitlist = []
+		self.counts = 4
+		self.counter = 0
+
 	def getPlayerByClientNum(self, cli):
 
 		for client in self.playerlist:
@@ -311,6 +328,7 @@ class tournament(ConsolePlugin):
 		for each in self.activeduel:
 			each['loses'] = 0
 			each['wins'] = 0
+
 		self.activeduel[0]['column'] = "A"
 		self.activeduel[1]['column'] = "B"
 		
@@ -375,19 +393,20 @@ class tournament(ConsolePlugin):
 				if (each['clinum'] == killed):
 					each['loses'] += 1
 					kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; TakeItem #_idx# 9; set _DUELER1 -1; set _DUELER2 -1" % (each['clinum']))
-					if each['loses'] > 2:
-						self.endDuel(**kwargs)
-						kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val \" \"; ExecScript GlobalSet var R%sNB val \" \"; ExecScript GlobalSync" % (each['bracket']))
-						return
-					if (self.activeduel[0]['wins']) < 3 and (self.activeduel[0]['wins'] < 3):
-						kwargs['Broadcast'].broadcast("ExecScript nextduelround")
 
 				if (each['clinum'] == killer):
 					each['wins'] += 1
 					kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sS%s val %s; ExecScript GlobalSync" % (each['bracket'], each['column'], each['wins']))
-					
-				
-					
+			
+			for each in self.activeduel:		
+				if each['loses'] > 2:
+					self.endDuel(**kwargs)
+					kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val \" \"; ExecScript GlobalSet var R%sNB val \" \"; ExecScript GlobalSync" % (each['bracket'],each['bracket'] ))
+					return
+
+			if (self.activeduel[0]['wins']) < 3 and (self.activeduel[1]['wins'] < 3):
+				kwargs['Broadcast'].broadcast("ExecScript nextduelround")
+		
 	def endDuel(self, **kwargs):
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#;" % (self.activeduel[0]['clinum']))
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#;" % (self.activeduel[1]['clinum']))

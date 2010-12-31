@@ -36,6 +36,18 @@ class beginners(ConsolePlugin):
 		
 		pass
 
+	def onStartServer(self, *args, **kwargs):
+		
+		self.VERSION = "0.0.2"
+		self.TIME = 0
+		self.GAMESTARTED = 0
+		self.STARTSTAMP = 0
+		self.CHAT_INTERVAL = 10
+		self.CHAT_STAMP = 0
+		self.PHASE = 0
+		self.MATCHES = 0
+		self.playerlist = []
+
 	def getPlayerByClientNum(self, cli):
 
 		for client in self.playerlist:
