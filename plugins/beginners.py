@@ -38,7 +38,7 @@ class beginners(ConsolePlugin):
 
 	def onStartServer(self, *args, **kwargs):
 		
-		self.VERSION = "0.0.2"
+		self.VERSION = "0.0.3"
 		self.TIME = 0
 		self.GAMESTARTED = 0
 		self.STARTSTAMP = 0
