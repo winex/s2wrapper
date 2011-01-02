@@ -240,12 +240,12 @@ class beginners(ConsolePlugin):
 				totalkills += int(each['kills'])
 
 		avgkills = int(totalkills/activeplayers)
-		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills)
+		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills))
 		for players in self.playerlist:
 			over = 'No'
 			if (players['kills'] > (avgkills * 3)):
 				over = 'Yes'
-			kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over)
+			kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over))
 				#cli = players['clinum']
 				#players['banned'] = True
 				#players['banstamp'] = self.MATCHES
