@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/29/10 - Added kill count check after 5 minutes. If player has more than 3 times the Avg. number of kills, boot them. Turned off level check.
+# 01/02/10 - smurfCheck now on
 import re
 import math
 import time
@@ -11,7 +11,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class beginners(ConsolePlugin):
-	VERSION = "0.0.2"
+	VERSION = "0.0.3"
 	ms = None
 	TIME = 0
 	GAMESTARTED = 0
@@ -243,13 +243,14 @@ class beginners(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills))
 		for players in self.playerlist:
 			over = 'No'
-			if (players['kills'] > (avgkills * 3)):
+			if (players['kills'] > (avgkills * 3)) and (players['kills'] > 20):
 				over = 'Yes'
+				cli = players['clinum']
+				players['banned'] = True
+				players['banstamp'] = self.MATCHES
+				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
 			kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over))
-				#cli = players['clinum']
-				#players['banned'] = True
-				#players['banstamp'] = self.MATCHES
-				#kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
+				
 				
 	def onMessage(self, *args, **kwargs):
 		
