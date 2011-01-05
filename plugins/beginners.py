@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 01/02/10 - smurfCheck now on
+# 01/05/10 - fix active flag for players
 import re
 import math
 import time
@@ -38,7 +38,7 @@ class beginners(ConsolePlugin):
 
 	def onStartServer(self, *args, **kwargs):
 		
-		self.VERSION = "0.0.3"
+		self.VERSION = "0.0.4"
 		self.TIME = 0
 		self.GAMESTARTED = 0
 		self.STARTSTAMP = 0
@@ -242,14 +242,15 @@ class beginners(ConsolePlugin):
 		avgkills = int(totalkills/activeplayers)
 		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills))
 		for players in self.playerlist:
-			over = 'No'
-			if (players['kills'] > (avgkills * 3)) and (players['kills'] > 20):
-				over = 'Yes'
-				cli = players['clinum']
-				players['banned'] = True
-				players['banstamp'] = self.MATCHES
-				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
-			kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over))
+			if each['active'] == 1:
+				over = 'No'
+				if (players['kills'] > (avgkills * 3)) and (players['kills'] > 20):
+					over = 'Yes'
+					cli = players['clinum']
+					players['banned'] = True
+					players['banstamp'] = self.MATCHES
+					kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
+				kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over))
 				
 				
 	def onMessage(self, *args, **kwargs):

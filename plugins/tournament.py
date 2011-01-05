@@ -242,8 +242,17 @@ class tournament(ConsolePlugin):
 		self.TOURNEYROUND = 1
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val 1")
 		if (self.tourneylist ['totalplayers'] < 2):
+			self.tourneylist = {'totalplayers' : 0, 'players' : []}
+			self.seededlist = []
+			self.STARTED = 0
+			self.ORGANIZER = -1
+			self.RECRUIT = False
+			for each in self.playerlist:
+				each['register'] = 0
+		
+			kwargs['Broadcast'].broadcast("ClientExecScript -1 ClientClear")
 			kwargs['Broadcast'].broadcast("Serverchat The tournament must have 3 people to start. Aborting.")
-			self.endTourney(**kwargs)
+			#self.endTourney(**kwargs)
 			return
 
 		self.seededlist = sorted(self.tourneylist ['players'], key=itemgetter('sf', 'level', 'clinum'), reverse=True)
@@ -277,7 +286,7 @@ class tournament(ConsolePlugin):
 			self.seededlist[start]['bye'] = 1
 			self.seededlist[start]['bracket'] = bracket
 			self.seededlist[start]['advance'] = 1
-			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,self.seededlist[start]['name'],bracket))
+			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket))
 			start += 1
 			bracket += 1
 			while (start < total_brackets):
@@ -401,15 +410,16 @@ class tournament(ConsolePlugin):
 			for each in self.activeduel:		
 				if each['loses'] > 2:
 					self.endDuel(**kwargs)
-					kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val \" \"; ExecScript GlobalSet var R%sNB val \" \"; ExecScript GlobalSync" % (each['bracket'],each['bracket'] ))
+					kwargs['Broadcast'].broadcast("ExecScript GlobalSync")
 					return
 
-			if (self.activeduel[0]['wins']) < 3 and (self.activeduel[1]['wins'] < 3):
-				kwargs['Broadcast'].broadcast("ExecScript nextduelround")
+			if (killer == self.activeduel[0]['clinum']) or (killer == self.activeduel[1]['clinum']):
+				if (self.activeduel[0]['wins']) < 3 and (self.activeduel[1]['wins'] < 3):
+					kwargs['Broadcast'].broadcast("ExecScript nextduelround")
 		
 	def endDuel(self, **kwargs):
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#;" % (self.activeduel[0]['clinum']))
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#;" % (self.activeduel[1]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#; KillEntity #_index#" % (self.activeduel[0]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#; KillEntity #_index#" % (self.activeduel[1]['clinum']))
 
 		for each in self.activeduel:
 			if each['loses'] > 2:
@@ -419,7 +429,7 @@ class tournament(ConsolePlugin):
 			if each['loses'] < 3:
 				winner = each['name']
 
-		kwargs['Broadcast'].broadcast("ServerChat ^r%s has defeated ^r%s and moves on to the next round; ClientExecScript -1 releasemove" % (winner, loser))
+		kwargs['Broadcast'].broadcast("ServerChat ^r%s has defeated ^r%s and moves on to the next round" % (winner, loser))
 
 		self.activeduel = []
 		self.DUELROUND = 0
@@ -446,13 +456,14 @@ class tournament(ConsolePlugin):
 		#now to do the re-bracketing
 		start = 0
 		end = remaining - 1
-		rebracket = 0
 		doround = True
+
 		if (self.seededlist[start]['advance'] == 1):
-			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,self.seededlist[start]['name'],bracket))
+			bracket = self.seededlist[start]['bracket']
+			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket))
 			start += 1
 		
-		#while (start < remaining):
+		
 		while doround:	
 			bracket = self.seededlist[start]['bracket']
 			self.seededlist[end]['bracket'] = bracket
@@ -471,16 +482,17 @@ class tournament(ConsolePlugin):
 		clinum = winner['clinum']
 		wins = winner['totalwins']
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
-		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ExecScript victory" % (clinum))
+		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s)" % (clinum))
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.STARTED = 0
 		self.ORGANIZER = -1
 		self.RECRUIT = False
+		self.TOURNEYROUND = 0
 		for each in self.playerlist:
 			each['register'] = 0
 		
-		kwargs['Broadcast'].broadcast("ExecScript GlobalClear")
+		kwargs['Broadcast'].broadcast("ExecScript GlobalClear; ClientExecScript -1 ClientClear; ExecScript GlobalSync")
 
 	def getBye(self, **kwargs):
 		#give the bye to the highest seeded player that doesn't have a bye

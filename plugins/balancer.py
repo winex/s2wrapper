@@ -408,7 +408,7 @@ class balancer(ConsolePlugin):
 		avg1 = int(self.TOTAL1/self.STAMPS)
 		avg2 = int(self.TOTAL2/self.STAMPS)
 		
-		kwargs['Broadcast'].broadcast("Serverchat ^cHow stacked was this game from start to finish? Humans had an average combined BF of ^r%s^c, Beasts had an average combined BF of ^r%s ^c(from a total of ^y%s ^ctime points)." % (avg1, avg2, self.STAMPS))
+		kwargs['Broadcast'].broadcast("Serverchat ^cHow stacked was this game from start to finish? Humans had an average combined BF of ^r%s^c, Beasts had an average combined BF of ^r%s ^cfrom a total of ^y%s ^ctime points." % (avg1, avg2, self.STAMPS))
 		#clear out the team dictionary info and globals when the map is reloaded
 		del self.teamOne ['players'][:]
 		del self.teamTwo ['players'][:]
@@ -582,8 +582,8 @@ class balancer(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
 		
 		if (self.GAMESTARTED == 1):
-			self.TOTAL1 += self.teamOne ['totalBF']
-			self.TOTAL2 += self.teamTwo ['totalBF']
+			self.TOTAL1 += self.teamOne['combinedBF']
+			self.TOTAL2 += self.teamTwo['combinedBF']
 			self.STAMPS += 1
 
 	def evaluateBalance(self, BF1=0.0, BF2=0.0, moving=False, **kwargs):
