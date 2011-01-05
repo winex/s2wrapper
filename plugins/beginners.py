@@ -242,7 +242,7 @@ class beginners(ConsolePlugin):
 		avgkills = int(totalkills/activeplayers)
 		kwargs['Broadcast'].broadcast("echo BEGINNERS: Average kills: %s" % (avgkills))
 		for players in self.playerlist:
-			if each['active'] == 1:
+			if players['active'] == 1:
 				over = 'No'
 				if (players['kills'] > (avgkills * 3)) and (players['kills'] > 20):
 					over = 'Yes'
