@@ -123,7 +123,7 @@ class beginners(ConsolePlugin):
 				doKick = True
 				
 
-		if (sf > 160) and (total > 4):
+		if (sf > 140) and (total > 4):
 			reason = reason1
 			doKick = True
 			client ['banned'] = True
@@ -152,10 +152,17 @@ class beginners(ConsolePlugin):
 			self.onGameEnd()
 		if (phase == 5):
 			self.onGameStart(*args, **kwargs)
-					
-		
+		if (phase == 6):
+			self.onNewGame(**kwargs)			
+	
+	def onNewGame(self, *args, **kwargs):
+		reason = "Congratulations! You have done a great job and have graduated from this server."
+		for each in self.playerlist:
+			if each['banned']:		
+				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (each['clinum'], reason))
+
 	def onGameEnd(self, *args, **kwargs):
-		
+						
 		self.MATCHES += 1
 		#all players are unbanned after 15 matches
 		for each in self.playerlist:
@@ -181,8 +188,8 @@ class beginners(ConsolePlugin):
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 			
 		if self.PHASE == 5:
-			if (self.TIME > (5 * 60 * 1000)):
-				self.smurfCheck (**kwargs)
+			if (self.TIME > (10 * 60 * 1000)):
+				#self.smurfCheck (**kwargs)
 				print 'check'	
 
 	def onGetLevels(self, *args, **kwargs):
@@ -190,19 +197,6 @@ class beginners(ConsolePlugin):
 		level = int(args[1])
 		client = self.getPlayerByClientNum(clinum)
 		
-
-	def retrieveLevels(self, cli, **kwargs):
-
-		#kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; set _plevel #GetLevel(|#_index|#)#;echo CLIENT %s is LEVEL #_plevel#; set _plevel 1" % (cli, cli))
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; set _pteam #GetTeam(|#_index|#)#; set _plevel #GetLevel(|#_index|#)#; if [_pteam > 0] echo CLIENT %s is LEVEL #_plevel#; set _plevel 1; set _pteam 0" % (cli, cli))
-
-
-	def getTeamLevels(self, **kwargs):
-	
-		for player in self.playerlist:
-			if player['active'] == 1:
-				self.retrieveLevels(player['clinum'], **kwargs)
-
 
 	def onGetLevels(self, *args, **kwargs):
 		clinum = args[0]
@@ -249,7 +243,7 @@ class beginners(ConsolePlugin):
 					cli = players['clinum']
 					players['banned'] = True
 					players['banstamp'] = self.MATCHES
-					kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
+					#kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
 				kwargs['Broadcast'].broadcast("echo BEGINNERS: Player: %s, Kills: %s, Over?: %s" % (players['name'], players['kills'], over))
 				
 				
