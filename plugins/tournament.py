@@ -274,7 +274,7 @@ class tournament(ConsolePlugin):
 			while (start < total_brackets):
 				self.seededlist[start]['bracket'] = bracket
 				self.seededlist[end]['bracket'] = bracket
-				kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val %s" % (bracket,self.seededlist[start]['name'],bracket,self.seededlist[end]['name']))	
+				kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s; ExecScript GlobalSet var R%sNB val %s; ExecScript GlobalSet var R%sFB val %s;" % (bracket, self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket,self.seededlist[end]['name'],bracket,self.seededlist[end]['sf']))	
 				start += 1
 				end -= 1
 				bracket += 1
@@ -286,13 +286,13 @@ class tournament(ConsolePlugin):
 			self.seededlist[start]['bye'] = 1
 			self.seededlist[start]['bracket'] = bracket
 			self.seededlist[start]['advance'] = 1
-			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket))
+			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket))
 			start += 1
 			bracket += 1
 			while (start < total_brackets):
 				self.seededlist[start]['bracket'] = bracket
 				self.seededlist[end]['bracket'] = bracket
-				kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val %s" % (bracket,self.seededlist[start]['name'],bracket,self.seededlist[end]['name']))
+				kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s;ExecScript GlobalSet var R%sNB val %s; ExecScript GlobalSet var R%sFB val %s;" % (bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket,self.seededlist[end]['name'],bracket,self.seededlist[end]['sf']))
 				bracket += 1
 				start += 1
 				end -= 1
@@ -460,14 +460,14 @@ class tournament(ConsolePlugin):
 
 		if (self.seededlist[start]['advance'] == 1):
 			bracket = self.seededlist[start]['bracket']
-			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket))
+			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket))
 			start += 1
 		
 		
 		while doround:	
 			bracket = self.seededlist[start]['bracket']
 			self.seededlist[end]['bracket'] = bracket
-			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sNB val %s" % (bracket,self.seededlist[start]['name'],bracket,self.seededlist[end]['name']))
+			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s;ExecScript GlobalSet var R%sNB val %s;ExecScript GlobalSet var R%sFB val %s;" % (bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket,self.seededlist[end]['name'],bracket,self.seededlist[end]['sf']))
 			if (end - start) == 1:
 				doround = False
 			start += 1

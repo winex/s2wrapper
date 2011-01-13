@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/28/10 - Minor fixes
+# 1/12/10 - Change kick message
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-	VERSION = "1.0.2"
+	VERSION = "1.0.3"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -33,7 +33,7 @@ class balancer(ConsolePlugin):
 	TOTAL1 = 0
 	TOTAL2 = 0
 	STAMPS = 0
-	reason = "You must have non-zero SF to play on this server"
+	reason = "Your Skill Factor is 0. Please play some matches on official beginner servers to get some stats before you join this server."
 	playerlist = []
 	itemlist = []
 	balancereport = []
