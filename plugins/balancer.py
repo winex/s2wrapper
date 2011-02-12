@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 1/12/10 - Change kick message
+# 2/04/11 - Add protection for errors when BF gets calculated as very large.
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-	VERSION = "1.0.3"
+	VERSION = "1.0.4"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -934,7 +934,15 @@ class balancer(ConsolePlugin):
 
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		
+		#added these to prevent any moves if there is an error in BF calculation that has sprung up on occasion
+		for clients in self.teamOne['players']:
+			if clients['bf'] > 1000:
+				kwargs['Broadcast'].broadcast("echo refresh")
+				return
+		for clients in self.teamTwo['players']:
+			if clients['bf'] > 1000:
+				kwargs['Broadcast'].broadcast("echo refresh")
+				return
 
 		self.DIFFERENCE = abs(self.evaluateBalance())
 		print(self.DIFFERENCE)
@@ -947,8 +955,16 @@ class balancer(ConsolePlugin):
 
 	def UnEvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
-		
-		
+		#added these to prevent any moves if there is an error in BF calculation that has sprung up on occasion
+		for clients in self.teamOne['players']:
+			if clients['bf'] > 1000:
+				kwargs['Broadcast'].broadcast("echo refresh")
+				return
+		for clients in self.teamTwo['players']:
+			if clients['bf'] > 1000:
+				kwargs['Broadcast'].broadcast("echo refresh")
+				return		
+
 		overcheck = self.evaluateBalance()
 		self.DIFFERENCE = abs(self.evaluateBalance())
 		#In this scenario, the larger team has a much lower BF, so do a player swap instead of a single move.

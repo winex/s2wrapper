@@ -28,13 +28,21 @@ class tournament(ConsolePlugin):
 	DUELROUND = 0
 	TOURNEYROUND = 0
 	MISSING = -1
+	DOUBLEELIM = True
+	CURRENT = 1
+	lastwinner = -1
+	lastloser = -1
 	playerlist = []
 	tourneylist = {'totalplayers' : 0, 'players' : []}
 	seededlist = []
 	activeduel = []
+	statueangle = []
 	unitlist = []
+	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540']
 	counts = 4
 	counter = 0
+	OFFICIAL = False
+	STATUE = 1
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
@@ -61,10 +69,18 @@ class tournament(ConsolePlugin):
 		self.playerlist = []
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
+		self.winnerlist = []
+		self.loserlist = []
 		self.activeduel = []
 		self.unitlist = []
 		self.counts = 4
 		self.counter = 0
+		self.statueangle = ["0.0000 0.0000 161.7999",
+				    "0.0000 0.0000 107.5998",
+				    "0.0000 0.0000 53.1997",
+				    "0.0000 0.0000 -22.6002",
+				    "0.0000 0.0000 -63.0003",			    
+				    "0.0000 0.0000 -109.2003"]
 
 	def getPlayerByClientNum(self, cli):
 
@@ -77,8 +93,6 @@ class tournament(ConsolePlugin):
 		for client in self.playerlist:
 			if (client['name'].lower() == name.lower()):
 				return client
-
-
 
 	def onConnect(self, *args, **kwargs):
 		
@@ -95,7 +109,7 @@ class tournament(ConsolePlugin):
 				
 								
 				return
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'index' : 0, 'active' : 1, 'register' : 0})
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'index' : 0, 'active' : 1, 'register' : 0, 'loses' : 0})
 
 	def onDisconnect(self, *args, **kwargs):
 		
@@ -156,7 +170,7 @@ class tournament(ConsolePlugin):
 	def RegisterScripts(self, **kwargs):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
-		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Chaplain']
+		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Marksman']
 		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")
 		#kwargs['Broadcast'].broadcast("")
 		
@@ -180,6 +194,14 @@ class tournament(ConsolePlugin):
 		if (action == 'ALLOW'):
 			self.allow(clinum, index, **kwargs)
 		
+	def isAdmin(self, client, **kwargs):
+		admin = False
+		
+		for each in self.adminlist:
+			if client['name'] == each:
+				admin = True
+		
+		return admin
 
 	def onMessage(self, *args, **kwargs):
 		
@@ -187,16 +209,78 @@ class tournament(ConsolePlugin):
 		message = args[2]
 		
 		client = self.getPlayerByName(name)
-		
-		start = re.match("start", message, flags=re.IGNORECASE)		
-		register = re.match("register", message, flags=re.IGNORECASE)
+		admin = self.isAdmin(client, **kwargs)
+		#only admins are allowed to start/add/redo/etc. if the tournament is official
+		if self.OFFICIAL and not admin:
+			return
+
+		start = re.match("start", message, flags=re.IGNORECASE)
+		official = re.match("toggle official", message, flags=re.IGNORECASE)
+		redo = re.match("redo", message, flags=re.IGNORECASE)
+		next = re.match("next", message, flags=re.IGNORECASE)
+		elim = re.match("double", message, flags=re.IGNORECASE)
+
+		#lets admin register people, even if not official tournament
+		if admin:	
+			register = re.match("register (\S+)", message, flags=re.IGNORECASE)
+			
+		else:
+			register = re.match("register", message, flags=re.IGNORECASE)
+
 		if start:
 			self.start (client, **kwargs)
+
 		if register:
+			if admin:
+				client = self.getPlayerByName(register.group(1))
 			self.register (client, **kwargs)
+
+		if official and admin:
+			self.toggleOfficial (client, **kwargs)
 		
+		if redo and admin:
+			self.redoDuel (**kwargs)
+
+		if next and admin:
+			self.endDuel (**kwargs)
+
+		if elim and admin:
+			if self.STARTED == 1:
+				return
+			self.DOUBLEELIM = True
+			kwargs['Broadcast'].broadcast("SendMessage %s ^yDouble Elimination: ^c%s" % (client['clinum'], self.DOUBLEELIM))
+	def toggleOfficial (self, client, **kwargs):	
+
+		
+		if self.OFFICIAL:
+			self.OFFICIAL = False
+		else:
+			self.OFFICIAL = True
+
+		kwargs['Broadcast'].broadcast("SendMessage %s ^rOfficial Status: %s" % (client['clinum'], self.OFFICIAL))
+
+	def redoDuel (self, **kwargs):	
+
+		self.DUELROUND -= 2
+		print self.DUELROUND
+
+		for each in self.activeduel:
+			if (each['clinum'] == self.lastloser):
+				each['loses'] -= 1
+									
+			if (each['clinum'] == self.lastwinner):
+				each['wins'] -= 1
+				kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sS%s val %s" % (each['bracket'], each['column'], each['wins']))
+				kwargs['Broadcast'].broadcast("ExecScript GlobalSync")
+		
+		kwargs['Broadcast'].broadcast("set _DUELER1 -1; set _DUELER2 -1")
+		self.nextDuelRound(**kwargs)
+
 	def start (self, client, **kwargs):
+
+		admin = self.isAdmin(client, **kwargs)
 		
+				
 		if self.RECRUIT or self.STARTED == 1:
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rA tournament has already been started. You must wait till the current tournament ends to start a new one." % (client['clinum']))
 			return
@@ -215,15 +299,23 @@ class tournament(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("ServerChat ^r%s ^chas started a tournament! To join the tournament, send the message 'register' to ALL, SQUAD, or TEAM chat.; ExecScript starttourney; ExecScript GlobalSet var TSB val %s; ExecScript GlobalShowDuel" % (client['name'], client['name']))
 		self.ORGANIZER = client['clinum']
 		#kwargs['Broadcast'].broadcast("ClientExecScript %s organize" % (client['clinum']))
-		#self.counter = 3
-		#kwargs['Broadcast'].broadcast("Serverchat ^cYou have %s minutes left to register for the next tournament by sending the message 'register' in game chat." % (self.counter))
-		#threading.thread(self.RegisterStart(**kwargs))
+		#kwargs['Broadcast'].broadcast("ExecScript GlobalGiveRegisterSkill")
+		
 		
 
 	def register (self, client, **kwargs):
 
 		if self.RECRUIT and client['register'] == 0:
-			self.tourneylist ['players'].append ({'clinum' : client['clinum'], 'name' : client['name'], 'sf' : client['sf'], 'level' : client['level'], 'totalwins' : 0, 'seed' : 0, 'advance' : 2, 'bye' : 0, 'bracket' : 0})	
+			self.tourneylist ['players'].append ({'clinum' : client['clinum'],
+							      'name' : client['name'],
+							      'sf' : client['sf'],
+							      'level' : client['level'],
+							      'totalwins' : 0,
+							      'totalloses' : 0,
+							      'seed' : 0,
+							      'advance' : 2,
+							      'bye' : 0,
+							      'bracket' : 0})	
 			client['register'] = 1
 			self.tourneylist ['totalplayers'] += 1
 			kwargs['Broadcast'].broadcast("Serverchat ^r%s ^chas registered for the tournament." % (client ['name']))
@@ -233,6 +325,7 @@ class tournament(ConsolePlugin):
 			return
 
 	def RegisterStart(self, **kwargs):
+
 		self.RECRUIT = False
 		self.STARTED = 1
 		self.SeedPlayers(**kwargs)
@@ -252,7 +345,7 @@ class tournament(ConsolePlugin):
 		
 			kwargs['Broadcast'].broadcast("ClientExecScript -1 ClientClear")
 			kwargs['Broadcast'].broadcast("Serverchat The tournament must have 3 people to start. Aborting.")
-			#self.endTourney(**kwargs)
+			
 			return
 
 		self.seededlist = sorted(self.tourneylist ['players'], key=itemgetter('sf', 'level', 'clinum'), reverse=True)
@@ -286,9 +379,12 @@ class tournament(ConsolePlugin):
 			self.seededlist[start]['bye'] = 1
 			self.seededlist[start]['bracket'] = bracket
 			self.seededlist[start]['advance'] = 1
+			self.winnerlist.append(self.seededlist[start])
+			
 			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket))
 			start += 1
 			bracket += 1
+
 			while (start < total_brackets):
 				self.seededlist[start]['bracket'] = bracket
 				self.seededlist[end]['bracket'] = bracket
@@ -297,10 +393,8 @@ class tournament(ConsolePlugin):
 				start += 1
 				end -= 1
 
-		kwargs['Broadcast'].broadcast("Serverchat ^cThe tournament seeding is as follows:")
+		
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var CR val 1; ExecScript GlobalSync; ")
-		for each in self.seededlist:
-			kwargs['Broadcast'].broadcast("Serverchat ^cSeed: ^y%s ^cPlayer: ^y%s ^cSF: ^y%s" % (each['seed'], each['name'], each['sf']))
 		
 		
 		self.checkRound(**kwargs)
@@ -386,7 +480,7 @@ class tournament(ConsolePlugin):
 				if (players['clinum'] == clinum) and (players['active'] == 0):
 					self.MISSING = players['clinum']
 					name = players['name']
-					kwargs['Broadcast'].broadcast("ServerChat ^cThe next duel is between ^r%s ^cand ^r%s^c, but ^r%s has disconnected. They have 2 minutes to reconnect or they will lose the round.; set _MISSING %s; ExecScript missingfighter" % (self.activeduel[0]['name'],self.activeduel[1]['name'], name, self.MISSING))
+					kwargs['Broadcast'].broadcast("ServerChat ^cThe next duel is between ^r%s ^cand ^r%s^c, but ^r%s ^chas disconnected. They have 2 minutes to reconnect or they will lose the round.; set _MISSING %s; ExecScript missingfighter" % (self.activeduel[0]['name'],self.activeduel[1]['name'], name, self.MISSING))
 					return False
 		return True
 
@@ -400,16 +494,18 @@ class tournament(ConsolePlugin):
 		if self.STARTED == 1:
 			for each in self.activeduel:
 				if (each['clinum'] == killed):
+					self.lastloser = each['clinum']
 					each['loses'] += 1
 					kwargs['Broadcast'].broadcast("set _idx #GetIndexFromClientNum(%s)#; TakeItem #_idx# 9; set _DUELER1 -1; set _DUELER2 -1" % (each['clinum']))
-
+					
 				if (each['clinum'] == killer):
+					self.lastwinner = each['clinum']
 					each['wins'] += 1
 					kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sS%s val %s; ExecScript GlobalSync" % (each['bracket'], each['column'], each['wins']))
-			
+					
 			for each in self.activeduel:		
 				if each['loses'] > 2:
-					self.endDuel(**kwargs)
+					self.checkendDuel(**kwargs)
 					kwargs['Broadcast'].broadcast("ExecScript GlobalSync")
 					return
 
@@ -417,37 +513,96 @@ class tournament(ConsolePlugin):
 				if (self.activeduel[0]['wins']) < 3 and (self.activeduel[1]['wins'] < 3):
 					kwargs['Broadcast'].broadcast("ExecScript nextduelround")
 		
-	def endDuel(self, **kwargs):
+	def checkendDuel(self, **kwargs):
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#; KillEntity #_index#" % (self.activeduel[0]['clinum']))
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#; KillEntity #_index#" % (self.activeduel[1]['clinum']))
 
+		if not self.OFFICIAL:
+			self.endDuel(**kwargs)
+			return
+		if self.OFFICIAL:
+			kwargs['Broadcast'].broadcast("SendMessage %s This round is over. Please send message 'next' to chat for the next duel, or 'redo' if there was an error." % (self.ORGANIZER))			
+			
+	def endDuel(self, **kwargs):
+	
 		for each in self.activeduel:
-			if each['loses'] > 2:
-				loser = each['name']
-				clinum = each['clinum']
-				self.removePlayer(each['clinum'])
-			if each['loses'] < 3:
-				winner = each['name']
-
-		kwargs['Broadcast'].broadcast("ServerChat ^r%s has defeated ^r%s and moves on to the next round" % (winner, loser))
+				if each['loses'] > 2:
+					loser = each['name']
+					clinum = each['clinum']
+					each['totalloses'] += 1
+					self.loserlist.append(each)
+					self.removePlayer(each['clinum'])
+				if each['loses'] < 3:
+					winner = each['name']
+					each['totalwins'] += 1
+					if each['totalloses'] == 0:
+						self.winnerlist.append(each)
+					if each['totalloses'] == 1:
+						self.loserlist.append(each)
+		kwargs['Broadcast'].broadcast("ServerChat ^y%s ^chas defeated ^y%s ^cand moves on to the next round" % (winner, loser))
 
 		self.activeduel = []
 		self.DUELROUND = 0
 		self.checkRound(**kwargs)
-		
 
+	def swapList(self, winners, losers, **kwargs):
+		
+		#gets if we are currently in winners or losers bracket, 1 = winner 2 = losers
+		#special condition, all remaining players are in losers bracket
+		if winners == 0:
+			self.CURRENT = 2
+			self.seededlist = self.loserlist
+			self.loserlist = []
+			return
+		#special condition, all are in winners bracket
+		if losers == 0:
+			self.CURRENT = 1
+			self.seededlist = self.winnerlist
+			self.winnerlist = []
+			return
+
+		#special condition, split brackets
+		if losers == winners == 1:
+			self.seededlist = [self.winnerlist[0], self.loserlist[0]]
+			self.loserlist = []
+			self.winnerlist = []
+			print self.seededlist
+			return
+
+		if self.CURRENT == 1:
+			self.CURRENT = 2
+			self.seededlist = self.loserlist
+			self.loserlist = []
+			return
+
+		if self.CURRENT == 2:
+			self.CURRENT = 1
+			self.seededlist = self.winnerlist
+			self.winnerlist = []
+			
+
+		
 	def nextRound(self, **kwargs):
-		kwargs['Broadcast'].broadcast("ExecScript GlobalClear")
+		kwargs['Broadcast'].broadcast("ExecScript GlobalClear; ClientExecScript -1 releasemove")
+		
 		print 'made it to nextRound'
 		remaining = 0
 		self.TOURNEYROUND += 1
-		for each in self.seededlist:
-			each['advance'] = 2
-			each['totalwins'] += 1
-			remaining += 1
+		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val %s" % (self.TOURNEYROUND))
+		
+					
+		if self.DOUBLEELIM:
+			winners = self.getRemaining(self.winnerlist, **kwargs)
+			losers = self.getRemaining(self.loserlist, **kwargs)
+			remaining = winners + losers
+			self.swapList(winners, losers)
+
+		remaining = self.getRemaining(self.seededlist, **kwargs)
+		
 		if (remaining == 1):
 			self.endTourney(**kwargs)		
 			return
+
 		if (remaining % (2)) != 0:
 			self.getBye(**kwargs)
 		
@@ -459,7 +614,12 @@ class tournament(ConsolePlugin):
 		doround = True
 
 		if (self.seededlist[start]['advance'] == 1):
+			byer = self.seededlist[start]
 			bracket = self.seededlist[start]['bracket']
+			if byer['totalloses'] == 1:
+				self.loserlist.append(byer)
+			if byer['totalloses'] == 0:
+				self.winnerlist.append(byer)
 			kwargs['Broadcast'].broadcast("ExecScript GlobalSet var R%sSA val 3; ExecScript GlobalSet var R%sNA val %s; ExecScript GlobalSet var R%sFA val %s; ExecScript GlobalSet var R%sNB val BYE" % (bracket,bracket,self.seededlist[start]['name'],bracket,self.seededlist[start]['sf'],bracket))
 			start += 1
 		
@@ -476,6 +636,15 @@ class tournament(ConsolePlugin):
 		print self.seededlist
 		self.checkRound(**kwargs)
 
+	def getRemaining(self, getlist, **kwargs):
+		remaining = 0
+
+		for each in getlist:
+			each['advance'] = 2
+			remaining += 1
+
+		return remaining
+
 	def endTourney(self, **kwargs):
 		winner = self.seededlist[0]
 		name = winner['name']
@@ -483,16 +652,28 @@ class tournament(ConsolePlugin):
 		wins = winner['totalwins']
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
 		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s)" % (clinum))
+		
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
+		self.winnerlist = []
+		self.loserlist = []
+		self.CURRENT = 1
 		self.STARTED = 0
 		self.ORGANIZER = -1
 		self.RECRUIT = False
 		self.TOURNEYROUND = 0
+		#self.DOUBLEELIM = False
 		for each in self.playerlist:
 			each['register'] = 0
 		
-		kwargs['Broadcast'].broadcast("ExecScript GlobalClear; ClientExecScript -1 ClientClear; ExecScript GlobalSync")
+		kwargs['Broadcast'].broadcast("ExecScript GlobalClear; ExecScript GlobalSync")
+
+		#Adds a statue only for official tournaments
+		if self.OFFICIAL:
+			kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
+			self.STATUE += 1
+			if self.STATUE > 6:
+				self.STATUE = 1
 
 	def getBye(self, **kwargs):
 		#give the bye to the highest seeded player that doesn't have a bye
@@ -518,11 +699,14 @@ class tournament(ConsolePlugin):
 		pick['advance'] = 1
 
 	def removePlayer(self, clinum, **kwargs):
-		#remove a player when they have been defeated
+		#remove a player when they have been defeated, if double elimination they have been moved to self.loserlist with single loss.
 		for each in self.seededlist:
 			if each['clinum'] == clinum:
 				self.seededlist.remove(each)
-
-		
+		#for double elimination, remove them all together if they have two loses
+		for each in self.loserlist:
+			if each['clinum'] == clinum:
+				if each['totalloses'] > 1:
+					self.loserlist.remove(each)
 
 				
