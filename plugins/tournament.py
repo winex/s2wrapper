@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 12/22/10 - Added end of game balance report, VERSION 1.0.1 (first version stamp, so arbitrary)
+# THIS PLUGIN REQUIRES A SPECIFIC MAP. It can be modified for other maps, but note that the blocker list needs to be changed
 import re
 import math
 import time
@@ -28,7 +28,7 @@ class tournament(ConsolePlugin):
 	DUELROUND = 0
 	TOURNEYROUND = 0
 	MISSING = -1
-	DOUBLEELIM = True
+	DOUBLEELIM = False
 	CURRENT = 1
 	lastwinner = -1
 	lastloser = -1
@@ -38,7 +38,8 @@ class tournament(ConsolePlugin):
 	activeduel = []
 	statueangle = []
 	unitlist = []
-	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540']
+	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540', 'Pidgeoni']
+	blockerlist = []
 	counts = 4
 	counter = 0
 	OFFICIAL = False
@@ -172,7 +173,19 @@ class tournament(ConsolePlugin):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
 		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Marksman']
-		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")
+
+		self.blockerlist = [{'angles' : '0.0000 0.0000 -3.4000', 'name' : 'blocker1', 'position' : '7751.7021 8648.5215 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 38.6000', 'name' : 'blocker2', 'position' : '7112.2378 8417.8262 -148.7921', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 74.8001', 'name' : 'blocker3', 'position' : '6739.8462 8053.7290 -33.6641', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 105.200', 'name' : 'blocker4', 'position' : '6751.2056 7424.2529 20.8391', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 142.000', 'name' : 'blocker5', 'position' : '7105.5361 6935.4971 -244.8373', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 176.800', 'name' : 'blocker6', 'position' : '7682.2261 6741.1899 -246.9767', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 210.400', 'name' : 'blocker7', 'position' : '8237.4541 6833.5957 -14.6271', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 249.200', 'name' : 'blocker8', 'position' : '8587.6348 7221.5093 -58.0270 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 277.800', 'name' : 'blocker9', 'position' : '8664.1816 7800.2666 -182.6546', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 304.200', 'name' : 'blocker10', 'position' : '8420.5273 8446.7617 -6.7577', 'scale' : '33.4070'}]
+
+		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")		
 		#kwargs['Broadcast'].broadcast("")
 		
 		
@@ -221,7 +234,8 @@ class tournament(ConsolePlugin):
 		next = re.match("next", message, flags=re.IGNORECASE)
 		elim = re.match("double", message, flags=re.IGNORECASE)
 		fail = re.match("remove (\S+)", message, flags=re.IGNORECASE)
-		roundunit = re.match("Round (\S+) Unit (\S+)", message, flags=re.IGNORECASE) 
+		roundunit = re.match("Round (\S+) Unit (\S+)", message, flags=re.IGNORECASE)
+		blocker = re.match("blocker (\S+)", message, flags=re.IGNORECASE)
 		#lets admin register people, even if not official tournament
 		if admin:	
 			register = re.match("register (\S+)", message, flags=re.IGNORECASE)
@@ -270,6 +284,18 @@ class tournament(ConsolePlugin):
 			if killer > -1 and killed > -1:
 				self.onDeath(killer, killed, **kwargs)
 				kwargs['Broadcast'].broadcast("SendMessage %s ^yAn administrator as removed you from the tournament" % (killed))
+
+		if blocker and admin:
+			print 'doing blocker....'
+			print self.blockerlist
+			print blocker.group(1)
+			if blocker.group(1) == 'on':
+				for each in self.blockerlist:
+					kwargs['Broadcast'].broadcast("SpawnEntity Prop_Scenery model \"/world/props/tools/blocker_range.mdf\" position \"%s\" name \"%s\" angles \"%s\" scale \"%s\"" % (each['position'], each['name'], each['angles'], each['scale']))
+
+			if blocker.group(1) == "off":
+				for each in self.blockerlist:
+					kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(%s)#" % (each['name']))
 
 		if elim and admin:
 			if self.STARTED == 1:
@@ -475,8 +501,8 @@ class tournament(ConsolePlugin):
 		if self.fightersPresent(**kwargs):
 			
 			self.getUnit(**kwargs)
-			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; ResetAttributes #_index#; SetPosition #_index# #_p1x# #_p1y# #_p1z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 1 value %s;" % (self.activeduel[0]['clinum'],self.activeduel[0]['clinum'], self.activeduel[0]['clinum']))
-			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#;  ResetAttributes #_index#; SetPosition #_index# #_p2x# #_p2y# #_p2z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 2 value %s;" % (self.activeduel[1]['clinum'],self.activeduel[1]['clinum'],self.activeduel[1]['clinum']))
+			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal; StartEffectOnObject #_index# \"shared/effects/green_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p1x# #_p1y# #_p1z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 1 value %s;" % (self.activeduel[0]['clinum'],self.activeduel[0]['clinum'], self.activeduel[0]['clinum']))
+			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal; StartEffectOnObject #_index# \"shared/effects/red_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p2x# #_p2y# #_p2z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 2 value %s;" % (self.activeduel[1]['clinum'],self.activeduel[1]['clinum'],self.activeduel[1]['clinum']))
 				
 		else:
 			
@@ -518,7 +544,7 @@ class tournament(ConsolePlugin):
 				if (players['clinum'] == clinum) and (players['active'] == 0):
 					self.MISSING = players['clinum']
 					name = players['name']
-					kwargs['Broadcast'].broadcast("ServerChat ^cThe next duel is between ^r%s ^cand ^r%s^c, but ^r%s ^chas disconnected. They have 2 minutes to reconnect or they will lose the round.; set _MISSING %s; ExecScript missingfighter" % (self.activeduel[0]['name'],self.activeduel[1]['name'], name, self.MISSING))
+					kwargs['Broadcast'].broadcast("ServerChat ^cThe next duel is between ^r%s ^cand ^r%s^c, but ^r%s ^chas disconnected. They have 1 minute to reconnect or they will lose the round.; set _MISSING %s; ExecScript missingfighter" % (self.activeduel[0]['name'],self.activeduel[1]['name'], name, self.MISSING))
 					return False
 		return True
 
@@ -558,8 +584,8 @@ class tournament(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("ExecScript nextduelround")
 		
 	def checkendDuel(self, **kwargs):
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e1x# #_e1y# #_e1z#; KillEntity #_index#" % (self.activeduel[0]['clinum']))
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetPosition #_index# #_e2x# #_e2y# #_e2z#; KillEntity #_index#" % (self.activeduel[1]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/green_aura.effect\"; SetPosition #_index# #_e1x# #_e1y# #_e1z#; KillEntity #_index#" % (self.activeduel[0]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/red_aura.effect\"; SetPosition #_index# #_e2x# #_e2y# #_e2z#; KillEntity #_index#" % (self.activeduel[1]['clinum']))
 
 		if not self.OFFICIAL:
 			self.endDuel(**kwargs)
@@ -743,7 +769,7 @@ class tournament(ConsolePlugin):
 		self.RECRUIT = False
 		self.TOURNEYROUND = 0
 		self.MISSING = -1
-		#self.DOUBLEELIM = False
+		self.DOUBLEELIM = False
 		for each in self.playerlist:
 			each['register'] = 0
 		
