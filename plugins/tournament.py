@@ -776,11 +776,11 @@ class tournament(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val 0; ExecScript GlobalClear; ExecScript GlobalSync")
 
 		#Adds a statue only for official tournaments
-		if self.OFFICIAL:
-			kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
-			self.STATUE += 1
-			if self.STATUE > 6:
-				self.STATUE = 1
+		
+		kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
+		self.STATUE += 1
+		if self.STATUE > 6:
+			self.STATUE = 1
 
 	def getBye(self, **kwargs):
 		#give the bye to the highest seeded player that doesn't have a bye
