@@ -37,8 +37,9 @@ class tournament(ConsolePlugin):
 	seededlist = []
 	activeduel = []
 	statueangle = []
+	statuelist = []
 	unitlist = []
-	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540', 'Pidgeoni']
+	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540', 'Pidgeoni', 'Inoyoulikeme']
 	blockerlist = []
 	counts = 4
 	counter = 0
@@ -60,6 +61,7 @@ class tournament(ConsolePlugin):
 
 	def onStartServer(self, *args, **kwargs):
 		print 'SERVER RESTARTED'
+		self.statuelist = []
 		self.STARTED = 0
 		self.MINIMUM =  2
 		self.RECRUIT = False
@@ -76,12 +78,28 @@ class tournament(ConsolePlugin):
 		self.unitlist = []
 		self.counts = 4
 		self.counter = 0
+		f = open('winners.txt', 'r')
+		self.statuelist = f.readlines()
+		f.close()
+			
 		self.statueangle = ["0.0000 0.0000 161.7999",
 				    "0.0000 0.0000 107.5998",
 				    "0.0000 0.0000 53.1997",
 				    "0.0000 0.0000 -22.6002",
 				    "0.0000 0.0000 -63.0003",			    
 				    "0.0000 0.0000 -109.2003"]
+
+		self.blockerlist = [{'angles' : '0.0000 0.0000 -3.4000', 'name' : 'blocker1', 'position' : '7751.7021 8648.5215 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 38.6000', 'name' : 'blocker2', 'position' : '7112.2378 8417.8262 -148.7921', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 74.8001', 'name' : 'blocker3', 'position' : '6739.8462 8053.7290 -33.6641', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 105.200', 'name' : 'blocker4', 'position' : '6751.2056 7424.2529 20.8391', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 142.000', 'name' : 'blocker5', 'position' : '7105.5361 6935.4971 -244.8373', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 176.800', 'name' : 'blocker6', 'position' : '7682.2261 6741.1899 -246.9767', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 210.400', 'name' : 'blocker7', 'position' : '8237.4541 6833.5957 -14.6271', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 249.200', 'name' : 'blocker8', 'position' : '8587.6348 7221.5093 -58.0270 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 277.800', 'name' : 'blocker9', 'position' : '8664.1816 7800.2666 -182.6546', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 304.200', 'name' : 'blocker10', 'position' : '8420.5273 8446.7617 -6.7577', 'scale' : '33.4070'}]
+		self.spawnStatues(**kwargs)
 
 	def getPlayerByClientNum(self, cli):
 
@@ -173,17 +191,6 @@ class tournament(ConsolePlugin):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
 		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Marksman']
-
-		self.blockerlist = [{'angles' : '0.0000 0.0000 -3.4000', 'name' : 'blocker1', 'position' : '7751.7021 8648.5215 -215.2963', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 38.6000', 'name' : 'blocker2', 'position' : '7112.2378 8417.8262 -148.7921', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 74.8001', 'name' : 'blocker3', 'position' : '6739.8462 8053.7290 -33.6641', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 105.200', 'name' : 'blocker4', 'position' : '6751.2056 7424.2529 20.8391', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 142.000', 'name' : 'blocker5', 'position' : '7105.5361 6935.4971 -244.8373', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 176.800', 'name' : 'blocker6', 'position' : '7682.2261 6741.1899 -246.9767', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 210.400', 'name' : 'blocker7', 'position' : '8237.4541 6833.5957 -14.6271', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 249.200', 'name' : 'blocker8', 'position' : '8587.6348 7221.5093 -58.0270 -215.2963', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 277.800', 'name' : 'blocker9', 'position' : '8664.1816 7800.2666 -182.6546', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 304.200', 'name' : 'blocker10', 'position' : '8420.5273 8446.7617 -6.7577', 'scale' : '33.4070'}]
 
 		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")		
 		#kwargs['Broadcast'].broadcast("")
@@ -584,14 +591,14 @@ class tournament(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("ExecScript nextduelround")
 		
 	def checkendDuel(self, **kwargs):
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/green_aura.effect\"; SetPosition #_index# #_e1x# #_e1y# #_e1z#; KillEntity #_index#" % (self.activeduel[0]['clinum']))
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/red_aura.effect\"; SetPosition #_index# #_e2x# #_e2y# #_e2z#; KillEntity #_index#" % (self.activeduel[1]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/green_aura.effect\"; SetPosition #_index# #_e1x# #_e1y# #_e1z#; ChangeUnit #_index# Player_Savage  true false false false false false false" % (self.activeduel[0]['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; StopEffectOnObject #_index# \"shared/effects/red_aura.effect\"; SetPosition #_index# #_e2x# #_e2y# #_e2z#; ChangeUnit #_index# Player_Savage  true false false false false false false" % (self.activeduel[1]['clinum']))
 
 		if not self.OFFICIAL:
 			self.endDuel(**kwargs)
 			return
 		if self.OFFICIAL:
-			kwargs['Broadcast'].broadcast("SendMessage %s This round is over. Please send message 'next' to chat for the next duel, or 'redo' if there was an error." % (self.ORGANIZER))			
+			kwargs['Broadcast'].broadcast("SendMessage %s This duel is over. Please send message 'next' to chat for the next duel, or 'redo' if there was an error." % (self.ORGANIZER))			
 			
 	def endDuel(self, **kwargs):
 	
@@ -775,12 +782,15 @@ class tournament(ConsolePlugin):
 		
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val 0; ExecScript GlobalClear; ExecScript GlobalSync")
 
-		#Adds a statue only for official tournaments
-		
+		#Adds a statue
 		kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
 		self.STATUE += 1
 		if self.STATUE > 6:
 			self.STATUE = 1
+		#appends to file, winners.txt
+		f = open('winners.txt', 'a')
+		f.write("%s\n" % (name))
+		f.close()
 
 	def getBye(self, **kwargs):
 		#give the bye to the highest seeded player that doesn't have a bye
@@ -816,4 +826,10 @@ class tournament(ConsolePlugin):
 				if each['totalloses'] > 1:
 					self.loserlist.remove(each)
 
-				
+	def spawnStatues(self, **kwargs):
+		for each in self.statuelist:
+			kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],each))
+			self.STATUE += 1
+			if self.STATUE > 6:
+				self.STATUE = 1
+					
