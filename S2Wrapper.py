@@ -280,7 +280,7 @@ class ConsoleParser:
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onMapReset    : re.compile ('.*\d+\.\d+\s{3, 6}'),
 			# custom filters
-			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
+			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*) (\d+)'),
 			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
 			self.onTeamCheck : re.compile ('^SERVER-SIDE client count, Team 1 (\d+), Team 2 (\d+)'),
