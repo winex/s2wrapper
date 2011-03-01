@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 2/04/11 - Add protection for errors when BF gets calculated as very large.
+# 2/28/11 - Turn off getlevels since it isn't working well in some cases. Add lifetime SF for 0 sf old players
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-	VERSION = "1.0.4"
+	VERSION = "1.0.5"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -172,7 +172,10 @@ class balancer(ConsolePlugin):
 		sf = int(stats['sf'])
 		lf = int(stats['lf'])
 		exp = int(stats['exp'])
-
+		time = int(stats['secs'])
+		if sf == 0 and exp > 500:
+			time = time/60
+			sf = int(exp/time)
 		client = self.getPlayerByClientNum(cli)
 
 		client ['acctid'] = int(id)
@@ -227,9 +230,7 @@ class balancer(ConsolePlugin):
 		cli = client ['clinum']
 		item = 'clinum'
 		PLAYER_INDICE = self.getTeamMember(item, cli, fromteam)
-		
 		fromteam ['combinedBF'] -= fromteam['players'][PLAYER_INDICE]['bf']
-
 		del fromteam['players'][PLAYER_INDICE]
 		
 		self.getGameInfo(**kwargs)
@@ -578,7 +579,7 @@ class balancer(ConsolePlugin):
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
-		self.getTeamLevels(**kwargs)
+		#self.getTeamLevels(**kwargs)
 		kwargs['Broadcast'].broadcast("set _team1num #GetNumClients(1)#; set _team2num #GetNumClients(2)#; echo SERVER-SIDE client count, Team 1 #_team1num#, Team 2 #_team2num#")
 		
 		if (self.GAMESTARTED == 1):
@@ -1006,7 +1007,7 @@ class balancer(ConsolePlugin):
 						self.runBalancer (**kwargs)
 			return
 		else:
-			kwargs['Broadcast'].broadcast("Serverchat ^cBalancer is currently off until player counts can be verified.")
+			#kwargs['Broadcast'].broadcast("Serverchat ^cBalancer is currently off until player counts can be verified.")
 			kwargs['Broadcast'].broadcast("ListClients")
 			kwargs['Broadcast'].broadcast("echo refresh")
 			#this initiates turns balancer off and tries to refresh the teams to get the proper count

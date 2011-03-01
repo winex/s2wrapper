@@ -28,7 +28,7 @@ class tournament(ConsolePlugin):
 	DUELROUND = 0
 	TOURNEYROUND = 0
 	MISSING = -1
-	DOUBLEELIM = False
+	DOUBLEELIM = True
 	CURRENT = 1
 	lastwinner = -1
 	lastloser = -1
@@ -89,16 +89,7 @@ class tournament(ConsolePlugin):
 				    "0.0000 0.0000 -63.0003",			    
 				    "0.0000 0.0000 -109.2003"]
 
-		self.blockerlist = [{'angles' : '0.0000 0.0000 -3.4000', 'name' : 'blocker1', 'position' : '7751.7021 8648.5215 -215.2963', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 38.6000', 'name' : 'blocker2', 'position' : '7112.2378 8417.8262 -148.7921', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 74.8001', 'name' : 'blocker3', 'position' : '6739.8462 8053.7290 -33.6641', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 105.200', 'name' : 'blocker4', 'position' : '6751.2056 7424.2529 20.8391', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 142.000', 'name' : 'blocker5', 'position' : '7105.5361 6935.4971 -244.8373', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 176.800', 'name' : 'blocker6', 'position' : '7682.2261 6741.1899 -246.9767', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 210.400', 'name' : 'blocker7', 'position' : '8237.4541 6833.5957 -14.6271', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 249.200', 'name' : 'blocker8', 'position' : '8587.6348 7221.5093 -58.0270 -215.2963', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 277.800', 'name' : 'blocker9', 'position' : '8664.1816 7800.2666 -182.6546', 'scale' : '33.4070'},
-				    {'angles' : '0.0000 0.0000 304.200', 'name' : 'blocker10', 'position' : '8420.5273 8446.7617 -6.7577', 'scale' : '33.4070'}]
+		
 		self.spawnStatues(**kwargs)
 
 	def getPlayerByClientNum(self, cli):
@@ -708,7 +699,7 @@ class tournament(ConsolePlugin):
 		if (remaining % (2)) != 0:
 			self.getBye(**kwargs)
 		
-		self.seededlist = sorted(self.seededlist, key=itemgetter('advance', 'bracket', 'seed'))
+		self.seededlist = sorted(self.seededlist, key=itemgetter('advance', 'bracket'))
 
 		#re-seed the list if we are switching to the loser bracket
 		if self.CURRENT == 2:
