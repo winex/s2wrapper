@@ -8,7 +8,6 @@ import threading
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
-from repeattimer import RepeatTimer
 from operator import itemgetter
 from threading import Timer
 
@@ -89,8 +88,19 @@ class tournament(ConsolePlugin):
 				    "0.0000 0.0000 -63.0003",			    
 				    "0.0000 0.0000 -109.2003"]
 
+		self.blockerlist = [{'angles' : '0.0000 0.0000 -3.4000', 'name' : 'blocker1', 'position' : '7751.7021 8648.5215 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 38.6000', 'name' : 'blocker2', 'position' : '7112.2378 8417.8262 -148.7921', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 74.8001', 'name' : 'blocker3', 'position' : '6739.8462 8053.7290 -33.6641', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 105.200', 'name' : 'blocker4', 'position' : '6751.2056 7424.2529 20.8391', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 142.000', 'name' : 'blocker5', 'position' : '7105.5361 6935.4971 -244.8373', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 176.800', 'name' : 'blocker6', 'position' : '7682.2261 6741.1899 -246.9767', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 210.400', 'name' : 'blocker7', 'position' : '8237.4541 6833.5957 -14.6271', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 249.200', 'name' : 'blocker8', 'position' : '8587.6348 7221.5093 -58.0270 -215.2963', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 277.800', 'name' : 'blocker9', 'position' : '8664.1816 7800.2666 -182.6546', 'scale' : '33.4070'},
+				    {'angles' : '0.0000 0.0000 304.200', 'name' : 'blocker10', 'position' : '8420.5273 8446.7617 -6.7577', 'scale' : '33.4070'}]
 		
 		self.spawnStatues(**kwargs)
+		self.doBlockers('on',**kwargs)
 
 	def getPlayerByClientNum(self, cli):
 
@@ -108,7 +118,7 @@ class tournament(ConsolePlugin):
 		
 		id = args[0]
 		ip = args[2]
-		print ip
+		
 		reason = "You are banned from this server"
 		#Kicks Brewen
 		if (ip == "76.177.233.35"):
@@ -116,11 +126,10 @@ class tournament(ConsolePlugin):
 
 		for client in self.playerlist:
 			if (client['clinum'] == id):
-				
-								
 				return
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'index' : 0, 'active' : 1, 'register' : 0, 'loses' : 0})
-
+		
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'index' : 0, 'active' : 0, 'register' : 0, 'loses' : 0})
+	
 	def onDisconnect(self, *args, **kwargs):
 		
 		cli = args[0]
@@ -182,7 +191,7 @@ class tournament(ConsolePlugin):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
 		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Marksman']
-
+		
 		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")		
 		#kwargs['Broadcast'].broadcast("")
 		
@@ -284,22 +293,26 @@ class tournament(ConsolePlugin):
 				kwargs['Broadcast'].broadcast("SendMessage %s ^yAn administrator as removed you from the tournament" % (killed))
 
 		if blocker and admin:
-			print 'doing blocker....'
-			print self.blockerlist
-			print blocker.group(1)
-			if blocker.group(1) == 'on':
-				for each in self.blockerlist:
-					kwargs['Broadcast'].broadcast("SpawnEntity Prop_Scenery model \"/world/props/tools/blocker_range.mdf\" position \"%s\" name \"%s\" angles \"%s\" scale \"%s\"" % (each['position'], each['name'], each['angles'], each['scale']))
-
-			if blocker.group(1) == "off":
-				for each in self.blockerlist:
-					kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(%s)#" % (each['name']))
+		
+			self.doBlockers(blocker.group(1), **kwargs)
 
 		if elim and admin:
 			if self.STARTED == 1:
 				return
 			self.DOUBLEELIM = True
 			kwargs['Broadcast'].broadcast("SendMessage %s ^yDouble Elimination: ^c%s" % (client['clinum'], self.DOUBLEELIM))
+
+	def doBlockers (self, toggle, **kwargs):
+
+		if toggle == 'on':
+			for each in self.blockerlist:
+				kwargs['Broadcast'].broadcast("SpawnEntity Prop_Scenery model \"/world/props/tools/blocker_range.mdf\" position \"%s\" name \"%s\" angles \"%s\" scale \"%s\"" % (each['position'], each['name'], each['angles'], each['scale']))
+
+		if toggle == "off":
+			for each in self.blockerlist:
+				kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(%s)#" % (each['name']))
+
+		return
 
 	def toggleOfficial (self, client, **kwargs):	
 
@@ -755,7 +768,7 @@ class tournament(ConsolePlugin):
 		wins = winner['totalwins']
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
 		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
-		
+		kwargs['Broadcast'].broadcast("set svr_name ^yTourney - Last Winner: %s" % (name))
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.winnerlist = []
