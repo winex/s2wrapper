@@ -9,7 +9,6 @@ from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
-from threading import Timer
 
 #This plugin was written by Old55 and he takes full responsibility for the junk below.
 #He does not know python so the goal was to make something functional, not something
@@ -19,7 +18,7 @@ from threading import Timer
 
 
 class tournament(ConsolePlugin):
-	VERSION = "0.0.1"
+	VERSION = "0.1.1"
 	STARTED = 0
 	MINIMUM =  2
 	RECRUIT = False
@@ -27,7 +26,7 @@ class tournament(ConsolePlugin):
 	DUELROUND = 0
 	TOURNEYROUND = 0
 	MISSING = -1
-	DOUBLEELIM = True
+	DOUBLEELIM = False
 	CURRENT = 1
 	lastwinner = -1
 	lastloser = -1
@@ -38,26 +37,20 @@ class tournament(ConsolePlugin):
 	statueangle = []
 	statuelist = []
 	unitlist = []
-	adminlist = ['Old55', 'stony', 'Ledah', 'mozes540', 'Pidgeoni', 'Inoyoulikeme']
+	adminlist = []
 	blockerlist = []
-	counts = 4
-	counter = 0
 	OFFICIAL = False
 	STATUE = 1
+
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
-		#for (name, value) in config.items('balancer'):
-		#	if (name == "level"):
-		#		self._level = int(value)
+		for (name, value) in ini.items('admin'):
+			self.adminlist.append(name)
 
-		#	if (name == "sf"):
-		#		self._sf = int(value)
-		
-		pass
-
+		print self.adminlist
 	def onStartServer(self, *args, **kwargs):
 		print 'SERVER RESTARTED'
 		self.statuelist = []
@@ -120,9 +113,9 @@ class tournament(ConsolePlugin):
 		ip = args[2]
 		
 		reason = "You are banned from this server"
-		#Kicks Brewen
-		if (ip == "76.177.233.35"):
-			kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (id, reason))
+		#Kicks Brewen. 
+		#if (ip == "76.177.233.35"):
+		#	kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (id, reason))
 
 		for client in self.playerlist:
 			if (client['clinum'] == id):
@@ -219,7 +212,7 @@ class tournament(ConsolePlugin):
 		admin = False
 		
 		for each in self.adminlist:
-			if client['name'] == each:
+			if client['name'].lower() == each:
 				admin = True
 		
 		return admin
@@ -510,11 +503,12 @@ class tournament(ConsolePlugin):
 	def nextDuelRound(self, **kwargs):
 		
 		if self.fightersPresent(**kwargs):
-			
+			kwargs['Broadcast'].broadcast("set _DUEL 0")
 			self.getUnit(**kwargs)
-			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal; StartEffectOnObject #_index# \"shared/effects/green_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p1x# #_p1y# #_p1z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 1 value %s;" % (self.activeduel[0]['clinum'],self.activeduel[0]['clinum'], self.activeduel[0]['clinum']))
-			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal; StartEffectOnObject #_index# \"shared/effects/red_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p2x# #_p2y# #_p2z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove; ExecScript setdueler dueler 2 value %s;" % (self.activeduel[1]['clinum'],self.activeduel[1]['clinum'],self.activeduel[1]['clinum']))
-				
+			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal; StartEffectOnObject #_index# \"shared/effects/green_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p1x# #_p1y# #_p1z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove" % (self.activeduel[0]['clinum'],self.activeduel[0]['clinum']))
+			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; GiveItem #_index# 9 Spell_CommanderHeal;   StartEffectOnObject #_index# \"shared/effects/red_aura.effect\"; ResetAttributes #_index#; SetPosition #_index# #_p2x# #_p2y# #_p2z#; ChangeUnit #_index# #_UNIT# true false false false false false false; ClientExecScript %s holdmove" % (self.activeduel[1]['clinum'],self.activeduel[1]['clinum']))
+			kwargs['Broadcast'].broadcast("ExecScript setdueler dueler1 %s dueler2 %s;" % (self.activeduel[0]['clinum'], self.activeduel[1]['clinum']))
+			kwargs['Broadcast'].broadcast("Execscript duelcountdown")	
 		else:
 			
 			print 'player missing'
@@ -768,7 +762,7 @@ class tournament(ConsolePlugin):
 		wins = winner['totalwins']
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
 		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
-		kwargs['Broadcast'].broadcast("set svr_name ^yTourney - Last Winner: %s" % (name))
+		kwargs['Broadcast'].broadcast("set svr_name ^yTourney - Last Winner: ^r%s" % (name))
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.winnerlist = []
@@ -791,9 +785,17 @@ class tournament(ConsolePlugin):
 		self.STATUE += 1
 		if self.STATUE > 6:
 			self.STATUE = 1
-		#appends to file, winners.txt
-		f = open('winners.txt', 'a')
-		f.write("%s\n" % (name))
+		#add name to statue list
+		self.statuelist.append(name)
+		print self.statuelist
+		#Truncate statuelist to 6 winners
+		size = len(self.statuelist)
+		if size > 5:
+			del self.statuelist[0]
+		#writes file, winners.txt
+		f = open('winners.txt', 'w')
+		for each in self.statuelist:
+			f.write("%s" % (each))
 		f.close()
 
 	def getBye(self, **kwargs):
