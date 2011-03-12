@@ -73,7 +73,7 @@ class mapvote(ConsolePlugin):
 		id = args[0]
 				
 		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'name' : 'X'})
-		self.TOTALPLAYERS += 1
+		
 
 
 	def onSetName(self, *args, **kwargs):
@@ -95,7 +95,7 @@ class mapvote(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("SendMessage %s %s" % (client['clinum'], mapmessage3))
 
 	def onAccountId(self, *args, **kwargs):
-		
+		self.TOTALPLAYERS += 1
 		cli = args[0]
 		id = args[1]
 		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
@@ -243,6 +243,7 @@ class mapvote(ConsolePlugin):
 					each['mapvote'] = votemap
 					kwargs['Broadcast'].broadcast("SendMessage %s ^cYou have switched your vote to ^r%s." % (client['clinum'], votemap))
 					self.reportVotes(**kwargs)
+					self.voteCheck(**kwargs)
 					return
 		#player has not yet voted, add to the total number of votes and add their selection to the list
 		self.votelist['votes'] += 1
@@ -262,7 +263,7 @@ class mapvote(ConsolePlugin):
 	def clearMapVotes(self, *args, **kwargs):
 
 		self.votelist = {'votes' : 0, 'playervotes' : []}	
-	
+		self.TOTALPLAYERS = 0
 	def reportVotes(self, *args, **kwargs):
 			
 		d = {}
