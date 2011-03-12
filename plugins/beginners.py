@@ -169,7 +169,7 @@ class beginners(ConsolePlugin):
 			each['kills'] = 0
 			each['active'] = 0
 			duration = self.MATCHES - int(each['banstamp'])
-			if duration > 9:
+			if duration > 19:
 				each['banned'] = False
 
 		self.GAMESTARTED = 0
