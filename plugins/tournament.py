@@ -283,7 +283,7 @@ class tournament(ConsolePlugin):
 			
 			if killer > -1 and killed > -1:
 				self.onDeath(killer, killed, **kwargs)
-				kwargs['Broadcast'].broadcast("SendMessage %s ^yAn administrator as removed you from the tournament" % (killed))
+				kwargs['Broadcast'].broadcast("SendMessage %s ^yAn administrator has removed you from the tournament" % (killed))
 
 		if blocker and admin:
 		

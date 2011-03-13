@@ -119,7 +119,7 @@ class mapvote(ConsolePlugin):
 		#if a player has voted and disconnects, remove their vote
 		for each in self.votelist['playervotes']:
 			if each['player'] == client['name']:
-				self.votelist['playervotes']
+				self.votelist['playervotes'].remove(each)
 				self.votelist['votes'] -= 1
 
 		self.TOTALPLAYERS -= 1
