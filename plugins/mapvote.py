@@ -200,6 +200,7 @@ class mapvote(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("set svr_sendStats false; set svr_official false ")
 
 		kwargs['Broadcast'].broadcast("changeworld %s" % (newmap))
+		self.clearMapVotes(*args, **kwargs)
 
 	def onMessage(self, *args, **kwargs):
 		voted = False
