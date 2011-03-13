@@ -72,7 +72,7 @@ class mapvote(ConsolePlugin):
 		
 		id = args[0]
 				
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'name' : 'X'})
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'name' : 'X', 'active' : 0})
 		
 
 
@@ -113,8 +113,8 @@ class mapvote(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 
 		for each in self.playerlist:
-			if cli == client['clinum']:
-				self.playerlist.remove(each)
+			if cli == each['clinum']:
+				each['active'] = 0
 
 		#if a player has voted and disconnects, remove their vote
 		for each in self.votelist['playervotes']:
