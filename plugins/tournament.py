@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # THIS PLUGIN REQUIRES A SPECIFIC MAP. It can be modified for other maps, but note that the blocker list needs to be changed
+# 3.15.11 - Put more things in ini file
 import re
 import math
 import time
@@ -18,7 +19,7 @@ from operator import itemgetter
 
 
 class tournament(ConsolePlugin):
-	VERSION = "0.1.1"
+	VERSION = "1.0.1"
 	STARTED = 0
 	MINIMUM =  2
 	RECRUIT = False
@@ -41,6 +42,10 @@ class tournament(ConsolePlugin):
 	blockerlist = []
 	OFFICIAL = False
 	STATUE = 1
+	SVRDESC = True
+	svrdesc = "^yTourney - Last Winner: ^r"
+	SVRNAME = True
+	svrname = "^yTourney - Last Winner: ^r"
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -50,7 +55,19 @@ class tournament(ConsolePlugin):
 		for (name, value) in ini.items('admin'):
 			self.adminlist.append(name)
 
-		print self.adminlist
+		for (name, value) in ini.items('var'):
+			if (name == "changesvrname"):
+				self.SVRNAME = value 
+			if (name == "changesvrdesc"):
+				self.SVRDESC = value
+			if (name == "svrname"):
+				self.svrname = value
+			if (name == "changesvrname"):
+				self.svrdesc = value
+			if (name == "double"):
+				self.DOUBLEELIM = value
+
+		print self.SVRDESC, self.SVRNAME
 	def onStartServer(self, *args, **kwargs):
 		print 'SERVER RESTARTED'
 		self.statuelist = []
@@ -762,7 +779,10 @@ class tournament(ConsolePlugin):
 		wins = winner['totalwins']
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
 		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
-		kwargs['Broadcast'].broadcast("set svr_name ^yTourney - Last Winner: ^r%s" % (name))
+		if self.SVRDESC:
+			kwargs['Broadcast'].broadcast("set svr_desc %s%s" % (self.svrdesc,name))
+		if self.SVRNAME:
+			kwargs['Broadcast'].broadcast("set svr_name %s%s" % (self.svrname,name))
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.winnerlist = []
@@ -774,7 +794,7 @@ class tournament(ConsolePlugin):
 		self.RECRUIT = False
 		self.TOURNEYROUND = 0
 		self.MISSING = -1
-		self.DOUBLEELIM = False
+		
 		for each in self.playerlist:
 			each['register'] = 0
 		
