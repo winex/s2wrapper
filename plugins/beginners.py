@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 01/05/10 - fix active flag for players
+# 03/15/11 - Add variables to beginners.ini
 import re
 import math
 import time
@@ -21,24 +21,34 @@ class beginners(ConsolePlugin):
 	PHASE = 0
 	MATCHES = 0
 	playerlist = []
-	
+	ipban = []
+	BANMATCH = 20
+	SFLIMIT = 0
+	LEVELLIMIT = 0
+	MATCHLIMIT = 4
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
 
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
-		#for (name, value) in config.items('beginners'):
-		#	if (name == "level"):
-		#		self._level = int(value)
-
-		#	if (name == "sf"):
-		#		self._sf = int(value)
 		
+		for (name, value) in ini.items('var'):
+			if (name == "banmatch"):
+				self.BANMATCH = int(value)
+			if (name == "sflimit"):
+				self.SFLIMIT = int(value)
+			if (name == "levellimit"):
+				self.LEVELLIMIT = int(value)
+			if (name == "matchlimit"):
+				self.MATCHLIMIT = int(value)
+
+		for (name, value) in ini.items('ipban'):
+			self.ipban.append(name)
 		pass
 
 	def onStartServer(self, *args, **kwargs):
 		
-		self.VERSION = "0.0.4"
+		self.VERSION = "0.0.6"
 		self.TIME = 0
 		self.GAMESTARTED = 0
 		self.STARTSTAMP = 0
@@ -71,9 +81,14 @@ class beginners(ConsolePlugin):
 				print 'already have entry with that clientnum!'
 				return
 
+		for each in self.ipban:
+			if each == ip:
+				kwargs['Broadcast'].broadcast("kick %s You are banned from this server" % (cli))
+				
+
 		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'level' : 0, 'sf' : 0, 'name' : 'X', 'active' : 0, 'banned' : False, 'ip' : ip, 'banstamp' : 0, 'kills' : 0})
 
-
+		
 	def onDisconnect(self, *args, **kwargs):
 		
 		cli = args[0]
@@ -123,7 +138,7 @@ class beginners(ConsolePlugin):
 				doKick = True
 				
 
-		if (sf > 140) and (total > 4):
+		if (sf > self.SFLIMIT) and (total > self.MATCHLIMIT):
 			reason = reason1
 			doKick = True
 			client ['banned'] = True
@@ -169,7 +184,7 @@ class beginners(ConsolePlugin):
 			each['kills'] = 0
 			each['active'] = 0
 			duration = self.MATCHES - int(each['banstamp'])
-			if duration > 19:
+			if duration > self.BANMATCH:
 				each['banned'] = False
 
 		self.GAMESTARTED = 0

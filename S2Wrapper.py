@@ -270,6 +270,7 @@ class ConsoleParser:
 			self.onPlayerReady : re.compile ('Sv: Client #(\d+) is ready to enter the game'),
 			self.onAccountId   : re.compile ('(?:Sv: )*?Getting persistant stats for client (\d+) \(Account ID: (\d+)\)\.'),
 			self.onStartServer : re.compile ('^K2 Engine start up.*'),
+			self.onNewGameStarted : re.compile ('NewGameStarted'),
 			#self.onConnected   : re.compile ('Sv: (\S+) has connected.'),
 			self.onMessage     : re.compile ('Sv: \[(.+?)\] ([^\s]+?): (.*)'),
 			self.onDisconnect  : re.compile ('SGame: Removed client #(\d+)'),
@@ -334,6 +335,10 @@ class ConsoleParser:
 
 	def onStartServer(self, *args, **kwargs):
 		print("ON_RESTART")
+		pass
+
+	def onNewGameStarted(self, *args, **kwargs):
+		print("ON_NEWGAMESTARTED")
 		pass
 	#def onConnected(self, *args, **kwargs):
 	#	pass

@@ -473,11 +473,11 @@ class balancer(ConsolePlugin):
 	def RegisterScripts(self, **kwargs):
 		#any extra scripts that need to go in can be done here
 		#these are for identifying bought and sold items
-		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# SOLD #_item#; echo\" sellitem")
-		kwargs['Broadcast'].put("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# BOUGHT #_item#; echo\" buyitem")
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# SOLD #_item#; echo\" sellitem")
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# BOUGHT #_item#; echo\" buyitem")
 		#this makes sure we get an update every thirty seconds.
-		kwargs['Broadcast'].put("set sv_statusNotifyTime 30000")
-		kwargs['Broadcast'].broadcast()
+		kwargs['Broadcast'].broadcast("set sv_statusNotifyTime 30000")
+		
 
 	def ItemList(self, *args, **kwargs):
 		#The item list to get gold values. I had hoped to make this more dynamic, but the server won't return 'Consumable_Advanced_Sights' so it is difficult to get the value
@@ -567,11 +567,11 @@ class balancer(ConsolePlugin):
 		self.sendGameInfo(**kwargs)
 		
 		
-		kwargs['Broadcast'].put("ServerChat ^cIf necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
-		kwargs['Broadcast'].put("ServerChat ^cAfter 6 minutes, joining will be limited to players that do not generate imbalance.")
-		kwargs['Broadcast'].put("ServerChat ^cAt 5 minute increments starting at minute 10, the server will check for imbalance and notify players that they will be switched in one minute unless they reject the move.")
-		kwargs['Broadcast'].put("ServerChat ^cSelected players may send the message 'reject' to ^bALL ^cchat to prevent the change.")
-		kwargs['Broadcast'].broadcast()
+		kwargs['Broadcast'].broadcast("ServerChat ^cIf necessary, the teams will be auto-balanced at 1, 3, and 6 minutes of game time.")
+		kwargs['Broadcast'].broadcast("ServerChat ^cAfter 6 minutes, joining will be limited to players that do not generate imbalance.")
+		kwargs['Broadcast'].broadcast("ServerChat ^cAt 5 minute increments starting at minute 10, the server will check for imbalance and notify players that they will be switched in one minute unless they reject the move.")
+		kwargs['Broadcast'].broadcast("ServerChat ^cSelected players may send the message 'reject' to ^bALL ^cchat to prevent the change.")
+		
 		self.RegisterScripts(**kwargs)
 		self.startFollow(**kwargs)
 
@@ -716,13 +716,13 @@ class balancer(ConsolePlugin):
 		playermessage = "^cYou have been selected to change teams to promote balance. You have one minute to REJECT this change by sending the message 'reject' to ^bALL ^cchat."
 		for player in self.switchlist:
 			index += 1
-			kwargs['Broadcast'].put("SendMessage %s %s" % (player['clinum'], playermessage))
+			kwargs['Broadcast'].broadcast("SendMessage %s %s" % (player['clinum'], playermessage))
 
 		if (index == 0):
-			kwargs['Broadcast'].put("Serverchat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name']))
+			kwargs['Broadcast'].broadcast("Serverchat ^cTeams are currently unbalanced. ^r%s ^chas been selected to improve balance. They will automatically switch teams in one minute unless they reject the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name']))
 		else:
-			kwargs['Broadcast'].put("Serverchat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
-		kwargs['Broadcast'].broadcast()
+			kwargs['Broadcast'].broadcast("Serverchat ^cTeams are currently unbalanced. ^r%s ^cand ^r%s ^chave been selected to improve balance. They will automatically switch teams in one minute unless one of them rejects the move by sending the message 'reject' to ^bALL ^cchat, or another player joins." % (self.switchlist[0]['name'], self.switchlist[1]['name']))
+		
 
 	def onMessage(self, *args, **kwargs):
 		
@@ -820,10 +820,10 @@ class balancer(ConsolePlugin):
 		else:
 			newteam = 1
 
-		kwargs['Broadcast'].put("SetTeam %s %s" % (index, newteam))
-		kwargs['Broadcast'].put("Serverchat ^r%s ^chas switched teams to promote balance." % (name))
-		kwargs['Broadcast'].put("ResetAttributes %s" % (index))
-		kwargs['Broadcast'].broadcast()
+		kwargs['Broadcast'].broadcast("SetTeam %s %s" % (index, newteam))
+		kwargs['Broadcast'].broadcast("Serverchat ^r%s ^chas switched teams to promote balance." % (name))
+		kwargs['Broadcast'].broadcast("ResetAttributes %s" % (index))
+		
 
 		self.balancereport.append ({'time' : self.TIME, 'client' : name})
 		
@@ -856,10 +856,10 @@ class balancer(ConsolePlugin):
 
 		value = client ['value']
 
-		kwargs['Broadcast'].put("SendMessage %s ^cYou have automatically switched teams to promote balance." % (clinum))
-		kwargs['Broadcast'].put("SendMessage %s ^cYou have been compensated ^g%s ^cgold for your non-consumable items and your attributes have been reset." % (clinum, value))
-		kwargs['Broadcast'].put("GiveGold %s %s" % (clinum, value))
-		kwargs['Broadcast'].broadcast()
+		kwargs['Broadcast'].broadcast("SendMessage %s ^cYou have automatically switched teams to promote balance." % (clinum))
+		kwargs['Broadcast'].broadcast("SendMessage %s ^cYou have been compensated ^g%s ^cgold for your non-consumable items and your attributes have been reset." % (clinum, value))
+		kwargs['Broadcast'].broadcast("GiveGold %s %s" % (clinum, value))
+	
 
 		client ['value'] = 0
 
@@ -928,10 +928,9 @@ class balancer(ConsolePlugin):
 		if (self.GAMESTARTED == 1):
 			self.DIFFERENCE = abs(self.evaluateBalance())
 			
-
-		kwargs['Broadcast'].put("ServerChat ^cCurrent balance: ^yTeam 1 Avg. BF: ^g%s (%s players), ^yTeam 2 Avg. BF: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
-		kwargs['Broadcast'].broadcast()
-
+		if self.GAMESTARTED == 1:
+			kwargs['Broadcast'].broadcast("ServerChat ^cCurrent balance: ^yTeam 1 Avg. BF: ^g%s (%s players), ^yTeam 2 Avg. BF: ^g%s (%s players). Stack percentage: ^r%s" % (self.teamOne ['avgBF'], self.teamOne ['size'], self.teamTwo ['avgBF'], self.teamTwo ['size'], round(self.DIFFERENCE, 1) ))
+			
 
 	def EvenTeamBalancer(self, **kwargs):
 		self.getGameInfo(**kwargs)
