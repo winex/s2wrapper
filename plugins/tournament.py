@@ -42,10 +42,10 @@ class tournament(ConsolePlugin):
 	blockerlist = []
 	OFFICIAL = False
 	STATUE = 1
-	SVRDESC = True
-	svrdesc = "^yTourney - Last Winner: ^r"
-	SVRNAME = True
-	svrname = "^yTourney - Last Winner: ^r"
+	SVRDESC = False
+	svr_desc = "^yTourney - Last Winner: ^r"
+	SVRNAME = False
+	svr_name = "^yTourney - Last Winner: ^r"
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -54,18 +54,18 @@ class tournament(ConsolePlugin):
 		ini.read(config)
 		for (name, value) in ini.items('admin'):
 			self.adminlist.append(name)
-
+		#Don't know how to get boolean values for things in a specific section of .ini
 		for (name, value) in ini.items('var'):
-			if (name == "changesvrname"):
-				self.SVRNAME = value 
-			if (name == "changesvrdesc"):
-				self.SVRDESC = value
+			if (name == "changesvrname") and (value == "true"):
+				self.SVRNAME = True
+			if (name == "changesvrdesc") and (value == "true"):
+				self.SVRDESC = True
 			if (name == "svrname"):
 				self.svrname = value
 			if (name == "changesvrname"):
 				self.svrdesc = value
-			if (name == "double"):
-				self.DOUBLEELIM = value
+			if (name == "double") and (value == "true"):
+				self.DOUBLEELIM = True
 
 		print self.SVRDESC, self.SVRNAME
 	def onStartServer(self, *args, **kwargs):
@@ -780,9 +780,9 @@ class tournament(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
 		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
 		if self.SVRDESC:
-			kwargs['Broadcast'].broadcast("set svr_desc %s%s" % (self.svrdesc,name))
+			kwargs['Broadcast'].broadcast("set svr_desc \"%s\"%s" % (self.svr_desc, name))
 		if self.SVRNAME:
-			kwargs['Broadcast'].broadcast("set svr_name %s%s" % (self.svrname,name))
+			kwargs['Broadcast'].broadcast("set svr_name \"%s\"%s" % (self.svr_name, name))
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.winnerlist = []
