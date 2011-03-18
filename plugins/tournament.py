@@ -67,7 +67,7 @@ class tournament(ConsolePlugin):
 			if (name == "double") and (value == "true"):
 				self.DOUBLEELIM = True
 
-		print self.SVRDESC, self.SVRNAME
+		
 	def onStartServer(self, *args, **kwargs):
 		print 'SERVER RESTARTED'
 		self.statuelist = []
@@ -129,11 +129,7 @@ class tournament(ConsolePlugin):
 		id = args[0]
 		ip = args[2]
 		
-		reason = "You are banned from this server"
-		#Kicks Brewen. 
-		#if (ip == "76.177.233.35"):
-		#	kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (id, reason))
-
+		
 		for client in self.playerlist:
 			if (client['clinum'] == id):
 				return
@@ -155,7 +151,8 @@ class tournament(ConsolePlugin):
 		playername = args[1]
 		client = self.getPlayerByClientNum(cli)
 		client ['name'] = playername
-		
+
+					
 	def onAccountId(self, *args, **kwargs):
 
 		cli = args[0]
@@ -177,7 +174,10 @@ class tournament(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("set _MISSING -1")
 			#self.nextDuelRound(**kwargs)
 		kwargs['Broadcast'].broadcast("SendMessage %s ^cDuel Tournament made by ^yOld55 ^cand ^yPidgeoni" % (cli))
-					
+		
+		if self.isAdmin(client, **kwargs):
+			kwargs['Broadcast'].broadcast("SendMessage %s ^cYou are registered as an administrator for this tournament server. Send the chat message: ^rhelp ^cto see what commands you can perform." % (cli))
+			
 	def getPlayerIndex (self, cli):
 		
 		indice = -1
@@ -203,7 +203,7 @@ class tournament(ConsolePlugin):
 		self.unitlist = ['Player_Savage', 'Player_ShapeShifter', 'Player_Predator', 'Player_Hunter', 'Player_Marksman']
 		
 		kwargs['Broadcast'].broadcast("set _green #GetIndexFromName(green_spawn)#; set _red #GetIndexFromName(red_spawn)#; set _exit1 #GetIndexFromName(exit1)#; set _exit2 #GetIndexFromName(exit2)#; set _p1x #GetPosX(|#_green|#)#; set _p1y #GetPosY(|#_green|#)#; set _p1z #GetPosZ(|#_green|#)#; set _p2x #GetPosX(|#_red|#)#; set _p2y #GetPosY(|#_red|#)#; set _p2z #GetPosZ(|#_red|#)#; set _e1x #GetPosX(|#_exit1|#)#; set _e1y #GetPosY(|#_exit1|#)#; set e1z #GetPosZ(|#_exit1|#)#; set _e2x #GetPosX(|#_exit2|#)#; set _e2y #GetPosY(|#_exit2|#)#; set _e2z #GetPosZ(|#_exit2|#)#; set _MISSING -1")		
-		#kwargs['Broadcast'].broadcast("")
+	
 		
 		
 
@@ -251,6 +251,7 @@ class tournament(ConsolePlugin):
 		next = re.match("next", message, flags=re.IGNORECASE)
 		elim = re.match("double", message, flags=re.IGNORECASE)
 		fail = re.match("remove (\S+)", message, flags=re.IGNORECASE)
+		help = re.match("help", message, flags=re.IGNORECASE)
 		roundunit = re.match("Round (\S+) Unit (\S+)", message, flags=re.IGNORECASE)
 		blocker = re.match("blocker (\S+)", message, flags=re.IGNORECASE)
 		#lets admin register people, even if not official tournament
@@ -308,9 +309,18 @@ class tournament(ConsolePlugin):
 
 		if elim and admin:
 			if self.STARTED == 1:
+				kwargs['Broadcast'].broadcast("SendMessage %s A tournament has already started" % (client['clinum']))
 				return
-			self.DOUBLEELIM = True
-			kwargs['Broadcast'].broadcast("SendMessage %s ^yDouble Elimination: ^c%s" % (client['clinum'], self.DOUBLEELIM))
+			self.toggleDouble (client, **kwargs)
+
+		if help and admin:
+			kwargs['Broadcast'].broadcast("SendMessage %s All commands on the server are done through server chat. The following are commands and a short description of what they do." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s As an admin you must ALWAYS register yourself by sending the message: ^rregister yourname" % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rtoggle official ^wsets the tournament between official and unofficial status. Admins MUST register people for official tournaments. Only admins can start tournaments in official mode." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rregister playername ^wwill register a player for the tournament. Must be used in official mode but also works in unofficial." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rblocker on/off ^wwill turn range blockers on/off around the arena." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rredo ^wwill force the players fighting in the arena to redo the last match. ONLY use after players have respawned as the next unit." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rremove playername ^wwill force a player to lose the match. Currently only works when the player is on the server. If they have disconnected, it is best to just let them timeout." % (client['clinum']))
 
 	def doBlockers (self, toggle, **kwargs):
 
@@ -333,6 +343,15 @@ class tournament(ConsolePlugin):
 			self.OFFICIAL = True
 
 		kwargs['Broadcast'].broadcast("SendMessage %s ^rOfficial Status: %s" % (client['clinum'], self.OFFICIAL))
+
+	def toggleDouble (self, client, **kwargs):
+
+		if self.DOUBLEELIM:
+			self.OFFICIAL = False
+		else:
+			self.DOUBLEELIM = True
+
+		kwargs['Broadcast'].broadcast("SendMessage %s ^rDouble Elimination Status: %s" % (client['clinum'], self.DOUBLEELIM))
 
 	def redoDuel (self, **kwargs):	
 
@@ -815,7 +834,7 @@ class tournament(ConsolePlugin):
 		#writes file, winners.txt
 		f = open('winners.txt', 'w')
 		for each in self.statuelist:
-			f.write("%s" % (each))
+			f.write("%s\n" % (each))
 		f.close()
 
 	def getBye(self, **kwargs):
