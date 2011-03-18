@@ -603,8 +603,10 @@ class balancer(ConsolePlugin):
 			smallsize = float(small ['size']) + 1.0
 		
 		sizediff = largesize / totalsize
-		largepercent = largeshare + sizediff
-		return (largepercent - 1) * 100
+		largepercent = largeshare
+		#largepercent = largeshare + sizediff
+		return (largepercent - 0.5) * 100
+		#return (largepercent - 1) * 100
  
 	def getClosestPersonToTarget (self, team, **kwargs):
 		
