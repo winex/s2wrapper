@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # THIS PLUGIN REQUIRES A SPECIFIC MAP. It can be modified for other maps, but note that the blocker list needs to be changed
-# 3.15.11 - Put more things in ini file
+# 3.19.11 - Added admin control: kick, cancel
 import re
 import math
 import time
@@ -19,7 +19,7 @@ from operator import itemgetter
 
 
 class tournament(ConsolePlugin):
-	VERSION = "1.0.1"
+	VERSION = "1.0.2"
 	STARTED = 0
 	MINIMUM =  2
 	RECRUIT = False
@@ -28,6 +28,7 @@ class tournament(ConsolePlugin):
 	TOURNEYROUND = 0
 	MISSING = -1
 	DOUBLEELIM = False
+	CANCEL = False
 	CURRENT = 1
 	lastwinner = -1
 	lastloser = -1
@@ -251,9 +252,12 @@ class tournament(ConsolePlugin):
 		next = re.match("next", message, flags=re.IGNORECASE)
 		elim = re.match("double", message, flags=re.IGNORECASE)
 		fail = re.match("remove (\S+)", message, flags=re.IGNORECASE)
+		kick = re.match("kick (\S+)", message, flags=re.IGNORECASE)
 		help = re.match("help", message, flags=re.IGNORECASE)
 		roundunit = re.match("Round (\S+) Unit (\S+)", message, flags=re.IGNORECASE)
 		blocker = re.match("blocker (\S+)", message, flags=re.IGNORECASE)
+		cancel = re.match("cancel", message, flags=re.IGNORECASE)
+
 		#lets admin register people, even if not official tournament
 		if admin:	
 			register = re.match("register (\S+)", message, flags=re.IGNORECASE)
@@ -303,6 +307,11 @@ class tournament(ConsolePlugin):
 				self.onDeath(killer, killed, **kwargs)
 				kwargs['Broadcast'].broadcast("SendMessage %s ^yAn administrator has removed you from the tournament" % (killed))
 
+		if kick and admin:
+			reason = "An administrator has removed you from the server, probably for being annoying"
+			kickclient = self.getPlayerByName(kick.group(1))
+			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
+
 		if blocker and admin:
 		
 			self.doBlockers(blocker.group(1), **kwargs)
@@ -313,6 +322,11 @@ class tournament(ConsolePlugin):
 				return
 			self.toggleDouble (client, **kwargs)
 
+		if cancel and admin:
+			self.CANCEL = True
+			self.endTourney(**kwargs)
+			kwargs['Broadcast'].broadcast("Serverchat The tournament has been ended by an administrator")
+
 		if help and admin:
 			kwargs['Broadcast'].broadcast("SendMessage %s All commands on the server are done through server chat. The following are commands and a short description of what they do." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s As an admin you must ALWAYS register yourself by sending the message: ^rregister yourname" % (client['clinum']))
@@ -321,6 +335,7 @@ class tournament(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rblocker on/off ^wwill turn range blockers on/off around the arena." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rredo ^wwill force the players fighting in the arena to redo the last match. ONLY use after players have respawned as the next unit." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rremove playername ^wwill force a player to lose the match. Currently only works when the player is on the server. If they have disconnected, it is best to just let them timeout." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rcancel ^wwill cancel the current tournament." % (client['clinum']))
 
 	def doBlockers (self, toggle, **kwargs):
 
@@ -792,16 +807,36 @@ class tournament(ConsolePlugin):
 		return remaining
 
 	def endTourney(self, **kwargs):
-		winner = self.seededlist[0]
-		name = winner['name']
-		clinum = winner['clinum']
-		wins = winner['totalwins']
-		kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
-		kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
-		if self.SVRDESC:
-			kwargs['Broadcast'].broadcast("set svr_desc \"%s\"%s" % (self.svr_desc, name))
-		if self.SVRNAME:
-			kwargs['Broadcast'].broadcast("set svr_name \"%s\"%s" % (self.svr_name, name))
+
+		if not self.CANCEL:
+			winner = self.seededlist[0]
+			name = winner['name']
+			clinum = winner['clinum']
+			wins = winner['totalwins']
+			kwargs['Broadcast'].broadcast("ServerChat ^cThis tournament is over! The winner is %s with a total of %s wins." % (name, wins))
+			kwargs['Broadcast'].broadcast("set _winnerind #GetIndexFromClientNum(%s); ClientExecScript %s ClientHideOptions" % (clinum, self.ORGANIZER))
+			if self.SVRDESC:
+				kwargs['Broadcast'].broadcast("set svr_desc \"%s\"%s" % (self.svr_desc, name))
+			if self.SVRNAME:
+				kwargs['Broadcast'].broadcast("set svr_name \"%s\"%s" % (self.svr_name, name))
+			#Adds a statue
+			kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
+			self.STATUE += 1
+			if self.STATUE > 6:
+				self.STATUE = 1
+			#add name to statue list
+			self.statuelist.append(name)
+			print self.statuelist
+			#Truncate statuelist to 6 winners
+			size = len(self.statuelist)
+			if size > 5:
+				del self.statuelist[0]
+			#writes file, winners.txt
+			f = open('winners.txt', 'w')
+			for each in self.statuelist:
+				f.write("%s\n" % (each))
+			f.close()
+			
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
 		self.seededlist = []
 		self.winnerlist = []
@@ -813,29 +848,11 @@ class tournament(ConsolePlugin):
 		self.RECRUIT = False
 		self.TOURNEYROUND = 0
 		self.MISSING = -1
-		
+		self.CANCEL = False
 		for each in self.playerlist:
 			each['register'] = 0
 		
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val 0; ExecScript GlobalClear; ExecScript GlobalSync")
-
-		#Adds a statue
-		kwargs['Broadcast'].broadcast("RemoveEntity #GetIndexFromName(player_%s)#; SpawnEntityAtEntity statue_%s Prop_Dynamic name player_%s maxhealth 999999999 model \"/world/props/arena/stone_legionnaire.mdf\" angles \"%s\" team 0 seed 0 scale 1.7627 propname %s" % (self.STATUE,self.STATUE,self.STATUE,self.statueangle[self.STATUE-1],name))
-		self.STATUE += 1
-		if self.STATUE > 6:
-			self.STATUE = 1
-		#add name to statue list
-		self.statuelist.append(name)
-		print self.statuelist
-		#Truncate statuelist to 6 winners
-		size = len(self.statuelist)
-		if size > 5:
-			del self.statuelist[0]
-		#writes file, winners.txt
-		f = open('winners.txt', 'w')
-		for each in self.statuelist:
-			f.write("%s\n" % (each))
-		f.close()
 
 	def getBye(self, **kwargs):
 		#give the bye to the highest seeded player that doesn't have a bye

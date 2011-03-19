@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 2/28/11 - Turn off getlevels since it isn't working well in some cases. Add lifetime SF for 0 sf old players
+# 3/19/11 - Modified BF calculation and balance calculation
 import re
 import math
 import time
@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class balancer(ConsolePlugin):
-	VERSION = "1.0.5"
+	VERSION = "1.0.8"
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
@@ -48,9 +48,9 @@ class balancer(ConsolePlugin):
 
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
-		#for (name, value) in config.items('balancer'):
-		#	if (name == "level"):
-		#		self._level = int(value)
+		for (name, value) in ini.items('balancer'):
+			if (name == "threshold"):
+				self.THRESHOLD = int(value)
 
 		#	if (name == "sf"):
 		#		self._sf = int(value)
@@ -243,11 +243,12 @@ class balancer(ConsolePlugin):
 		NAME = client['name']
 		level = client['level']
 		SF = client['sf']
-		BF = SF + level + (client ['gamelevel'] * 4)
+		#BF = SF + level + (client ['gamelevel'] * 4)
+		BF = SF + (client ['gamelevel'] * 4)
 		LF = client['lf'] + 10 + level
 		moved = client['moved']
 		client ['team'] = team
-		client ['bf'] = BF + (client ['gamelevel'] * 4)
+		client ['bf'] = BF
 		toteam ['players'].append ({'clinum' : cli, 'name' : NAME, 'sf' : SF,  'lf' : LF, 'level' : level, 'moved' : moved, 'bf' : BF})
 		
 		self.getGameInfo(**kwargs)
@@ -315,7 +316,7 @@ class balancer(ConsolePlugin):
 			#this applies to both even and uneven games. The player is forced back to team 0.
 			if (self.DENY == 1):
 				self.DIFFERENCE = abs(self.evaluateBalance())
-				if (self.DIFFERENCE > 10) and (self.DIFFERENCE > diff):
+				if (self.DIFFERENCE > self.THRESHOLD) and (self.DIFFERENCE > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
 					return
@@ -361,8 +362,8 @@ class balancer(ConsolePlugin):
 		item = 'clinum'
 		PLAYER_INDICE = self.getTeamMember(item, cli, fromteam)
 		
-		#fromteam['players'][PLAYER_INDICE]['bf'] = client ['sf']
-		fromteam['players'][PLAYER_INDICE]['bf'] = int(client['sf'] + client['level'] + (client['gamelevel']*4))
+		fromteam['players'][PLAYER_INDICE]['bf'] = client['sf'] + (client['gamelevel']*4)
+		#fromteam['players'][PLAYER_INDICE]['bf'] = int(client['sf'] + client['level'] + (client['gamelevel']*4))
 		fromteam['players'][PLAYER_INDICE]['moved'] = 0
 		
 		client ['moved'] = 0	
@@ -436,6 +437,7 @@ class balancer(ConsolePlugin):
 		self.TOTAL1 = 0
 		self.TOTAL2 = 0
 		self.STAMPS = 0
+
 	def onNewGame(self, *args, **kwargs):
 		
 		if (self.PICKING == 1):
@@ -480,8 +482,7 @@ class balancer(ConsolePlugin):
 		
 
 	def ItemList(self, *args, **kwargs):
-		#The item list to get gold values. I had hoped to make this more dynamic, but the server won't return 'Consumable_Advanced_Sights' so it is difficult to get the value
-		#directly from game_settings.cfg. Modification to remove appends from winex, 10/12.
+		
 		self.itemlist = {
 			'Advanced Sights' : 700,
 			'Ammo Pack' : 500,
