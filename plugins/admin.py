@@ -45,7 +45,7 @@ class admin(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
-		ip = args[2]
+		ip = str(args[2])
 		print self.banlist
 
 		reason = "An administrator has removed you from this server. You may rejoin the server after the current game ends."
