@@ -245,7 +245,7 @@ class balancer(ConsolePlugin):
 		SF = client['sf']
 		#BF = SF + level + (client ['gamelevel'] * 4)
 		BF = SF + (client ['gamelevel'] * 4)
-		LF = client['lf'] + 10 + level
+		LF = client['lf'] + 10
 		moved = client['moved']
 		client ['team'] = team
 		client ['bf'] = BF
