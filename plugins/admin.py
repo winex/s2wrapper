@@ -45,8 +45,9 @@ class admin(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
-		ip = str(args[2])
+		ip = args[2]
 		print self.banlist
+		print ip
 
 		reason = "An administrator has removed you from this server. You may rejoin the server after the current game ends."
 		
@@ -123,7 +124,7 @@ class admin(ConsolePlugin):
 			reason = "An administrator has removed you from the server, probably for being annoying"
 			kickclient = self.getPlayerByName(kick.group(1))
 			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
-			self.banlist.append(client['ip'])
+			self.banlist.append(kickclient['ip'])
 
 		if changeworld:
 			#change the map
