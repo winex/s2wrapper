@@ -20,6 +20,7 @@ class admin(ConsolePlugin):
 	playerlist = []
 	adminlist = []
 	banlist = []
+	PHASE = 0
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -47,7 +48,7 @@ class admin(ConsolePlugin):
 		ip = args[2]
 		print self.banlist
 
-		reason = "An administrator has removed you from this server for abuse. You may rejoin the server after the current game ends."
+		reason = "An administrator has removed you from this server. You may rejoin the server after the current game ends."
 		
 		for each in self.banlist:
 			if each == ip:
@@ -125,11 +126,15 @@ class admin(ConsolePlugin):
 			self.banlist.append(client['ip'])
 
 		if changeworld:
-		
+			#change the map
 			kwargs['Broadcast'].broadcast("changeworld %s" % (changeworld.group(1)))
 
 		if prevphase:
-		
+			#if game is started, move back to previous phase
+			if self.PHASE != 5:
+				kwargs['Broadcast'].broadcast("SendMessage %s Cannot change phase if the game has not started!" % (client['clinum']))
+				return
+
 			kwargs['Broadcast'].broadcast("prevphase")
 
 		self.logCommand(client['name'],message)
@@ -144,12 +149,14 @@ class admin(ConsolePlugin):
 	
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
-		
+		self.PHASE = phase
+
 		if (phase == 6):
 			self.banlist = []	
 
 	def logCommand(self, client, message, **kwargs):
-
+		localtime = time.localtime(time.time())
+		date = ("%s-%s-%s, %s:%s:%s" % (localtime[1], localtime[2], localtime[0], localtime[3], localtime[4], localtime[5]))
 		f = open('admin.log', 'a')		
-		f.write("%s %s\n" % (client, message))
+		f.write("Timestamp: \"%s\", Admin: %s, Command: %s\n" % (date, client, message))
 		f.close
