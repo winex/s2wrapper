@@ -399,7 +399,7 @@ class tournament(ConsolePlugin):
 				activeplayers += 1
 
 		if (activeplayers < self.MINIMUM):
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rA minimum of eight active players is required to call a tournament" % (client['clinum']))		
+			kwargs['Broadcast'].broadcast("SendMessage %s ^rA minimum of two active players is required to call a tournament" % (client['clinum']))		
 			return
 		
 		self.RegisterScripts(**kwargs)	
@@ -834,7 +834,7 @@ class tournament(ConsolePlugin):
 			#writes file, winners.txt
 			f = open('winners.txt', 'w')
 			for each in self.statuelist:
-				f.write("%s\n" % (each))
+				f.write("%s" % (each))
 			f.close()
 			
 		self.tourneylist = {'totalplayers' : 0, 'players' : []}
