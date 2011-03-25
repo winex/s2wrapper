@@ -8,6 +8,7 @@ import threading
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
+from numpy import median
 
 #This plugin was written by Old55 and he takes full responsibility for the junk below.
 #He does not know python so the goal was to make something functional, not something
@@ -21,6 +22,7 @@ class balancer(ConsolePlugin):
 	ms = None
 	TIME = 0
 	THRESHOLD = 6
+	JOINTHRESHOLD = 8
 	DIFFERENCE = -1
 	GAMESTARTED = 0
 	STARTSTAMP = 0
@@ -51,9 +53,9 @@ class balancer(ConsolePlugin):
 		for (name, value) in ini.items('balancer'):
 			if (name == "threshold"):
 				self.THRESHOLD = int(value)
-
-		#	if (name == "sf"):
-		#		self._sf = int(value)
+			if (name == "jointhreshold"):
+				self.JOINTHRESHOLD = int(value)
+		
 		
 		pass
 
@@ -316,7 +318,7 @@ class balancer(ConsolePlugin):
 			#this applies to both even and uneven games. The player is forced back to team 0.
 			if (self.DENY == 1):
 				self.DIFFERENCE = abs(self.evaluateBalance())
-				if (self.DIFFERENCE > self.THRESHOLD) and (self.DIFFERENCE > diff):
+				if (self.DIFFERENCE > self.JOINTHRESHOLD) and (self.DIFFERENCE > diff):
 					action = 'PREVENT'
 					self.retrieveIndex(client, action, **kwargs)
 					return
@@ -544,8 +546,10 @@ class balancer(ConsolePlugin):
 
 	def runBalancer (self, **kwargs):
 		#determines if it is even or uneven balancer
+		#3-23-11 - If there are fewer than 8 players, don't bother with balancer
+		if (self.teamOne['size'] + self.teamTwo['size']) < 8:
+			return
 		
-
 		diff = self.teamOne['size'] - self.teamTwo['size']
 		print diff
 		if (diff == 0):
