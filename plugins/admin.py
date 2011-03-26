@@ -10,7 +10,7 @@ from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
-
+from numpy import median
 #This plugin was written by Old55 and he takes full responsibility for the junk below.
 #He does not know python so the goal was to make something functional, not something
 #efficient or pretty.
@@ -222,6 +222,9 @@ class admin(ConsolePlugin):
 		client['team'] = team
 
 	def onShuffle (self, client, **kwargs):
+
+		shufflelist = []
+
 		#Put all the active players in a list
 		for each in self.playerlist:
 			if not each['active']:
@@ -257,13 +260,7 @@ class admin(ConsolePlugin):
 
 		teamone = []
 		teamtwo = []
-		shufflelist = []
-		combteamone = 0
-		avgteamone = 0
-		combteamtwo = 0
-		avgteamtwo = 0
-		gameavg = 0
-		target = 0
+
 		#populate current team lists:
 		for each in self.playerlist:
 			if not each['active']:
@@ -273,38 +270,26 @@ class admin(ConsolePlugin):
 			if each['team'] == 2:
 				teamtwo.append(each)
 
-		#figure out current averages:
-		for each in teamone:
-			combteamone += each['sf']
-		for each in teamtwo:
-			combteamtwo += each['sf']
+		#Get Information about the teams
 		
-		sizeteamone = len(teamone)
-		sizeteamtwo = len(teamtwo)
-		avgteamone = combteamone/sizeteamone
-		avgteamtwo = combteamtwo/sizeteamtwo
-		gameavg = (avgteamone + avgteamtwo) / 2
-		kwargs['Broadcast'].broadcast("SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y, Team Two Avg. SF was ^r%s" % (client, avgteamone, avgteamtwo))
+		teamonestats = self.getTeamInfo(teamone)
+		teamtwostats = self.getTeamInfo(teamtwo)
+		print teamonestats, teamtwostats
+		startstack = self.evaluateBalance(teamone, teamtwo)
+		print startstack
+		#Send message to admin that called the shuffle/balance
+		kwargs['Broadcast'].broadcast("SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
-		target = abs(gameavg * (sizeteamone - avgteamone))
-
+				
+		#Find the players to swap
 		lowest = -1
 		pick1 = None
 		pick2 = None
-		eventeams = False
-		teamonelarge = False
-
-		if sizeteamone == sizeteamtwo:
-			eventeams = True
-			teamonelarge = False
-
-		if sizeteamone > sizeteamtwo:
-			teamonelarge = True
-
+		
 		for player1 in teamone:
 			for player2 in teamtwo:
-								
-				ltarget = abs(player1['sf'] - player2['sf'] + target)
+				#sort of inefficient to send the teamlist each time				
+				ltarget = self.evaluateBalance(teamone, teamtwo, player1, player2, True)
 				
 				if (lowest < 0):
 					lowest = ltarget
@@ -319,24 +304,59 @@ class admin(ConsolePlugin):
 				pick1 = player1
 				pick2 = player2
 
-		if not eventeams and teamonelarge:
-			t1 = -1
-			t2 = 1
-
-		if not eventeams and not teamonelarge:
-			t1 = 1
-			t2 = -1
-
-		diff = abs(avgteamone - avgteamtwo)
-		team1SF = combteamone - pick1['sf'] + pick2['sf']
-		team2SF = combteamtwo - pick2['sf'] + pick1['sf']
-		newdiff = abs((team1SF / (sizeteamone + t1)) - (team2SF / (sizeteamtwo + t2)))
-
-		#If the avg isn't improved, abort it
-		if (newdiff >= diff):
+		#If the stack isn't improved, abort it
+		if (lowest >= startstack):
 			print 'unproductive balance. terminate'
-			kwargs['Broadcast'].broadcast("echo unproductive EVEN balance")
+			kwargs['Broadcast'].broadcast("echo unproductive balance")
 			return
 		#Do the switch
 		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s); SetTeam #_index# 2; set _index #GetIndexFromClientNum(%s); SetTeam #_index# 1" % (pick1['clinum'], pick2['clinum']))
+
+	def getTeamInfo(self, teamlist, **kwargs):
 		
+		teamsf = []
+		combteamsf = float(0)		
+		#figure out current averages and set some commonly used variables:
+		for each in teamlist:
+			combteamsf += each['sf']
+			teamsf.append(each['sf'])
+	
+		sizeteam = len(teamlist)
+		avgteam = combteamsf/sizeteam
+		med = median(teamsf)
+		
+		teaminfo = {'size' : sizeteam, 'avg' : avgteam, 'total' : combteamsf, 'median' : med}
+		
+		return teaminfo
+
+	def evaluateBalance(self, team1, team2, pick1=None, pick2=None, swap=False, **kwargs):
+		#This function will swap out the picked players in a temporary list if swap is true and report the stack percent
+		print 'made to balance'
+		print team1, team2, pick1, pick2, swap
+		#First, make new lists that we can modify:
+		teamone = list(team1)
+		teamtwo = list(team2)
+		
+		if swap:
+			#Remove those players from the lists...		
+			for each in teamone:
+				if each['clinum'] == pick1['clinum']:
+					teamone.remove(each) 
+			for each in teamtwo:
+				if each['clinum'] == pick2['clinum']:
+					teamtwo.remove(each) 
+		
+			#Add to the lists		
+			teamone.append(pick2)
+			teamtwo.append(pick1)
+
+		#Get the new team stats...
+		teamonestats = self.getTeamInfo(teamone)
+		teamtwostats = self.getTeamInfo(teamtwo)
+		
+		#Evaluate team balance
+		print teamonestats['total']
+		teamoneshare = float(teamonestats['total']/(teamonestats['total'] + teamtwostats['total']))
+		diffmedone = teamonestats['median']/(teamonestats['median'] + teamtwostats['median'])
+		stack = teamoneshare + diffmedone
+		return abs(stack - 1) * 100
