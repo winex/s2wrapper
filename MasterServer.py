@@ -45,7 +45,20 @@ class MasterServer:
 
 		return data
 
+	def queryserver (self, params):
+		url = "/irc_updater/svr_request_pub.php"
+		conn = httplib.HTTPConnection (self.MASTERHOST)
+		conn.request ("POST", url, params, self.headers)
 
+		response = conn.getresponse()
+
+		if response.status <> 200:
+			return None
+
+		data = response.read()
+		conn.close()
+
+		return data
 
 if __name__ == '__main__':
 	ms = MasterServer()

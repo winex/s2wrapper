@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 3.25.11 - Added shuffle
+# 3.27.11 - Remove prev. phase command
 import re
 import math
 import time
@@ -11,13 +11,10 @@ from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
 from numpy import median
-#This plugin was written by Old55 and he takes full responsibility for the junk below.
-#He does not know python so the goal was to make something functional, not something
-#efficient or pretty.
 
 
 class admin(ConsolePlugin):
-	VERSION = "1.0.1"
+	VERSION = "1.0.3"
 	playerlist = []
 	adminlist = []
 	banlist = []
@@ -30,6 +27,7 @@ class admin(ConsolePlugin):
 		ini.read(config)
 		for (name, value) in ini.items('admin'):
 			self.adminlist.append(name)
+
 	def onStartServer(self, *args, **kwargs):
 				
 		self.playerlist = []
@@ -121,7 +119,6 @@ class admin(ConsolePlugin):
 		ban = re.match("ban (\S+)", message, flags=re.IGNORECASE)
 		changeworld = re.match("changeworld (\S+)", message, flags=re.IGNORECASE)
 		help = re.match("help", message, flags=re.IGNORECASE)
-		prevphase = re.match("previous phase", message, flags=re.IGNORECASE)
 		addadmin = re.match("admin (\S+) (\S+)", message, flags=re.IGNORECASE)
 		balance = re.match("balance", message, flags=re.IGNORECASE)
 
@@ -131,10 +128,14 @@ class admin(ConsolePlugin):
 
 		if shuffle:
 			#artificial shuffle vote
+			if self.PHASE != 5:
+				kwargs['Broadcast'].broadcast("SendMessage %s Cannot shuffle until the game has started!" % (client['clinum']))
+				return
+				
 			self.onShuffle(client['clinum'], **kwargs)						
 			
 		if kick:
-			#kicks a player from the server and temporarily bans that player's IP till the game is over
+			#kicks a player from the server
 			reason = "An administrator has removed you from the server, probably for being annoying"
 			kickclient = self.getPlayerByName(kick.group(1))
 			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
@@ -150,14 +151,7 @@ class admin(ConsolePlugin):
 			#change the map
 			kwargs['Broadcast'].broadcast("changeworld %s" % (changeworld.group(1)))
 
-		if prevphase:
-			#if game is started, move back to previous phase
-			if self.PHASE != 5:
-				kwargs['Broadcast'].broadcast("SendMessage %s Cannot change phase if the game has not started!" % (client['clinum']))
-				return
-
-			kwargs['Broadcast'].broadcast("prevphase")
-
+		
 		if balance:
 			if self.PHASE != 5:
 				kwargs['Broadcast'].broadcast("SendMessage %s Cannot balance if the game has not started!" % (client['clinum']))
@@ -194,7 +188,6 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rkick playername ^wwill remove a player from the server." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rban playername ^wwill remove a player from the server and ban that IP address till the end of the game." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rchangeworld mapname ^wwill change the map to the desired map." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rprevious phase ^wwill reset the map and set the game to the previous phase. May be better than changeworld if you are restarting a stacked game." % (client['clinum']))
 			kwargs['Broadcast'].broadcast("SendMessage %s ^rbalance ^wwill move two players to achieve balance." % (client['clinum']))
 
 			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this." % (client['clinum']))
@@ -251,10 +244,10 @@ class admin(ConsolePlugin):
 		for each in shufflelist:
 			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s" % (each['clinum'], each['team']))
 		#Finish it off by going back a phase
-		kwargs['Broadcast'].broadcast("prevphase; prevphase; prevphase")
+		kwargs['Broadcast'].broadcast("nextphase")
 		kwargs['Broadcast'].broadcast("SendMessage %s You have shuffled the game." % (client))
 		#Run balancer to get it nice and even
-		self.onBalance(client, **kwargs)
+		#self.onBalance(client, **kwargs)
 
 	def onBalance(self, client, **kwargs):
 
@@ -274,7 +267,6 @@ class admin(ConsolePlugin):
 		
 		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
-		print teamonestats, teamtwostats
 		startstack = self.evaluateBalance(teamone, teamtwo)
 		print startstack
 		#Send message to admin that called the shuffle/balance
@@ -310,7 +302,11 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("echo unproductive balance")
 			return
 		#Do the switch
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s); SetTeam #_index# 2; set _index #GetIndexFromClientNum(%s); SetTeam #_index# 1" % (pick1['clinum'], pick2['clinum']))
+		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# 2; set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# 1" % (pick1['clinum'], pick2['clinum']))
+		teamonestats = self.getTeamInfo(teamone)
+		teamtwostats = self.getTeamInfo(teamtwo)
+		kwargs['Broadcast'].broadcast("SendMessage %s ^yAfter balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+
 
 	def getTeamInfo(self, teamlist, **kwargs):
 		
@@ -331,8 +327,7 @@ class admin(ConsolePlugin):
 
 	def evaluateBalance(self, team1, team2, pick1=None, pick2=None, swap=False, **kwargs):
 		#This function will swap out the picked players in a temporary list if swap is true and report the stack percent
-		print 'made to balance'
-		print team1, team2, pick1, pick2, swap
+				
 		#First, make new lists that we can modify:
 		teamone = list(team1)
 		teamtwo = list(team2)
@@ -356,7 +351,7 @@ class admin(ConsolePlugin):
 		
 		#Evaluate team balance
 		print teamonestats['total']
-		teamoneshare = float(teamonestats['total']/(teamonestats['total'] + teamtwostats['total']))
+		teamoneshare = teamonestats['total']/(teamonestats['total'] + teamtwostats['total'])
 		diffmedone = teamonestats['median']/(teamonestats['median'] + teamtwostats['median'])
 		stack = teamoneshare + diffmedone
 		return abs(stack - 1) * 100
