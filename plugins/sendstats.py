@@ -40,11 +40,12 @@ class sendstats(ConsolePlugin):
 		home  = os.environ['HOME']
 		print home
 		path = 	os.path.join(home, self.base)
+		sentdir = os.path.join(home, self.sent)
 		print path
 		for infile in glob.glob( os.path.join(home, self.base,'*.stats') ):
 			print "Sending stat file: " + infile
 			statstring = open(infile, 'r').read()
 			self.ms.queryserver(statstring)
 			print 'Sent stat string'
-			shutil.move(os.path.join(infile),self.sent)
+			shutil.move(os.path.join(infile),sentdir)
 
