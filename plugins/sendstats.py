@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-# 3.27.11 - Remove prev. phase command
+#22/4/11 - Send stats to both S2G and Salvage servers
 import re
 import ConfigParser
 import thread
 import glob
 import os
 import shutil
-from MasterServer import MasterServer
+from StatsServers import StatsServers
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 
@@ -36,16 +36,22 @@ class sendstats(ConsolePlugin):
 			
 	def uploadstats(self):
 		print 'starting uploadstats'
-		self.ms = MasterServer ()
+		self.ss = StatsServers ()
 		home  = os.environ['HOME']
-		print home
+		
 		path = 	os.path.join(home, self.base)
 		sentdir = os.path.join(home, self.sent)
-		print path
+		
 		for infile in glob.glob( os.path.join(home, self.base,'*.stats') ):
 			print "Sending stat file: " + infile
 			statstring = open(infile, 'r').read()
-			self.ms.queryserver(statstring)
-			print 'Sent stat string'
-			shutil.move(os.path.join(infile),sentdir)
+			try:
+				self.ss.s2gstats(statstring)
+				self.ss.salvagestats(statstring)
+			except:
+				print 'upload failed. no stats sent'				
+				return
 
+			print 'Sent stat string'
+			shutil.move(infile,sentdir)
+			infile.close()
