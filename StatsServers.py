@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-import httplib, urllib, re, sys, logging
+import httplib, urllib, re, sys, logging, paramiko, glob
 from phpserialize import *
+from scp import *
 
 class StatsServers:
 
@@ -9,6 +10,7 @@ class StatsServers:
 	S2GURL = "/irc_updater/irc_stats.php"
 	SALVAGEHOST = "188.40.92.72"
 	SALVAGEURL = "/wwwps2/index.php"
+	REPLAYURL = "/wwwps2/replay.php"
 	headers = {}
 
 	def __init__(self):
@@ -54,12 +56,35 @@ class StatsServers:
 		conn.close()
 		#print data
 		return data
+	
+	def sendreplay (self, params):
+		server = '188.40.92.72'
+		port = 22
+		user = 'scponly'
+		remotepath = 'incoming'
+		client = paramiko.SSHClient()
+		client.load_system_host_keys()
+		client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+		client.connect(server, port, user)
+		
+		scp = SCPClient(client.get_transport())
+		scp.put(params, remote_path=remotepath)
+		client.close()
 
 if __name__ == '__main__':
-	linestring = open('305386.stats', 'r').read()
-	ss = StatsServers()
-	#print ms.getStatistics(251700)
-	#print ms.getStatistics(251700,251701)
-	ss.s2gstats(linestring)
-	
+
+	ss = StatsServer()
+	sentdir = 'sent'
+	for infile in glob.glob('*.s2r'):
+		print "Sending replay file: " + infile
+		replay = infile
+		try:
+			ss.sendreplay(replay)
+			
+		except:
+			print 'upload failed. replay not sent'				
+			
+
+		print 'Sent replay'
+		
 

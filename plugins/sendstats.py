@@ -29,16 +29,16 @@ class sendstats(ConsolePlugin):
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
 	
-		#Everytime we start a game, start a new thread to send all the stats to eaxs' script
+		#Everytime we start a game, start a new thread to send all the stats to eaxs' script, and replays to stony
 		if (phase == 6):
 						 
 			uploadthread = thread.start_new_thread(self.uploadstats, ())
-			
+			replaythread = thread.start_new_thread(self.uploadreplay, ())
+
 	def uploadstats(self):
 		print 'starting uploadstats'
 		self.ss = StatsServers ()
 		home  = os.environ['HOME']
-		
 		path = 	os.path.join(home, self.base)
 		sentdir = os.path.join(home, self.sent)
 		
@@ -55,3 +55,25 @@ class sendstats(ConsolePlugin):
 			print 'Sent stat string'
 			shutil.move(infile,sentdir)
 			infile.close()
+
+
+	def uploadreplay(self):
+		print 'starting uploadreplay'
+		self.ss = StatsServers ()
+		home  = os.environ['HOME']
+		path = 	os.path.join(home, self.base)
+		sentdir = os.path.join(home, self.sent)
+		
+		for replay in glob.glob( os.path.join(home, self.base,'*.s2r') ):
+			print "Sending replay file: " + infile
+			
+			try:
+				self.ss.sendreplay(replay)
+				
+			except:
+				print 'upload failed. replay not sent'				
+				return
+
+			print 'Sent replay'
+			shutil.move(infile,sentdir)
+			
