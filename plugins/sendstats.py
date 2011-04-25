@@ -54,7 +54,7 @@ class sendstats(ConsolePlugin):
 
 			print 'Sent stat string'
 			shutil.move(infile,sentdir)
-			infile.close()
+			
 
 
 	def uploadreplay(self):
