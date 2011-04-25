@@ -64,11 +64,11 @@ class sendstats(ConsolePlugin):
 		path = 	os.path.join(home, self.base)
 		sentdir = os.path.join(home, self.sent)
 		
-		for replay in glob.glob( os.path.join(home, self.base,'*.s2r') ):
+		for infile in glob.glob( os.path.join(home, self.base,'*.s2r') ):
 			print "Sending replay file: " + infile
 			
 			try:
-				self.ss.sendreplay(replay)
+				self.ss.sendreplay(infile)
 				
 			except:
 				print 'upload failed. replay not sent'				
