@@ -113,14 +113,14 @@ class admin(ConsolePlugin):
 		if not admin:
 			return
 
-		restart = re.match("restart", message, flags=re.IGNORECASE)
-		shuffle = re.match("shuffle", message, flags=re.IGNORECASE)
-		kick = re.match("kick (\S+)", message, flags=re.IGNORECASE)
-		ban = re.match("ban (\S+)", message, flags=re.IGNORECASE)
-		changeworld = re.match("changeworld (\S+)", message, flags=re.IGNORECASE)
+		restart = re.match("admin restart", message, flags=re.IGNORECASE)
+		shuffle = re.match("admin shuffle", message, flags=re.IGNORECASE)
+		kick = re.match("admin kick (\S+)", message, flags=re.IGNORECASE)
+		ban = re.match("admin ban (\S+)", message, flags=re.IGNORECASE)
+		changeworld = re.match("admin changeworld (\S+)", message, flags=re.IGNORECASE)
 		help = re.match("help", message, flags=re.IGNORECASE)
-		addadmin = re.match("admin (\S+) (\S+)", message, flags=re.IGNORECASE)
-		balance = re.match("balance", message, flags=re.IGNORECASE)
+		addadmin = re.match("admin admin (\S+) (\S+)", message, flags=re.IGNORECASE)
+		balance = re.match("admin balance", message, flags=re.IGNORECASE)
 
 		if restart:
 			#restarts server if something catastrophically bad has happened
@@ -183,12 +183,12 @@ class admin(ConsolePlugin):
 
 		if help:
 			kwargs['Broadcast'].broadcast("SendMessage %s All commands on the server are done through server chat. All commands are logged to prevent you from abusing them.The following are commands and a short description of what they do." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rrestart ^whard reset of the server. ONLY use in weird cases." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rshuffle ^wwill shuffle the game and set to previous phase." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rkick playername ^wwill remove a player from the server." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rban playername ^wwill remove a player from the server and ban that IP address till the end of the game." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rchangeworld mapname ^wwill change the map to the desired map." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rbalance ^wwill move two players to achieve balance." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin restart ^whard reset of the server. ONLY use in weird cases." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin shuffle ^wwill shuffle the game and set to previous phase." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmi kick playername ^wwill remove a player from the server." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin ban playername ^wwill remove a player from the server and ban that IP address till the end of the game." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin changeworld mapname ^wwill change the map to the desired map." % (client['clinum']))
+			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin balance ^wwill move two players to achieve balance." % (client['clinum']))
 
 			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this." % (client['clinum']))
 	def onPhaseChange(self, *args, **kwargs):
