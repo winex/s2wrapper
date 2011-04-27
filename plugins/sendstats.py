@@ -6,6 +6,7 @@ import thread
 import glob
 import os
 import shutil
+import urllib
 from StatsServers import StatsServers
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler

@@ -28,6 +28,18 @@ class MasterServer:
 
 		return self.decode (self.query ("f=get_all_stats%s" % lookup))
 
+	#Only used this to populate new ladder, but Iam leaving it in for historical purposes
+	def getName (self, *args):
+		stub = "&account_id[%s]=%s"
+		lookup = ""
+
+		i = 0
+		for id in args:
+			lookup = lookup + (stub % (i, id))
+			i = i + 1
+
+		return self.decode (self.query ("f=id2nick&account_id%s" % lookup))
+
 	def decode (self, response):
 		return loads(response, object_hook=phpobject)
 
@@ -45,6 +57,7 @@ class MasterServer:
 		conn.close()
 
 		#print params
+		print data
 		return data
 
 	def queryserver (self, params):
@@ -65,11 +78,11 @@ class MasterServer:
 		return data
 
 if __name__ == '__main__':
-	linestring = open('unsent_000046.txt', 'r').read()
+	#linestring = open('unsent_000046.txt', 'r').read()
 	ms = MasterServer()
 	#print ms.getStatistics(251700)
 	#print ms.getStatistics(251700,251701)
-	ms.queryserver(linestring)
+	ms.getName(309106)
 	
 	"""
 	{'all_stats': {251700: {'demo': 1, 'overall_r': '1218', 'gold': '3771986', 'deaths': '14350', 'razed': '948', 'c_d_conns': '0', 'souls': '239', 'c_hp_repaired': '0', 'c_buffs': '238', 'c_secs': '5782', 'c_hp_healed': '7473', 'clan_img': 'png', 'c_winstreak': '0', 'earned_exp': '1815522', 'malphas': '2', 'lf': '0', 'bdmg': '4175764', 'c_gold': '263480', 'c_debuffs': '170', 'c_orders': '91', 'res': '457', 'c_losses': '2', 'c_exp': '10187', 'c_pdmg': '4446', 'c_wins': '2', 'c_kills': '17', 'total_secs': '1199039', 'revenant': '2', 'account_id': '251700', 'kills': '12685', 'cr_fk': '0.00', 'c_assists': '0', 'hp_repaired': '677835', 'npc': '906', 'clan_name': 'Heroes-of-Newerth', 'c_builds': '59', 'assists': '14052', 'c_swtch': '0', 'c_razed': '47', 'd_conns': '166', 'clan_tag': 'HoN', 'swtch': '1', 'level': '43', 'wins': '374', 'losses': '473', 'c_earned_exp': '9226', 'pdmg': '7915208', 'secs': '1199039', 'devourer': '2', 'karma': '78', 'exp': '1987781', 'hp_healed': '207573', 'sf': '118'}}}
