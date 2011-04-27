@@ -34,6 +34,7 @@ class tournament(ConsolePlugin):
 	lastloser = -1
 	playerlist = []
 	tourneylist = {'totalplayers' : 0, 'players' : []}
+	tourneystats = {'entries' : 0, 'avgSF' : 0, 'winner' : {}, 'runnerup' : {}}
 	seededlist = []
 	activeduel = []
 	statueangle = []
@@ -417,6 +418,7 @@ class tournament(ConsolePlugin):
 
 		if self.RECRUIT and client['register'] == 0:
 			self.tourneylist ['players'].append ({'clinum' : client['clinum'],
+							      'acctid' : client['acctid'],
 							      'name' : client['name'],
 							      'sf' : client['sf'],
 							      'level' : client['level'],
@@ -439,14 +441,27 @@ class tournament(ConsolePlugin):
 
 		self.RECRUIT = False
 		self.STARTED = 1
-		self.SeedPlayers(**kwargs)
-		
-	def SeedPlayers(self, **kwargs):
+		self.seedPlayers(**kwargs)
+	
+	def getTourneyinfo(self, **kwargs):
+
+		entries = self.seededlist['totalplayers']
+		self.tourneystats['entries'] = entries
+		totalsf = 0
+
+		for each in self.seededlist['players']:
+			totalsf += each['sf']
+
+		self.tourneystats['avgSF'] = int(totalsf/entries)
+
+		print self.tourneystats
+
+	def seedPlayers(self, **kwargs):
 		
 		self.TOURNEYROUND = 1
 		kwargs['Broadcast'].broadcast("ExecScript GlobalSet var TR val 1")
 		kwargs['Broadcast'].broadcast("ClientExecScript %s ClientHideOptions" % (self.ORGANIZER))
-		if (self.tourneylist ['totalplayers'] < 2):
+		if (self.tourneylist ['totalplayers'] < 4):
 			self.tourneylist = {'totalplayers' : 0, 'players' : []}
 			self.seededlist = []
 			self.STARTED = 0
@@ -456,12 +471,15 @@ class tournament(ConsolePlugin):
 				each['register'] = 0
 		
 			kwargs['Broadcast'].broadcast("ClientExecScript -1 ClientClear")
-			kwargs['Broadcast'].broadcast("Serverchat The tournament must have 3 people to start. Aborting.")
+			kwargs['Broadcast'].broadcast("Serverchat The tournament must have 4 people to start. Aborting.")
 			
 			return
 
 		self.seededlist = sorted(self.tourneylist ['players'], key=itemgetter('sf', 'level', 'clinum'), reverse=True)
 		seed = 0
+
+		#Gets information about tournament for scoring purposes
+		self.getTourneyinfo()
 
 		for player in self.seededlist:
 			seed += 1
@@ -657,9 +675,11 @@ class tournament(ConsolePlugin):
 					clinum = each['clinum']
 					each['totalloses'] += 1
 					self.loserlist.append(each)
+					self.tourneystats['runnerup'] = { 'name' : each['name'], 'acctid' : each['acctid'] }
 					self.removePlayer(each['clinum'])
 				if each['loses'] < 3:
 					winner = each['name']
+					self.tourneystats['winner'] = { 'name' : each['name'], 'acctid' : each['acctid'] }
 					each['totalwins'] += 1
 					if each['totalloses'] == 0:
 						self.winnerlist.append(each)

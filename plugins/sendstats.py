@@ -13,7 +13,8 @@ from S2Wrapper import Savage2DaemonHandler
 class sendstats(ConsolePlugin):
 	base = None
 	sent = None
-	
+	playerlist = []
+
 	def onPluginLoad(self, config):
 		
 		ini = ConfigParser.ConfigParser()
@@ -45,9 +46,12 @@ class sendstats(ConsolePlugin):
 		for infile in glob.glob( os.path.join(home, self.base,'*.stats') ):
 			print "Sending stat file: " + infile
 			statstring = open(infile, 'r').read()
+			decoded = urllib.quote(statstring)
+			stats = ("stats=%s" % (decoded))
+
 			try:
 				self.ss.s2gstats(statstring)
-				self.ss.salvagestats(statstring)
+				self.ss.salvagestats(stats)
 			except:
 				print 'upload failed. no stats sent'				
 				return
@@ -76,4 +80,35 @@ class sendstats(ConsolePlugin):
 
 			print 'Sent replay'
 			shutil.move(infile,sentdir)
-			
+
+	def getPlayerByClientNum(self, cli):
+
+		for client in self.playerlist:
+			if (client['clinum'] == cli):
+				return client
+
+	def onConnect(self, *args, **kwargs):
+		
+		id = args[0]
+		
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0,'name' : 'X'})
+
+	def onSetName(self, *args, **kwargs):
+				
+		cli = args[0]
+		playername = args[1]
+
+		client = self.getPlayerByClientNum(cli)
+		client ['name'] = playername
+
+	def onAccountId(self, *args, **kwargs):
+		self.ss = StatsServers ()
+		cli = args[0]
+		id = args[1]
+		client = self.getPlayerByClientNum(cli)
+		client ['acctid'] = int(id)
+		name = client ['name']
+		#print client
+		playerinfo = ("sync_user=1&username=%s&acc=%s" % (name, id))
+		#print playerinfo	
+		self.ss.salvagestats(playerinfo)			

@@ -44,7 +44,7 @@ class MasterServer:
 		data = response.read()
 		conn.close()
 
-		print params
+		#print params
 		return data
 
 	def queryserver (self, params):
@@ -61,7 +61,7 @@ class MasterServer:
 
 		data = response.read()
 		conn.close()
-		print data
+		#print data
 		return data
 
 if __name__ == '__main__':

@@ -41,11 +41,8 @@ class StatsServers:
 
 	def salvagestats (self, params):
 		
-		decoded = urllib.quote(params)
-		stats = ("stats=%s" % (decoded))
-
 		conn = httplib.HTTPConnection (self.SALVAGEHOST)
-		conn.request ("POST", self.SALVAGEURL, stats, self.headers)
+		conn.request ("POST", self.SALVAGEURL, params, self.headers)
 
 		response = conn.getresponse()
 
