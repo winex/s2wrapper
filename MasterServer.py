@@ -61,12 +61,10 @@ class MasterServer:
 		return data
 
 	def queryserver (self, params):
-		host = self.MASTERSTAT
-		decoded = urllib.quote(params)
-		stats = ("stats=%s" % (decoded))
-		url = ("/wwwps2/index.php")
-		conn = httplib.HTTPConnection (host)
-		conn.request ("POST", url, stats, self.headers)
+		url = "/irc_updater/svr_request_pub.php"
+		conn = httplib.HTTPConnection (self.MASTERHOST)
+		conn.request ("POST", url, params, self.headers)
+
 		response = conn.getresponse()
 
 		if response.status <> 200:
@@ -74,7 +72,7 @@ class MasterServer:
 
 		data = response.read()
 		conn.close()
-		#print data
+
 		return data
 
 if __name__ == '__main__':
