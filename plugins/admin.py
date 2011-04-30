@@ -143,7 +143,7 @@ class admin(ConsolePlugin):
 		if ban:
 			#kicks a player from the server and temporarily bans that player's IP till the game is over
 			reason = "An administrator has banned you from the server. You are banned till this game is over."
-			kickclient = self.getPlayerByName(kick.group(1))
+			kickclient = self.getPlayerByName(ban.group(1))
 			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
 			self.banlist.append(kickclient['ip'])
 

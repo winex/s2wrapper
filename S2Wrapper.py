@@ -277,7 +277,7 @@ class ConsoleParser:
 			self.onPhaseChange : re.compile ('(?:SGame: |Sv: )*?SetGamePhase\(\): (\d+) start: (\d+) length: (\d+) now: (\d+)'),
 			self.onTeamChange  : re.compile ('(?:SGame: |Sv: )*?Client #(\d+) requested to join team: (\d+)'),
 			self.onHasKilled   : re.compile ('Sv: (\S+) has been killed by (\S+)'),
-			self.onUnitChange  : re.compile ('(?:SGame|Sv): Client #(\d+) requested change to: (\S+)'),
+			self.onUnitChange  : re.compile ('(?:SGame:|Sv:)?.?Client #(\d+) requested change to: (\S+)'),
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onMapReset    : re.compile ('.*\d+\.\d+\s{3, 6}'),
 			# custom filters
@@ -368,6 +368,7 @@ class ConsoleParser:
 		pass
 
 	def onUnitChange(self, *args, **kwargs):
+		print("ON_UNIT_CHANGE", args)
 		pass
 
 	def onCommResign(self, *args, **kwargs):

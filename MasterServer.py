@@ -57,7 +57,7 @@ class MasterServer:
 		conn.close()
 
 		#print params
-		print data
+		#print data
 		return data
 
 	def queryserver (self, params):
