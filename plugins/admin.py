@@ -290,13 +290,13 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 				"set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s"\
 				 % (each['clinum'], each['team']))
-		#Finish it off by going back a phase
+		#Finish it off by going forward a phase
 		kwargs['Broadcast'].broadcast(\
 			"nextphase")
 		kwargs['Broadcast'].broadcast(\
 			"SendMessage %s You have shuffled the game." % (client))
 		#Run balancer to get it nice and even
-		#self.onBalance(client, **kwargs)
+		self.onBalance(client, **kwargs)
 
 	def onBalance(self, client, **kwargs):
 
