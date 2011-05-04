@@ -91,8 +91,9 @@ class sendstats(ConsolePlugin):
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
-		
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0,'name' : 'X'})
+		ip = args[2]
+
+		self.playerlist.append ({'clinum' : id, 'acctid' : 0,'name' : 'X', 'ip' : ip})
 
 	def onSetName(self, *args, **kwargs):
 				
@@ -109,7 +110,8 @@ class sendstats(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client ['acctid'] = int(id)
 		name = client ['name']
+		ip = client['ip']
 		#print client
-		playerinfo = ("sync_user=1&username=%s&acc=%s" % (name, id))
+		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=%s" % (name, id, ip))
 		#print playerinfo	
 		self.ss.salvagestats(playerinfo)			

@@ -56,13 +56,22 @@ class admin(ConsolePlugin):
 		
 		for each in self.banlist:
 			if each == ip:
-				kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (id, reason))
+				kwargs['Broadcast'].broadcast(\
+					"Kick %s \"%s\"" % (id, reason))
 
 		for client in self.playerlist:
 			if (client['clinum'] == id):
 				return
 		
-		self.playerlist.append ({'clinum' : id, 'acctid' : 0, 'name' : 'X', 'ip' : ip, 'team' : 0, 'sf' : 0, 'active' : False, 'level' : 0})
+		self.playerlist.append ({'clinum' : id,\
+					 'acctid' : 0,\
+					 'name' : 'X',\
+					 'ip' : ip,\
+					 'team' : 0,\
+					 'sf' : 0,\
+					 'active' : False,\
+					 'level' : 0,\
+					 'commander' : False})
 	
 	def onDisconnect(self, *args, **kwargs):
 		
@@ -89,7 +98,9 @@ class admin(ConsolePlugin):
 		client['level'] = level
 		client['active'] = True	
 		if self.isAdmin(client, **kwargs):
-			kwargs['Broadcast'].broadcast("SendMessage %s ^cYou are registered as an administrator. Send the chat message: ^rhelp ^cto see what commands you can perform." % (cli))
+			kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^cYou are registered as an administrator. Send the chat message: ^rhelp ^cto see what commands you can perform."\
+			 % (cli))
 
 		
 	def isAdmin(self, client, **kwargs):
@@ -129,7 +140,9 @@ class admin(ConsolePlugin):
 		if shuffle:
 			#artificial shuffle vote
 			if self.PHASE != 5:
-				kwargs['Broadcast'].broadcast("SendMessage %s Cannot shuffle until the game has started!" % (client['clinum']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s Cannot shuffle until the game has started!"\
+					 % (client['clinum']))
 				return
 				
 			self.onShuffle(client['clinum'], **kwargs)						
@@ -138,23 +151,31 @@ class admin(ConsolePlugin):
 			#kicks a player from the server
 			reason = "An administrator has removed you from the server, probably for being annoying"
 			kickclient = self.getPlayerByName(kick.group(1))
-			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
+			kwargs['Broadcast'].broadcast(\
+				"Kick %s \"%s\""\
+				 % (kickclient['clinum'], reason))
 			
 		if ban:
 			#kicks a player from the server and temporarily bans that player's IP till the game is over
 			reason = "An administrator has banned you from the server. You are banned till this game is over."
 			kickclient = self.getPlayerByName(ban.group(1))
-			kwargs['Broadcast'].broadcast("Kick %s \"%s\"" % (kickclient['clinum'], reason))
+			kwargs['Broadcast'].broadcast(\
+				"Kick %s \"%s\"" \
+				 % (kickclient['clinum'], reason))
 			self.banlist.append(kickclient['ip'])
 
 		if changeworld:
 			#change the map
-			kwargs['Broadcast'].broadcast("changeworld %s" % (changeworld.group(1)))
+			kwargs['Broadcast'].broadcast(\
+				"changeworld %s"\
+				 % (changeworld.group(1)))
 
 		
 		if balance:
 			if self.PHASE != 5:
-				kwargs['Broadcast'].broadcast("SendMessage %s Cannot balance if the game has not started!" % (client['clinum']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s Cannot balance if the game has not started!"\
+					 % (client['clinum']))
 				return
 
 			self.onBalance(client['clinum'], **kwargs)
@@ -169,28 +190,52 @@ class admin(ConsolePlugin):
 			if addadmin.group(1) == "add":
 				self.adminlist.append(addadmin.group(2))
 				
-				kwargs['Broadcast'].broadcast("SendMessage %s You have added %s as a temporary administrator." % (client['clinum'], added['name']))
-				kwargs['Broadcast'].broadcast("SendMessage %s You have been added as an administrator. Send the chat message: ^chelp ^wto see commands" % (added['clinum']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s You have added %s as a temporary administrator."\
+					 % (client['clinum'], added['name']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s You have been added as an administrator. Send the chat message: ^chelp ^wto see commands"\
+					 % (added['clinum']))
 
 			if addadmin.group(1) == "remove":
 				for each in self.adminlist:
 					if each == addadmin.group(2):
 						self.adminlist.remove(each)
-				kwargs['Broadcast'].broadcast("SendMessage %s You have removed %s as a temporary administrator." % (client['clinum'], added['name']))
-				kwargs['Broadcast'].broadcast("SendMessage %s You have been removed as an administrator." % (added['clinum']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s You have removed %s as a temporary administrator."\
+					 % (client['clinum'], added['name']))
+				kwargs['Broadcast'].broadcast(\
+					"SendMessage %s You have been removed as an administrator."\
+					 % (added['clinum']))
 
 		self.logCommand(client['name'],message)
 
 		if help:
-			kwargs['Broadcast'].broadcast("SendMessage %s All commands on the server are done through server chat. All commands are logged to prevent you from abusing them.The following are commands and a short description of what they do." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin restart ^whard reset of the server. ONLY use in weird cases." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin shuffle ^wwill shuffle the game and set to previous phase." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmi kick playername ^wwill remove a player from the server." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin ban playername ^wwill remove a player from the server and ban that IP address till the end of the game." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin changeworld mapname ^wwill change the map to the desired map." % (client['clinum']))
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin balance ^wwill move two players to achieve balance." % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s All commands on the server are done through server chat. All commands are logged to prevent you from abusing them.The following are commands and a short description of what they do."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin restart ^whard reset of the server. ONLY use in weird cases."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin shuffle ^wwill shuffle the game and set to previous phase."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmi kick playername ^wwill remove a player from the server."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin ban playername ^wwill remove a player from the server and ban that IP address till the end of the game."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin changeworld mapname ^wwill change the map to the desired map."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin balance ^wwill move two players to achieve balance."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this."\
+				 % (client['clinum']))
 
-			kwargs['Broadcast'].broadcast("SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this." % (client['clinum']))
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
 		self.PHASE = phase
@@ -233,7 +278,7 @@ class admin(ConsolePlugin):
 		
 		#Assign new teams, just like the K2 way, but Ino won't always be on humans
 		for each in shufflelist:
-			
+		#TODO: is there a cleaner, more pythonic way to do this?	
 			each['team'] = r
 			if r == 1:
 				r += 1
@@ -242,10 +287,14 @@ class admin(ConsolePlugin):
 			
 		#Now actually do the shuffling
 		for each in shufflelist:
-			kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s" % (each['clinum'], each['team']))
+			kwargs['Broadcast'].broadcast(\
+				"set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s"\
+				 % (each['clinum'], each['team']))
 		#Finish it off by going back a phase
-		kwargs['Broadcast'].broadcast("nextphase")
-		kwargs['Broadcast'].broadcast("SendMessage %s You have shuffled the game." % (client))
+		kwargs['Broadcast'].broadcast(\
+			"nextphase")
+		kwargs['Broadcast'].broadcast(\
+			"SendMessage %s You have shuffled the game." % (client))
 		#Run balancer to get it nice and even
 		#self.onBalance(client, **kwargs)
 
@@ -270,7 +319,9 @@ class admin(ConsolePlugin):
 		startstack = self.evaluateBalance(teamone, teamtwo)
 		print startstack
 		#Send message to admin that called the shuffle/balance
-		kwargs['Broadcast'].broadcast("SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+		kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" \
+			 % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
 				
 		#Find the players to swap
@@ -279,7 +330,11 @@ class admin(ConsolePlugin):
 		pick2 = None
 		
 		for player1 in teamone:
+			if player1['commander']:
+				continue
 			for player2 in teamtwo:
+				if player2['commander']:
+					continue
 				#sort of inefficient to send the teamlist each time				
 				ltarget = self.evaluateBalance(teamone, teamtwo, player1, player2, True)
 				
@@ -299,13 +354,23 @@ class admin(ConsolePlugin):
 		#If the stack isn't improved, abort it
 		if (lowest >= startstack):
 			print 'unproductive balance. terminate'
-			kwargs['Broadcast'].broadcast("echo unproductive balance")
+			kwargs['Broadcast'].broadcast(\
+				"echo unproductive balance")
 			return
 		#Do the switch
-		kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# 2; set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# 1" % (pick1['clinum'], pick2['clinum']))
+		kwargs['Broadcast'].broadcast(\
+			"set _index #GetIndexFromClientNum(%s)#;\
+			 SetTeam #_index# 2;\
+			 set _index #GetIndexFromClientNum(%s)#;\
+			 SetTeam #_index# 1"\
+			 % (pick1['clinum'], pick2['clinum']))
+
 		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
-		kwargs['Broadcast'].broadcast("SendMessage %s ^yAfter balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+
+		kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^yAfter balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s"\
+			 % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
 
 	def getTeamInfo(self, teamlist, **kwargs):
@@ -327,7 +392,7 @@ class admin(ConsolePlugin):
 
 	def evaluateBalance(self, team1, team2, pick1=None, pick2=None, swap=False, **kwargs):
 		#This function will swap out the picked players in a temporary list if swap is true and report the stack percent
-				
+		#If swap is false, it will just report the balance		
 		#First, make new lists that we can modify:
 		teamone = list(team1)
 		teamtwo = list(team2)
@@ -355,3 +420,18 @@ class admin(ConsolePlugin):
 		diffmedone = teamonestats['median']/(teamonestats['median'] + teamtwostats['median'])
 		stack = teamoneshare + diffmedone
 		return abs(stack - 1) * 100
+
+	def onCommResign(self, *args, **kwargs):
+		name = args[0]
+		
+		client = self.getPlayerByName(name)
+		client['commander'] = False
+		
+	
+	def onUnitChange(self, *args, **kwargs):
+		if args[1] != "Player_Commander":
+			return
+
+		cli = args[0]
+		client = self.getPlayerByClientNum(cli)
+		client['commander'] = True
