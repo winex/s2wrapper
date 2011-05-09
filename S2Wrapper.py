@@ -281,7 +281,7 @@ class ConsoleParser:
 			self.onCommResign  : re.compile ('SGame: (\S+) has resigned as commander.'),
 			self.onMapReset    : re.compile ('.*\d+\.\d+\s{3, 6}'),
 			# custom filters
-			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*) (\d+)'),
+			self.onItemTransaction : re.compile ('Sv: ITEM: Client (\d+) (\S+) (.*)'),
 			self.onRefresh : re.compile ('^refresh'),
 			self.onRefreshTeams : re.compile ('CLIENT (\d+) is on TEAM (\d+)'),
 			self.onTeamCheck : re.compile ('^SERVER-SIDE client count, Team 1 (\d+), Team 2 (\d+)'),
@@ -291,7 +291,8 @@ class ConsoleParser:
 			self.RegisterStart : re.compile ('^STARTTOURNEY'),
 			self.getNextDuel : re.compile ('^NEXTDUELROUND'),
 			self.waitForPlayer : re.compile ('.*MISSING: (\S+)'),
-			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)')
+			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)'),
+			self.onFighterRemoved : re.compile('SGame: REMOVED PLAYER (\d+) TEAM (\d+)')
 		})
 
 	def onLineReceived(self, line, dh):
@@ -401,6 +402,8 @@ class ConsoleParser:
 	def waitForPlayer(self, *args, **kwargs):
 		pass
 	def onDeath(self, *args, **kwargs):
+		pass
+	def onFighterRemoved(self, *args, **kwargs):
 		pass
 	def cmd(self, string):
 		Savage2DaemonHandler.broadcast(string)

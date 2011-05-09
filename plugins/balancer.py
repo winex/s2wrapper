@@ -502,7 +502,7 @@ class balancer(ConsolePlugin):
 			'Shield of Wisdom' : 650,
 			'Stone Hide' : 650,
 			'Tough Skin' : 300,
-			'Trinket of Restoration' : 575,
+			'Trinket of Restoration' : 575
 		}
 
 
@@ -517,7 +517,7 @@ class balancer(ConsolePlugin):
 			value = self.itemlist[newitem]
 		except:
 			return
-
+		
 		if (trans == 'BOUGHT'):
 			client['value'] += value
 		elif (trans == 'SOLD'):

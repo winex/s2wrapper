@@ -244,6 +244,9 @@ class admin(ConsolePlugin):
 			self.banlist = []	
 			for each in self.playerlist:
 				each['team'] = 0
+		if (phase == 7):
+			for each in self.playerlist:
+				each['commander'] = False
 
 	def logCommand(self, client, message, **kwargs):
 		localtime = time.localtime(time.time())
