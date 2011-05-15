@@ -1,0 +1,226 @@
+# -*- coding: utf-8 -*-
+# 3/19/11 - Modified BF calculation and balance calculation
+import re
+import math
+import time
+import ConfigParser
+import threading
+from MasterServer import MasterServer
+from PluginsManager import ConsolePlugin
+from S2Wrapper import Savage2DaemonHandler
+
+#This plugin was written by Old55 and he takes full responsibility for the junk below.
+#He does not know python so the goal was to make something functional, not something
+#efficient or pretty.
+
+#NORMAL VERSION
+
+
+class extras(ConsolePlugin):
+	VERSION = "1.0.8"
+	ms = None
+	CHAT_INTERVAL = 10
+	CHAT_STAMP = 0
+	playerlist = []
+	itemlist = []
+	followlist = []
+
+	def onPluginLoad(self, config):
+		self.ms = MasterServer ()
+		
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
+		
+		pass
+	
+		
+	def RegisterScripts(self, **kwargs):
+
+		print 'register scripts'
+		
+	def getPlayerByClientNum(self, cli):
+
+		client = None
+
+		for client in self.playerlist:
+			if (client['clinum'] == cli):
+				return client
+
+	def getPlayerByName(self, name):
+
+		client = None
+
+		for client in self.playerlist:
+			if (client['name'].lower() == name.lower()):
+				return client
+
+	def onPhaseChange(self, *args, **kwargs):
+		self.RegisterScripts(**kwargs)
+
+	def onConnect(self, *args, **kwargs):
+		
+		id = args[0]
+		
+		for client in self.playerlist:
+			if (client['clinum'] == id):
+				return
+
+		self.playerlist.append ({
+		 'clinum' : id,\
+		 'acctid' : 0,\
+		 'level' : 0,\
+		 'sf' : 0,\
+		 'lf' : 0,\
+		 'name' : 'X',\
+		 'team' : 0,\
+		 'stuck' : 0,\
+		 'index' : 0,\
+		 'exp' : 2,\
+		 'value' : 150,\
+		 'prevent' : 0,\
+		 'active' : False,\
+		 'gamelevel' : 1})
+	
+	def onDisconnect(self, *args, **kwargs):
+		
+		cli = args[0]
+		client = self.getPlayerByClientNum(cli)
+		client ['active'] = False
+		
+		for each in self.followlist:
+			if each ['follower'] == client['clinum'] or each['followed'] == client['clinum']:
+				self.followlist.remove(each)
+				self.follow(**kwargs)
+				
+	def onSetName(self, *args, **kwargs):
+
+				
+		cli = args[0]
+		playername = args[1]
+		
+		client = self.getPlayerByClientNum(cli)
+		client ['name'] = playername
+		mapmessage = "^cSpectators on this server can follow individual players. Send the message: ^rfollow playername. ^cTo stop following: ^rstop follow"
+		kwargs['Broadcast'].broadcast("SendMessage %s %s" % (client['clinum'], mapmessage))
+		
+	def onAccountId(self, *args, **kwargs):
+
+		cli = args[0]
+		id = args[1]
+		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
+		
+		level = int(stats['level'])
+		sf = int(stats['sf'])
+		lf = int(stats['lf'])
+		exp = int(stats['exp'])
+		time = int(stats['secs'])
+		
+		client = self.getPlayerByClientNum(cli)
+
+		client ['acctid'] = int(id)
+		client ['level'] = level
+		client ['sf'] = sf
+		client ['lf'] = lf
+		client ['exp'] = exp
+		client ['active'] = True
+
+	def onTeamChange (self, *args, **kwargs):
+		
+		team = int(args[1])
+		cli = args[0]
+		
+		client = self.getPlayerByClientNum(cli)
+		client['team'] = team
+
+	def onPhaseChange(self, *args, **kwargs):
+		phase = int(args[0])
+			
+		if (phase == 7):
+			del(self.followlist[:])
+		
+
+	def onMessage(self, *args, **kwargs):
+		
+		name = args[1]
+		message = args[2]
+		
+		client = self.getPlayerByName(name)
+		
+		#Various chat matches
+		followed = re.match("follow (\S+)", message, flags=re.IGNORECASE)
+		stopfollow = re.match("stop follow", message, flags=re.IGNORECASE)
+		stuck = re.match("stuck", message, flags=re.IGNORECASE)
+
+		if followed:
+			action = 'start'
+			followed_player = self.getPlayerByName(followed.group(1))
+			if followed_player == None:
+				kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^cCould not find a player by that name." % (client['clinum']))
+				return
+			
+			if (followed_player ['team'] > 0) and (client ['team'] == 0):
+				self.followaction(action, client, followed_player, **kwargs)
+
+		if stopfollow:
+			action = 'stop'
+			self.followaction(action, client, followed_player=None, **kwargs)
+			
+		if stuck:
+
+			print 'stuck stuff'
+
+				
+	def followaction(self, action, client, followed_player, **kwargs):
+		
+		if action == 'start':
+			for each in self.followlist:
+				if each ['follower'] == client['clinum']:
+					each ['followed'] = followed_player['clinum']
+					self.follow(**kwargs)
+					return
+				#append to player list			
+			self.followlist.append ({'follower' : client['clinum'], 'followed' : followed_player['clinum']})
+			
+		if action == 'stop':
+			for each in self.followlist:
+				if each['follower'] == client['clinum']:
+					self.followlist.remove(each)
+		
+		self.follow(**kwargs)
+		
+	def follow(self, **kwargs):
+		
+		followlist = []
+		for each in self.followlist:
+			followline =  (";set _follower%s #GetIndexFromClientNum(%s)#;\
+					set _followed%s #GetIndexFromClientNum(%s)#;\
+					set _fx #GetPosX(|#_followed%s|#)#;\
+					set _fy #GetPosY(|#_followed%s|#)#;\
+					set _fz #GetPosZ(|#_follower%s|#)#;\
+					set _followX 200;\
+					set _followY 200;\
+					SetPosition #_follower%s# [_fx + _followX] [_fy + _followY] [_fz]"\
+					 % (each['follower'],\
+					    each['follower'],\
+					    each['followed'],\
+					    each['followed'],\
+					    each['followed'],\
+					    each['followed'],\
+					    each['follower'],\
+					    each['follower']))
+		
+			followlist.append(followline)	
+	
+			
+		mainbody = ''.join(followlist)
+		
+		
+		if mainbody == None:
+			script = ("RegisterGlobalScript -1 \"set _xmod 1.0; set _ymod -1.0\" frame")
+			kwargs['Broadcast'].broadcast("%s" % (script))
+			return
+
+		script = ("RegisterGlobalScript -1 \"set _xmod 1.0; set _ymod -1.0 %s\" frame" % (mainbody))
+				
+		kwargs['Broadcast'].broadcast("%s" % (script))

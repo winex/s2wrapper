@@ -8,7 +8,7 @@ import threading
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
-from numpy import median
+
 
 #This plugin was written by Old55 and he takes full responsibility for the junk below.
 #He does not know python so the goal was to make something functional, not something
@@ -763,31 +763,7 @@ class balancer(ConsolePlugin):
 			
 			kwargs['Broadcast'].broadcast("SendMessage %s Balancer version: ^y%s" % (client['clinum'], self.VERSION))
 
-		#Beginnings of a following script for spectators
-		followed = re.match("follow (\S+)", message, flags=re.IGNORECASE)
-		stopfollow = re.match("stop follow", message, flags=re.IGNORECASE)
-		if followed:
-			followed_player = self.getPlayerByName(followed.group(1))
-			if (followed_player ['team'] > 0) and (client ['team'] == 0):
-				for each in self.followlist:
-					if each ['follower'] == client['clinum']:
-						each ['followed'] = followed_player['clinum']
-						self.startFollow(**kwargs)
-						return
-					
-				self.followlist.append ({'follower' : client['clinum'], 'followed' : followed_player['clinum']})
-				
-				self.startFollow(**kwargs)
-				
-			else:
-				print 'conditions not met to follow'
-				return
-		if stopfollow:
-			for followings in self.followlist:
-				if followings ['follower'] == client ['clinum']:
-					followings ['follower'] = -1
-			
-						
+								
 		if args[0] != "ALL":
 			return
 
