@@ -3,6 +3,7 @@
 import httplib, urllib, re, sys, logging, paramiko, glob
 from phpserialize import *
 from scp import *
+from urllib import urlencode
 
 class StatsServers:
 

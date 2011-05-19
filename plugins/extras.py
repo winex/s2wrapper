@@ -197,10 +197,10 @@ class extras(ConsolePlugin):
 					set _followed%s #GetIndexFromClientNum(%s)#;\
 					set _fx #GetPosX(|#_followed%s|#)#;\
 					set _fy #GetPosY(|#_followed%s|#)#;\
-					set _fz #GetPosZ(|#_follower%s|#)#;\
+					set _z #GetPosZ(|#_follower%s|#)#;\
 					set _followX 200;\
 					set _followY 200;\
-					SetPosition #_follower%s# [_fx + _followX] [_fy + _followY] [_fz]"\
+					SetPosition #_follower%s# [_fx + _followX] [_fy + _followY] [_z]"\
 					 % (each['follower'],\
 					    each['follower'],\
 					    each['followed'],\

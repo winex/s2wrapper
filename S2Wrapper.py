@@ -292,7 +292,8 @@ class ConsoleParser:
 			self.getNextDuel : re.compile ('^NEXTDUELROUND'),
 			self.waitForPlayer : re.compile ('.*MISSING: (\S+)'),
 			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)'),
-			self.onFighterRemoved : re.compile('SGame: REMOVED PLAYER (\d+) TEAM (\d+)')
+			self.onFighterRemoved : re.compile('SGame: REMOVED PLAYER (\d+) TEAM (\d+)'),
+			self.getServerVar : re.compile('SERVERVAR: (\S+) is (.*)')
 		})
 
 	def onLineReceived(self, line, dh):
@@ -404,6 +405,8 @@ class ConsoleParser:
 	def onDeath(self, *args, **kwargs):
 		pass
 	def onFighterRemoved(self, *args, **kwargs):
+		pass
+	def getServerVar(self, *args, **kwargs):
 		pass
 	def cmd(self, string):
 		Savage2DaemonHandler.broadcast(string)

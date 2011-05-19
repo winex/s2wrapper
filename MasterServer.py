@@ -39,7 +39,14 @@ class MasterServer:
 			i = i + 1
 
 		return self.decode (self.query ("f=id2nick&account_id%s" % lookup))
-
+		
+	def getServer (self, login, lpass, broadcast, *args):
+		
+		if broadcast == 2:
+			return self.decode (self.queryserver ("f=set_online&login=%s&pass=%s" % (login, lpass)))
+		if broadcast == 1:
+			return self.decode (self.queryserver ("f=set_online&pub=NA&login=%s&pass=%s" % (login, lpass)))
+			
 	def decode (self, response):
 		return loads(response, object_hook=phpobject)
 

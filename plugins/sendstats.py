@@ -8,14 +8,20 @@ import os
 import shutil
 import urllib
 from StatsServers import StatsServers
+from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
+from urllib import urlencode
 
 class sendstats(ConsolePlugin):
 	base = None
 	sent = None
 	playerlist = []
-
+	login = None
+	lpass = None
+	broadcast = 0
+	serverid = 0
+	loaded = False
 	def onPluginLoad(self, config):
 		
 		ini = ConfigParser.ConfigParser()
@@ -30,13 +36,22 @@ class sendstats(ConsolePlugin):
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
-	
+		
 		#Everytime we start a game, start a new thread to send all the stats to eaxs' script, and replays to stony
 		if (phase == 6):
 						 
 			uploadthread = thread.start_new_thread(self.uploadstats, ())
 			replaythread = thread.start_new_thread(self.uploadreplay, ())
-
+			
+		
+		if not self.loaded:
+			kwargs['Broadcast'].broadcast("echo SERVERVAR: svr_login is #svr_login#")
+			kwargs['Broadcast'].broadcast("echo SERVERVAR: svr_pass is #svr_pass#")			
+			kwargs['Broadcast'].broadcast("echo SERVERVAR: svr_broadcast is #svr_broadcast#")
+			self.loaded = True
+			
+		
+		
 	def uploadstats(self):
 		print 'starting uploadstats'
 		self.ss = StatsServers ()
@@ -60,8 +75,26 @@ class sendstats(ConsolePlugin):
 			print 'Sent stat string'
 			shutil.move(infile,sentdir)
 			
+	def getServerVar(self, *args, **kwargs):
+	
+		var = args[0]
+		
+		if var == 'svr_login':
+			self.login = args[1]
 
+		if var == 'svr_pass':
+			self.lpass = args[1]
+			
+		if var == 'svr_broadcast':
+			self.broadcast = int(args[1])
+		
+		self.ms = MasterServer ()
 
+		if self.broadcast > 0:
+			server = self.ms.getServer(self.login, self.lpass, self.broadcast)
+			self.serverid = server['svr_id']
+			
+			
 	def uploadreplay(self):
 		print 'starting uploadreplay'
 		self.ss = StatsServers ()
@@ -111,7 +144,9 @@ class sendstats(ConsolePlugin):
 		client ['acctid'] = int(id)
 		name = client ['name']
 		ip = client['ip']
-		#print client
-		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=%s" % (name, id, ip))
-		#print playerinfo	
+		server = self.serverid
+		
+		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=&svr=%s" % (name, id, ip, server))
+		
+		#Send info to PS2	
 		self.ss.salvagestats(playerinfo)			
