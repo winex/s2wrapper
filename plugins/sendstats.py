@@ -93,7 +93,7 @@ class sendstats(ConsolePlugin):
 		if self.broadcast > 0:
 			server = self.ms.getServer(self.login, self.lpass, self.broadcast)
 			self.serverid = server['svr_id']
-			
+			print self.serverid
 			
 	def uploadreplay(self):
 		print 'starting uploadreplay'
@@ -146,7 +146,7 @@ class sendstats(ConsolePlugin):
 		ip = client['ip']
 		server = self.serverid
 		
-		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=&svr=%s" % (name, id, ip, server))
+		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=%s&svr=%s" % (name, id, ip, server))
 		
 		#Send info to PS2	
 		self.ss.salvagestats(playerinfo)			
