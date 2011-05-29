@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-import httplib, urllib, re, sys, logging, paramiko, glob
+import httplib, urllib, re, sys, logging, glob
+#import parakmiko
 from phpserialize import *
 from scp import *
 from urllib import urlencode
@@ -55,6 +56,8 @@ class StatsServers:
 		#print data
 		return data
 	
+	#This is currently not used. Replays are sent using os.system
+	'''
 	def sendreplay (self, params):
 		server = '188.40.92.72'
 		port = 22
@@ -68,7 +71,7 @@ class StatsServers:
 		scp = SCPClient(client.get_transport())
 		scp.put(params, remote_path=remotepath)
 		client.close()
-
+	'''
 if __name__ == '__main__':
 
 	ss = StatsServer()
