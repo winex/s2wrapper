@@ -101,13 +101,15 @@ class sendstats(ConsolePlugin):
 		home  = os.environ['HOME']
 		path = 	os.path.join(home, self.base)
 		sentdir = os.path.join(home, self.sent)
-		
+		remotehost = '188.40.92.72'
+		remotefile = 'incoming'
 		for infile in glob.glob( os.path.join(home, self.base,'*.s2r') ):
 			print "Sending replay file: " + infile
 			
 			try:
-				self.ss.sendreplay(infile)
-				
+				#self.ss.sendreplay(infile)
+				os.system('scp "%s" scponly@"%s:%s"' % (infile, remotehost, remotefile) )
+
 			except:
 				print 'upload failed. replay not sent'				
 				return
