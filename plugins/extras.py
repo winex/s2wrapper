@@ -17,7 +17,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class extras(ConsolePlugin):
-	VERSION = "1.0.8"
+	VERSION = "1.0.9"
 	ms = None
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
@@ -33,9 +33,8 @@ class extras(ConsolePlugin):
 		
 		pass
 	
-		
 	def RegisterScripts(self, **kwargs):
-
+		
 		print 'register scripts'
 		
 	def getPlayerByClientNum(self, cli):
@@ -55,8 +54,16 @@ class extras(ConsolePlugin):
 				return client
 
 	def onPhaseChange(self, *args, **kwargs):
+		phase = int(args[0])
 		self.RegisterScripts(**kwargs)
+		
+		self.followlist = []
+		self.follow(**kwargs)
 
+		if phase == 6:
+			for each in self.playerlist:
+				each['stuck'] = False
+			
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
@@ -73,7 +80,7 @@ class extras(ConsolePlugin):
 		 'lf' : 0,\
 		 'name' : 'X',\
 		 'team' : 0,\
-		 'stuck' : 0,\
+		 'stuck' : False,\
 		 'index' : 0,\
 		 'exp' : 2,\
 		 'value' : 150,\
@@ -100,7 +107,8 @@ class extras(ConsolePlugin):
 		
 		client = self.getPlayerByClientNum(cli)
 		client ['name'] = playername
-		mapmessage = "^cSpectators on this server can follow individual players. Send the message: ^rfollow playername. ^cTo stop following: ^rstop follow"
+		mapmessage = "^cSpectators on this server can follow individual players. Send the message: ^rfollow playername. ^cTo stop following: ^rstop follow.\
+			      ^cIf you get stuck on the map you can send the message: ^rstuck^c to nudge you out of your spot. This can be used once a game."
 		kwargs['Broadcast'].broadcast("SendMessage %s %s" % (client['clinum'], mapmessage))
 		
 	def onAccountId(self, *args, **kwargs):
@@ -132,12 +140,6 @@ class extras(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client['team'] = team
 
-	def onPhaseChange(self, *args, **kwargs):
-		phase = int(args[0])
-			
-		if (phase == 7):
-			del(self.followlist[:])
-		
 
 	def onMessage(self, *args, **kwargs):
 		
@@ -167,10 +169,19 @@ class extras(ConsolePlugin):
 			self.followaction(action, client, followed_player=None, **kwargs)
 			
 		if stuck:
+			if client['stuck']:
+				return
+			kwargs['Broadcast'].broadcast(\
+				"set _stuckindex #GetIndexFromClientNum(%s)#;\
+				 set _X [rand*100]; echo #_X#;\
+				 set _Y [rand*100]; echo #_Y#;\
+				 set _stuckx #GetPosX(|#_stuckindex|#)#;\
+				 set _stucky #GetPosY(|#_stuckindex|#)#;\
+				 set _stuckz #GetPosZ(|#_stuckindex|#)#;\
+				 SetPosition #_stuckindex# [_stuckx + _X] [_stucky + _Y] [_stuckz + 40]" % (client['clinum']))
 
-			print 'stuck stuff'
-
-				
+			client['stuck'] = True
+	
 	def followaction(self, action, client, followed_player, **kwargs):
 		
 		if action == 'start':
