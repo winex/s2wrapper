@@ -132,6 +132,7 @@ class admin(ConsolePlugin):
 		help = re.match("help", message, flags=re.IGNORECASE)
 		addadmin = re.match("admin admin (\S+) (\S+)", message, flags=re.IGNORECASE)
 		balance = re.match("admin balance", message, flags=re.IGNORECASE)
+		slap = re.match("admin slap (\S+)", message, flags=re.IGNORECASE)
 
 		if restart:
 			#restarts server if something catastrophically bad has happened
@@ -163,6 +164,18 @@ class admin(ConsolePlugin):
 				"Kick %s \"%s\"" \
 				 % (kickclient['clinum'], reason))
 			self.banlist.append(kickclient['ip'])
+
+		if slap:
+			#slap will move a player x+100, y+200 to get them off of a structure
+			
+			slapclient = self.getPlayerByName(ban.group(1))
+			kwargs['Broadcast'].broadcast(\
+				"set _slapindex #GetIndexFromClientNum(%s)#;\
+				 set _sx #GetPosX(|#_slapindex|#)#; set _sy #GetPosY(|#_slapindex|#)#; set _sz #GetPosZ(|#_slapindex|#)#;\
+				 SetPosition #_slapindex# [_sx + 200] [_sy + 200] #_sz#;\
+				 SendMessage %s ^cAn adminstrator has moved you for jumping on buildings. YOU WILL BE BANNED if this action persists"\
+				 % (slapclient['clinum'], slapclient['clinum']))
+			
 
 		if changeworld:
 			#change the map
@@ -225,6 +238,9 @@ class admin(ConsolePlugin):
 				 % (client['clinum']))
 			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin ban playername ^wwill remove a player from the server and ban that IP address till the end of the game."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin slap playername ^wwill move the player. Use to get them off of structures if they are exploiting."\
 				 % (client['clinum']))
 			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin changeworld mapname ^wwill change the map to the desired map."\

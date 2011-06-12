@@ -250,7 +250,9 @@ class tournament(ConsolePlugin):
 		cancel = re.match("cancel", message, flags=re.IGNORECASE)
 		#lets admin register people, even if not official tournament
 		register = re.match("register (\S+)", message, flags=re.IGNORECASE)
-
+		
+		if start:
+			self.start (client, **kwargs)
 
 		if official:
 			self.toggleOfficial (client, **kwargs)
@@ -258,7 +260,7 @@ class tournament(ConsolePlugin):
 		if redo:
 			self.redoDuel (**kwargs)
 
-		if nex:
+		if next:
 			self.endDuel (**kwargs)
 
 		if fail:

@@ -293,7 +293,8 @@ class ConsoleParser:
 			self.waitForPlayer : re.compile ('.*MISSING: (\S+)'),
 			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)'),
 			self.onFighterRemoved : re.compile('SGame: REMOVED PLAYER (\d+) TEAM (\d+)'),
-			self.getServerVar : re.compile('SERVERVAR: (\S+) is (.*)')
+			self.getServerVar : re.compile('SERVERVAR: (\S+) is (.*)'),
+			self.getEvent : re.compile('(?:SGame: |Sv: )*?EVENT (\S+) (\S+) on (\S+) by (\S+) at (\d+\.\d+) (\d+\.\d+) (\d+\.\d+)')
 		})
 
 	def onLineReceived(self, line, dh):
@@ -311,36 +312,28 @@ class ConsoleParser:
 
 	# SGame: Server Status: Map(ss2010_6) Timestamp(69180000) Active Clients(9) Disconnects(160) Entities(1700) Snapshots(34671)
 	def onServerStatus(self, *args, **kwargs):
-		print("ON_SERVER_STATUS", args)
 		pass
 	def onServerStatusResponse(self, *args, **kwargs):
-		print("ON_SERVER_STATUS_RESPONSE", args)
 		pass
 
 	#X Sv: New client connection: #203, ID: 8625, 83.226.95.135:51427
 	def onConnect(self, *args, **kwargs):
-		print("ON_CONNECT", args)
 		pass
 
 	#X Sv: Client #88 set name to Cicero23
 	def onSetName(self, *args, **kwargs):
-		print("ON_SET_NAME", args)
 		pass
 
 	def onPlayerReady(self, *args, **kwargs):
-		print("ON_PLAYER_READY", args)
 		pass
 
 	def onAccountId(self, *args, **kwargs):
-		print("ON_ACCOUNT_ID", args)
 		pass
 
 	def onStartServer(self, *args, **kwargs):
-		print("ON_RESTART")
 		pass
 
 	def onNewGameStarted(self, *args, **kwargs):
-		print("ON_NEWGAMESTARTED")
 		pass
 	#def onConnected(self, *args, **kwargs):
 	#	pass
@@ -349,32 +342,26 @@ class ConsoleParser:
 	#X Sv: [TEAM 2] BeastSlayer`: need ammo
 	#X Sv: [ALL] bLu3_eYeS: is any 1 here ?
 	def onMessage(self, *args, **kwargs):
-		print("ON_MESSAGE", args)
 		pass
 
 	# SGame: Removed client #195
 	def onDisconnect(self, *args, **kwargs):
-		print("ON_DISCONNECT", args)
 		pass
 
 	def onPhaseChange(self, *args, **kwargs):
-		print("ON_PHASE_CHANGE", args)
 		pass
 
 	#X SGame: Client #180 requested to join team: IDX
 	def onTeamChange(self, *args, **kwargs):
-		print("ON_TEAM_CHANGE", args)
 		pass
 
 	def onHasKilled(self, *args, **kwargs):
 		pass
 
 	def onUnitChange(self, *args, **kwargs):
-		print("ON_UNIT_CHANGE", args)
 		pass
 
 	def onCommResign(self, *args, **kwargs):
-		print("ON_COMM_RESIGN", args)
 		pass
 	def onMapReset(self, *args, **kwargs):
 		print("SHUFFLE HAS BEEN CALLED, now DO SOMETHING")
@@ -407,6 +394,8 @@ class ConsoleParser:
 	def onFighterRemoved(self, *args, **kwargs):
 		pass
 	def getServerVar(self, *args, **kwargs):
+		pass
+	def getEvent(self, *args, **kwargs):
 		pass
 	def cmd(self, string):
 		Savage2DaemonHandler.broadcast(string)

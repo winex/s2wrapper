@@ -151,4 +151,18 @@ class sendstats(ConsolePlugin):
 		playerinfo = ("sync_user=1&username=%s&acc=%s&ip=%s&svr=%s" % (name, id, ip, server))
 		
 		#Send info to PS2	
-		self.ss.salvagestats(playerinfo)			
+		self.ss.salvagestats(playerinfo)
+		
+	def onDisconnect(self, *args, **kwargs):
+		
+		cli = args[0]
+		client = self.getPlayerByClientNum(cli)
+		
+		acct = client['acctid']
+		name = client['name']
+		server = server.serverid
+		
+		playerinfo = ("sync_user=2&username=%s&acc=%s&svr=%s" % (name, id, server))
+		#Send info to PS2	
+		self.ss.salvagestats(playerinfo)
+			

@@ -24,6 +24,7 @@ class extras(ConsolePlugin):
 	playerlist = []
 	itemlist = []
 	followlist = []
+	buildingprotect = False
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -63,7 +64,9 @@ class extras(ConsolePlugin):
 		if phase == 6:
 			for each in self.playerlist:
 				each['stuck'] = False
-			
+			if self.buildingprotect:
+				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#; ExecScript Death\\\"; set _index #GetScriptParam(index)#; echo #_index#; echo #GetScriptParam(type)#; set _x #GetPosX(|#_index|#)#; set _y #GetPosY(|#_index|#)#; set _z #GetPosZ(|#_index|#)#; SpawnEntityatEntity #_index# Trigger_Proximity model /core/null/null.mdf name DeathTrigger#_index# triggeronplayer 1 triggerradius 250 triggerenter \\\"set _xindex #GetScriptParam(index)#; set _xx #GetPosX(|#_xindex|#)#; set _xy #GetPosY(|#_xindex|#)#; set _xz #GetPosZ(|#_xindex|#)#; SetPosition #_xindex# [_xx + 300] [_xy - 300] #_xz#\\\"; SetPosition #GetIndexFromName(DeathTrigger|#_index|#)# #_x# #_y# [_z + 350]; echo\" buildingplaced")
+				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]

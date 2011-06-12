@@ -12,13 +12,11 @@ from S2Wrapper import Savage2DaemonHandler
 
 class norunes(ConsolePlugin):
 
-	ms = None
-	
+		
 	def onPluginLoad(self, config, **kwargs):
-		self.ms = MasterServer ()
-
-		ini = ConfigParser.ConfigParser()
-		ini.read(config)
+		
+		#ini = ConfigParser.ConfigParser()
+		#ini.read(config)
 		#for (name, value) in config.items('balancer'):
 		#	if (name == "level"):
 		#		self._level = int(value)
@@ -32,7 +30,8 @@ class norunes(ConsolePlugin):
 	def onPhaseChange(self, *args, **kwargs):
 		kwargs['Broadcast'].broadcast(\
 		"RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#;\
+		 set _buyindex #GetIndexFromClientNum(|#_client|#)#;\
 		 set _none \"\"; set _item #GetScriptParam(itemname)#;\
-		 if #StringEquals(|#_item|#,|#_none|#)# TakeItem #_index# #_slot#; echo\" buyitem")
+		 if #StringEquals(|#_item|#,|#_none|#)# TakeItem #_buyindex# #GetScriptParam(slot)#; echo\" buyitem")
 		
 
