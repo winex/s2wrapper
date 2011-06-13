@@ -160,7 +160,7 @@ class sendstats(ConsolePlugin):
 		
 		acct = client['acctid']
 		name = client['name']
-		server = server.serverid
+		server = self.serverid
 		
 		playerinfo = ("sync_user=2&username=%s&acc=%s&svr=%s" % (name, id, server))
 		#Send info to PS2	
