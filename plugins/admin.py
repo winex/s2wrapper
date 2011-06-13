@@ -18,6 +18,7 @@ class admin(ConsolePlugin):
 	playerlist = []
 	adminlist = []
 	banlist = []
+	ipban = []
 	PHASE = 0
 
 	def onPluginLoad(self, config):
@@ -27,6 +28,9 @@ class admin(ConsolePlugin):
 		ini.read(config)
 		for (name, value) in ini.items('admin'):
 			self.adminlist.append(name)
+		for (name, value) in ini.items('ipban'):
+			self.ipban.append(name)
+		pass
 
 	def onStartServer(self, *args, **kwargs):
 				
@@ -49,8 +53,11 @@ class admin(ConsolePlugin):
 		
 		id = args[0]
 		ip = args[2]
-		print self.banlist
-		print ip
+		
+		for each in self.ipban:
+			if each == ip:
+				kwargs['Broadcast'].broadcast("kick %s You are banned from this server" % (cli))
+				return
 
 		reason = "An administrator has removed you from this server. You may rejoin the server after the current game ends."
 		
