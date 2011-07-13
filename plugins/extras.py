@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-# 3/19/11 - Modified BF calculation and balance calculation
+# 7/13/11 - building protection on by default
 import re
 import math
 import time
 import ConfigParser
 import threading
+import os
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
@@ -24,7 +25,7 @@ class extras(ConsolePlugin):
 	playerlist = []
 	itemlist = []
 	followlist = []
-	buildingprotect = False
+	buildingprotect = True
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -67,6 +68,8 @@ class extras(ConsolePlugin):
 			if self.buildingprotect:
 				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#; ExecScript Death\\\"; set _index #GetScriptParam(index)#; set _mz 350; set _type #GetScriptParam(type)#; echo #_type#; if #StringEquals(|#_type|#,Building_HumanHellShrine)# set _mz 2000; if #StringEquals(|#_type|#,Building_ArrowTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_CannonTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_ChlorophilicSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_EntangleSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_ShieldTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_StrataSpire)# set _mz 2000; set _x #GetPosX(|#_index|#)#; set _y #GetPosY(|#_index|#)#; set _z #GetPosZ(|#_index|#)#; SpawnEntityatEntity #_index# Trigger_Proximity model /core/null/null.mdf name DeathTrigger#_index# triggeronplayer 1 triggerradius 250 triggerenter \\\"set _domove 1; set _xindex #GetScriptParam(index)#; set _xtype #GetType(|#_xindex|#)#; if #StringEquals(|#_xtype|#,Player_Behemoth)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Malphas)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Devourer)# set _domove 0; set _xx #GetPosX(|#_xindex|#)#; set _xy #GetPosY(|#_xindex|#)#; set _xz #GetPosZ(|#_xindex|#)#; if [_domove == 1] SetPosition #_xindex# [_xx + 300] [_xy - 300] #_xz#\\\"; SetPosition #GetIndexFromName(DeathTrigger|#_index|#)# #_x# #_y# [_z + _mz]; echo\" buildingplaced")
 				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
+
+
 	def onConnect(self, *args, **kwargs):
 		
 		id = args[0]
@@ -90,7 +93,7 @@ class extras(ConsolePlugin):
 		 'prevent' : 0,\
 		 'active' : False,\
 		 'gamelevel' : 1})
-	
+
 	def onDisconnect(self, *args, **kwargs):
 		
 		cli = args[0]
@@ -134,6 +137,7 @@ class extras(ConsolePlugin):
 		client ['lf'] = lf
 		client ['exp'] = exp
 		client ['active'] = True
+
 
 	def onTeamChange (self, *args, **kwargs):
 		

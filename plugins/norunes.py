@@ -32,6 +32,7 @@ class norunes(ConsolePlugin):
 		"RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#;\
 		 set _buyindex #GetIndexFromClientNum(|#_client|#)#;\
 		 set _none \"\"; set _item #GetScriptParam(itemname)#;\
-		 if #StringEquals(|#_item|#,|#_none|#)# TakeItem #_buyindex# #GetScriptParam(slot)#; echo\" buyitem")
+		 if #StringEquals(|#_item|#,|#_none|#)# TakeItem #_buyindex# #GetScriptParam(slot)#;\
+		 if #StringEquals(|#_item|#,|#_none|#)# SendMessage #GetScriptParam(clientid)# ^yYou cannot equip persistent items on this server; echo\" buyitem")
 		
 

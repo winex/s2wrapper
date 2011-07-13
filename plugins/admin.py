@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 3.27.11 - Remove prev. phase command
+# Added slap
 import re
 import math
 import time
@@ -14,7 +14,7 @@ from numpy import median
 
 
 class admin(ConsolePlugin):
-	VERSION = "1.0.3"
+	VERSION = "1.0.6"
 	playerlist = []
 	adminlist = []
 	banlist = []
@@ -78,6 +78,7 @@ class admin(ConsolePlugin):
 					 'sf' : 0,\
 					 'active' : False,\
 					 'level' : 0,\
+					 'admin' : False,\
 					 'commander' : False})
 	
 	def onDisconnect(self, *args, **kwargs):
@@ -108,7 +109,7 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^cYou are registered as an administrator. Send the chat message: ^rhelp ^cto see what commands you can perform."\
 			 % (cli))
-
+			client['admin'] = True
 		
 	def isAdmin(self, client, **kwargs):
 		admin = False
@@ -126,8 +127,14 @@ class admin(ConsolePlugin):
 		
 		client = self.getPlayerByName(name)
 		admin = self.isAdmin(client, **kwargs)
+		request = re.match("request admin", message, flags=re.IGNORECASE)
+		if request:
+			for each in self.playerlist:
+				if each['active'] and each['admin']:
+					kwargs['Broadcast'].broadcast("SendMessage %s Admin present: ^y%s" % (client['clinum'], each['name']))
 
-		#ignore everything if it isn't from admin
+		
+		#ignore everything else if it isn't from admin
 		if not admin:
 			return
 
@@ -135,11 +142,13 @@ class admin(ConsolePlugin):
 		shuffle = re.match("admin shuffle", message, flags=re.IGNORECASE)
 		kick = re.match("admin kick (\S+)", message, flags=re.IGNORECASE)
 		ban = re.match("admin ban (\S+)", message, flags=re.IGNORECASE)
+		slap = re.match("admin slap (\S+)", message, flags=re.IGNORECASE)
 		changeworld = re.match("admin changeworld (\S+)", message, flags=re.IGNORECASE)
 		help = re.match("help", message, flags=re.IGNORECASE)
 		addadmin = re.match("admin admin (\S+) (\S+)", message, flags=re.IGNORECASE)
 		balance = re.match("admin balance", message, flags=re.IGNORECASE)
-		slap = re.match("admin slap (\S+)", message, flags=re.IGNORECASE)
+		getbalance = re.match("admin get balance", message, flags=re.IGNORECASE)
+		reportbal = re.match("admin report balance", message, flags=re.IGNORECASE)
 
 		if restart:
 			#restarts server if something catastrophically bad has happened
@@ -152,7 +161,7 @@ class admin(ConsolePlugin):
 					"SendMessage %s Cannot shuffle until the game has started!"\
 					 % (client['clinum']))
 				return
-				
+			kwargs['Broadcast'].broadcast("SendMessage -1 %s has shuffled the game." % (name))	
 			self.onShuffle(client['clinum'], **kwargs)						
 			
 		if kick:
@@ -175,7 +184,7 @@ class admin(ConsolePlugin):
 		if slap:
 			#slap will move a player x+100, y+200 to get them off of a structure
 			
-			slapclient = self.getPlayerByName(ban.group(1))
+			slapclient = self.getPlayerByName(slap.group(1))
 			kwargs['Broadcast'].broadcast(\
 				"set _slapindex #GetIndexFromClientNum(%s)#;\
 				 set _sx #GetPosX(|#_slapindex|#)#; set _sy #GetPosY(|#_slapindex|#)#; set _sz #GetPosZ(|#_slapindex|#)#;\
@@ -197,7 +206,7 @@ class admin(ConsolePlugin):
 					"SendMessage %s Cannot balance if the game has not started!"\
 					 % (client['clinum']))
 				return
-
+			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.onBalance(client['clinum'], **kwargs)
 
 		if addadmin:
@@ -227,6 +236,47 @@ class admin(ConsolePlugin):
 				kwargs['Broadcast'].broadcast(\
 					"SendMessage %s You have been removed as an administrator."\
 					 % (added['clinum']))
+		if getbalance:
+			teamone = []
+			teamtwo = []
+
+			#populate current team lists:
+			for each in self.playerlist:
+				if not each['active']:
+					continue
+				if each['team'] == 1:
+					teamone.append(each)
+				if each['team'] == 2:
+					teamtwo.append(each)
+			
+			teamonestats = self.getTeamInfo(teamone)
+			teamtwostats = self.getTeamInfo(teamtwo)
+			stack = self.evaluateBalance(teamone, teamtwo)
+
+			kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+			 % (client['clinum'], teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
+
+		if reportbal:
+			teamone = []
+			teamtwo = []
+			#populate current team lists:
+			for each in self.playerlist:
+				if not each['active']:
+					continue
+				if each['team'] == 1:
+					teamone.append(each)
+				if each['team'] == 2:
+					teamtwo.append(each)
+
+			teamonestats = self.getTeamInfo(teamone)
+			teamtwostats = self.getTeamInfo(teamtwo)
+			stack = self.evaluateBalance(teamone, teamtwo)
+
+			kwargs['Broadcast'].broadcast(\
+			"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+			 % (teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
+
 
 		self.logCommand(client['name'],message)
 
@@ -258,7 +308,12 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this."\
 				 % (client['clinum']))
-
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin get balance ^wwill report avg. and median SF values for the teams as well as a stack value."\
+				 % (client['clinum']))
+			kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^radmin report balance ^wwill send a message to ALL players that has the avg. and median SF values."\
+				 % (client['clinum']))
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
 		self.PHASE = phase
@@ -343,7 +398,7 @@ class admin(ConsolePlugin):
 		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
 		startstack = self.evaluateBalance(teamone, teamtwo)
-		print startstack
+		
 		#Send message to admin that called the shuffle/balance
 		kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" \
@@ -441,7 +496,6 @@ class admin(ConsolePlugin):
 		teamtwostats = self.getTeamInfo(teamtwo)
 		
 		#Evaluate team balance
-		print teamonestats['total']
 		teamoneshare = teamonestats['total']/(teamonestats['total'] + teamtwostats['total'])
 		diffmedone = teamonestats['median']/(teamonestats['median'] + teamtwostats['median'])
 		stack = teamoneshare + diffmedone

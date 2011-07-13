@@ -294,6 +294,8 @@ class ConsoleParser:
 			self.onDeath : re.compile('SGame: DUEL: (\d+) defeated (\d+)'),
 			self.onFighterRemoved : re.compile('SGame: REMOVED PLAYER (\d+) TEAM (\d+)'),
 			self.getServerVar : re.compile('SERVERVAR: (\S+) is (.*)'),
+			self.getHashCheck : re.compile('Sv: HACKCHECK ClientNumber: (\d+), AccountID: (\d+), Hashcheck result: (\S+)'),
+			self.getMatchID   : re.compile('SGame: Authenticated server successfully, stats will be recorded this game. Match ID: (/d+), Server ID: (/d+)'),
 			self.getEvent : re.compile('(?:SGame: |Sv: )*?EVENT (\S+) (\S+) on (\S+) by (\S+) at (\d+\.\d+) (\d+\.\d+) (\d+\.\d+)')
 		})
 
@@ -394,6 +396,10 @@ class ConsoleParser:
 	def onFighterRemoved(self, *args, **kwargs):
 		pass
 	def getServerVar(self, *args, **kwargs):
+		pass
+	def getHashCheck(self, *args, **kwargs):
+		pass
+	def getMatchID(self, *args, **kwargs):
 		pass
 	def getEvent(self, *args, **kwargs):
 		pass
