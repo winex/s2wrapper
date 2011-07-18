@@ -5,6 +5,7 @@ import math
 import time
 import ConfigParser
 import threading
+import os
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
@@ -21,6 +22,7 @@ class beginners(ConsolePlugin):
 	PHASE = 0
 	MATCHES = 0
 	playerlist = []
+	adminlist = []
 	ipban = []
 	BANMATCH = 20
 	SFLIMIT = 0
@@ -31,7 +33,7 @@ class beginners(ConsolePlugin):
 
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
-		
+
 		for (name, value) in ini.items('var'):
 			if (name == "banmatch"):
 				self.BANMATCH = int(value)
@@ -44,6 +46,13 @@ class beginners(ConsolePlugin):
 
 		for (name, value) in ini.items('ipban'):
 			self.ipban.append(name)
+		#added to allow admins to join beginners servers
+		admin = os.path.join(os.path.dirname(config),'admin.ini')	
+		ini.read(admin)
+		
+		for (name, value) in ini.items('admin'):
+			self.adminlist.append(name)
+		print self.adminlist
 		pass
 
 	def onStartServer(self, *args, **kwargs):
@@ -143,11 +152,18 @@ class beginners(ConsolePlugin):
 			doKick = True
 			client ['banned'] = True
 			client ['banstamp'] = self.MATCHES
-		
+
+		if (level > self.LEVELLIMIT):
+			reason = reason1
+			doKick = True
+
+		#allow admins to join
+		for each in self.adminlist:
+			if client['name'].lower() == each:
+				doKick = False
 		if doKick:
 			kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (cli, reason))
 
-		print client
 
 	def onTeamChange (self, *args, **kwargs):
 		

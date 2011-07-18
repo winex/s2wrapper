@@ -262,7 +262,11 @@ class tournament(ConsolePlugin):
 
 		if next:
 			self.endDuel (**kwargs)
-
+			
+		if register:
+			client = self.getPlayerByName(register.group(1))
+			self.register (client, **kwargs)
+			
 		if fail:
 			killer = -1
 			killed = -1
@@ -301,7 +305,7 @@ class tournament(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 						"Serverchat The tournament has been ended by an administrator")
 
-		if help and admin:
+		if help:
 			kwargs['Broadcast'].broadcast(\
 			"SendMessage %s All commands on the server are done through server chat. The following are commands and a short description of what they do." % (client['clinum']))
 			kwargs['Broadcast'].broadcast(\
@@ -339,13 +343,10 @@ class tournament(ConsolePlugin):
 
 		roundunit = re.match("Round (\S+) Unit (\S+)", message, flags=re.IGNORECASE)
 		register = re.match("register", message, flags=re.IGNORECASE)
+		
 
-
-		if start:
-			self.start (client, **kwargs)
 
 		if register:
-			client = self.getPlayerByName(register.group(1))
 			self.register (client, **kwargs)
 
 		if roundunit:
@@ -508,7 +509,7 @@ class tournament(ConsolePlugin):
 		seed = 0
 
 		#Gets information about tournament for scoring purposes
-		self.getTourneyinfo()
+		#self.getTourneyinfo()
 
 		for player in self.seededlist:
 			seed += 1
