@@ -215,7 +215,12 @@ class extras(ConsolePlugin):
 					set _followed%s #GetIndexFromClientNum(%s)#;\
 					set _fx #GetPosX(|#_followed%s|#)#;\
 					set _fy #GetPosY(|#_followed%s|#)#;\
+					set _x #GetPosX(|#_follower%s|#)#;\
+					set _y #GetPosY(|#_follower%s|#)#;\
 					set _z #GetPosZ(|#_follower%s|#)#;\
+					set _zs #_x#, #_y#;\
+					set _zt #GetTerrainHeight(|#_zs|#)#;\
+					if [_z < _zt] set _z [_zt + 50];\
 					set _followX 200;\
 					set _followY 200;\
 					SetPosition #_follower%s# [_fx + _followX] [_fy + _followY] [_z]"\
@@ -225,6 +230,8 @@ class extras(ConsolePlugin):
 					    each['followed'],\
 					    each['followed'],\
 					    each['followed'],\
+					    each['follower'],\
+					    each['follower'],\
 					    each['follower'],\
 					    each['follower']))
 		
