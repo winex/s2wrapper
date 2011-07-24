@@ -6,12 +6,13 @@ import time
 import ConfigParser
 import threading
 import random
+import os
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
 from numpy import median
-
+import urllib2
 
 class admin(ConsolePlugin):
 	VERSION = "1.0.6"
@@ -20,10 +21,11 @@ class admin(ConsolePlugin):
 	banlist = []
 	ipban = []
 	PHASE = 0
-
+	CONFIG = None
+	
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
-
+		self.CONFIG = config
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
 		for (name, value) in ini.items('admin'):
@@ -322,10 +324,22 @@ class admin(ConsolePlugin):
 			self.banlist = []	
 			for each in self.playerlist:
 				each['team'] = 0
-		if (phase == 7):
-			for each in self.playerlist:
 				each['commander'] = False
-
+				
+		if (phase == 6):
+		#fetch admin list and reload at the start of each game
+			try:
+				response = urllib2.urlopen('http://188.40.92.72/admin.ini')
+				adminlist = response.read()
+				adminfile = os.path.join(os.path.dirname(self.CONFIG),'admin.ini')
+				f = open(adminfile, 'w')
+				f.write(adminlist)
+				f.close
+				#reload the config file		
+				self.onPluginLoad(adminfile)
+			except:
+				return
+				
 	def logCommand(self, client, message, **kwargs):
 		localtime = time.localtime(time.time())
 		date = ("%s-%s-%s, %s:%s:%s" % (localtime[1], localtime[2], localtime[0], localtime[3], localtime[4], localtime[5]))
