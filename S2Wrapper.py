@@ -296,7 +296,8 @@ class ConsoleParser:
 			self.getServerVar : re.compile('SERVERVAR: (\S+) is (.*)'),
 			self.getHashCheck : re.compile('Sv: HACKCHECK ClientNumber: (\d+), AccountID: (\d+), Hashcheck result: (\S+)'),
 			self.getMatchID   : re.compile('SGame: Authenticated server successfully, stats will be recorded this game. Match ID: (/d+), Server ID: (/d+)'),
-			self.getEvent : re.compile('(?:SGame: |Sv: )*?EVENT (\S+) (\S+) on (\S+) by (\S+) at (\d+\.\d+) (\d+\.\d+) (\d+\.\d+)')
+			self.getEvent : re.compile('(?:SGame: |Sv: )*?EVENT (\S+) (\S+) on (\S+) by (\S+) at (\d+\.\d+) (\d+\.\d+) (\d+\.\d+)'),
+			self.onPugEvent : re.compile('(?:SGame: |Sv: )*?PUG Client (\d+) (\S+) with value (\S+)')
 		})
 
 	def onLineReceived(self, line, dh):
@@ -402,6 +403,8 @@ class ConsoleParser:
 	def getMatchID(self, *args, **kwargs):
 		pass
 	def getEvent(self, *args, **kwargs):
+		pass
+	def onPugEvent(self, *args, **kwargs):
 		pass
 	def cmd(self, string):
 		Savage2DaemonHandler.broadcast(string)

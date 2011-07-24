@@ -61,6 +61,7 @@ class sendstats(ConsolePlugin):
 		
 		for infile in glob.glob( os.path.join(home, self.base,'*.stats') ):
 			print "Sending stat file: " + infile
+			s2pfile = infile
 			statstring = open(infile, 'r').read()
 			decoded = urllib.quote(statstring)
 			stats = ("stats=%s" % (decoded))
@@ -68,6 +69,8 @@ class sendstats(ConsolePlugin):
 			try:
 				self.ss.s2gstats(statstring)
 				self.ss.salvagestats(stats)
+				self.ss.s2pstats(statstring)
+	
 			except:
 				print 'upload failed. no stats sent'				
 				return

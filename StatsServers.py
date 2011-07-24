@@ -10,6 +10,8 @@ class StatsServers:
 
 	S2GHOST = "masterserver.savage2.s2games.com"
 	S2GURL = "/irc_updater/irc_stats.php"
+	S2PHOST = "savage.boubbin.org"
+	S2PURL = "/stats_files/uploader.php"
 	SALVAGEHOST = "188.40.92.72"
 	SALVAGEURL = "/wwwps2/index.php"
 	REPLAYURL = "/wwwps2/replay.php"
@@ -37,8 +39,9 @@ class StatsServers:
 
 		data = response.read()
 		conn.close()
-
+		
 		#print params
+		#print data
 		return data
 
 	def salvagestats (self, params):
@@ -53,9 +56,25 @@ class StatsServers:
 
 		data = response.read()
 		conn.close()
+		#print params
 		#print data
 		return data
-	
+
+	def s2pstats (self, params):
+
+		conn = httplib.HTTPConnection (self.S2PHOST)
+		conn.request ("POST", self.S2PURL, params, self.headers)
+
+		response = conn.getresponse()
+
+		if response.status <> 200:
+			return None
+
+		data = response.read()
+		conn.close()
+		#print params
+		#print data
+		return data	
 	#This is currently not used. Replays are sent using os.system
 	'''
 	def sendreplay (self, params):

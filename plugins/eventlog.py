@@ -156,13 +156,13 @@ class eventlog(ConsolePlugin):
 			 echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
 
 		if phase == 7:
-			self.eventlist = sorted(self.eventlist, key=itemgetter('time','sys'), reverse=False)
+			self.eventlist = sorted(self.eventlist, key=itemgetter('event','time'), reverse=False)
 			self.endGame(**kwargs)
-		
+			self.STARTSTAMP = 0
 		if phase == 5:
 			self.GAMETIME = 0
 			self.EVENT = 0
-
+			self.STARTSTAMP = args[1]
 	def getEvent(self, *args, **kwargs):
 
 		
@@ -191,7 +191,7 @@ class eventlog(ConsolePlugin):
 				 'time' : self.GAMETIME,\
 				 'coord' : location,\
 				 'event' : tm})	
-		print eventbuffer
+		
 		self.eventlist.append(eventbuffer)
 
 		
