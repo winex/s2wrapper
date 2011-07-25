@@ -98,6 +98,7 @@ class pug(ConsolePlugin):
 		playername = args[1]
 		client = self.getPlayerByClientNum(cli)
 		client ['name'] = playername					
+		client ['play'] = True
 
 	def onAccountId(self, *args, **kwargs):
 
@@ -120,7 +121,7 @@ class pug(ConsolePlugin):
 		client ['active'] = True
 		client ['clan'] = clan
 		client ['newteam'] = 0
-		client ['play'] = True
+		
 		
 	def onTeamChange (self, *args, **kwargs):
 
@@ -149,6 +150,7 @@ class pug(ConsolePlugin):
 							set Gadget_Hail_ModelPath \"trigger UpdateError 1\";\
 							set State_ImpPoisoned_Name \"trigger UpdateSpeed 1\";\
 							set Gadget_Hail_Description \"trigger UpdatePercent -1\";\
+							set State_ImpPoisoned_ExpiredEffectPath \"trigger UpdateExtraction 1\";\
 							set maxteams 3;\
 							set Pet_Shaman_Prerequisite 1;\
 							set sv_setupTimeCommander 600000000;\
@@ -168,16 +170,26 @@ class pug(ConsolePlugin):
 		noplay = re.match("pug noplay", message, flags=re.IGNORECASE)
 		
 		if noplay:
-			if self.PICKING:
+			self.togglePlay(client, **kwargs)
+	
+	def togglePlay(self, client, playing=None, **kwargs):
+		color = '^g'
+		if self.PICKING:
 				kwargs['Broadcast'].broadcast("SendMessage %s ^rYou cannot toggle your status once picking has begun." % (client['clinum']))
 				return
+		if not playing:
 			if client['play']:
 				client['play'] = False
+				color = '^r'
 			else:
 				client['play'] = True
-
-			kwargs['Broadcast'].broadcast("SendMessage %s ^rYour Playing Status: %s" % (client['clinum'], client['nojoin']))
-		
+		else:
+			client['play'] = playing
+			if not client['play']:
+				color = '^r' 
+		kwargs['Broadcast'].broadcast("SendMessage %s ^cYour Playing Status: %s%s" % (client['clinum'], color, client['play']))
+	
+	
 	def onPugEvent(self, *args, **kwargs):		
 		
 		caller = args[0]
@@ -206,13 +218,22 @@ class pug(ConsolePlugin):
 		
 					self.beginpicking(**kwargs)
 			print info
+			
+		#Toggle player availability
+		if event == 'Toggle':
+			playing = False
+			if value == 'true':
+				playing = True
+
+			self.togglePlay(client, playing, **kwargs)
+			
 		#Player select
 		if event == 'Select':
 			player = self.getPlayerByName(value)
 			
 			if caller == info['h_captain']:
 				if not player['play']:
-					kwargs['Broadcast'].broadcast("SendMessage %s ^rThat player has requested to not play in this match." % (client['name']))
+					kwargs['Broadcast'].broadcast("SendMessage %s ^rThat player has requested to not play in this match." % (client['clinum']))
 					return
 				player['newteam'] = 1
 				client['newteam'] = 1
@@ -235,9 +256,10 @@ class pug(ConsolePlugin):
 				return
 			if caller == info['h_captain']:
 				info['h_ready'] = True
+				kwargs['Broadcast'].broadcast("SendMessage -1 ^r%s^w has indicated that Humans are ready!" % (client['name']))
 			if caller == info['b_captain']:
 				info['b_ready'] = True
-			
+				kwargs['Broadcast'].broadcast("SendMessage -1 ^r%s^w has indicated that Beasts are ready!" % (client['name']))
 			#Start the game if both captains say they are ready
 			if info['h_ready'] and info['b_ready']:
 				kwargs['Broadcast'].broadcast("set State_ImpPoisoned_Name \"trigger UpdateSpeed 0\"")
@@ -246,7 +268,7 @@ class pug(ConsolePlugin):
 	def beginpicking(self, **kwargs):
 		self.PICKING = True
 		#start by making the teams unjoinable: doesn't seem to work
-		kwargs['Broadcast'].broadcast("set sv_maxteamdifference 0")
+		kwargs['Broadcast'].broadcast("set sv_maxteamdifference 1; set State_ImpPoisoned_ExpiredEffectPath \"trigger UpdateExtraction 0\";")
 		#move everyone to spectator, but move captains to the appropriate team
 		for each in self.playerlist:
 			if each['active']:

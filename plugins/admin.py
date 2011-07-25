@@ -4,9 +4,10 @@ import re
 import math
 import time
 import ConfigParser
-import threading
+import thread
 import random
 import os
+import PluginsManager
 from MasterServer import MasterServer
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
@@ -15,7 +16,7 @@ from numpy import median
 import urllib2
 
 class admin(ConsolePlugin):
-	VERSION = "1.0.6"
+	VERSION = "1.1.0"
 	playerlist = []
 	adminlist = []
 	banlist = []
@@ -24,15 +25,30 @@ class admin(ConsolePlugin):
 	CONFIG = None
 	
 	def onPluginLoad(self, config):
+		
 		self.ms = MasterServer ()
 		self.CONFIG = config
 		ini = ConfigParser.ConfigParser()
 		ini.read(config)
+		
 		for (name, value) in ini.items('admin'):
-			self.adminlist.append(name)
+			self.adminlist.append({'name': name, 'level' : value})
 		for (name, value) in ini.items('ipban'):
-			self.ipban.append(name)
+			self.ipban.append(name)	
+		
 		pass
+		
+	def reload_config(self):
+		
+        	self.adminlist = []
+       		self.ipban = []
+                ini = ConfigParser.ConfigParser()
+                ini.read(self.CONFIG)
+
+                for (name, value) in ini.items('admin'):
+                	self.adminlist.append({'name': name, 'level' : value})
+                for (name, value) in ini.items('ipban'):
+                	self.ipban.append(name)	
 
 	def onStartServer(self, *args, **kwargs):
 				
@@ -106,21 +122,37 @@ class admin(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client['sf'] = sf
 		client['level'] = level
-		client['active'] = True	
+		client['active'] = True
+
 		if self.isAdmin(client, **kwargs):
 			kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^cYou are registered as an administrator. Send the chat message: ^rhelp ^cto see what commands you can perform."\
 			 % (cli))
 			client['admin'] = True
-		
+
+		if self.isSuperuser(client, **kwargs):
+			kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: sudo <command>."\
+			 % (cli))
+
 	def isAdmin(self, client, **kwargs):
 		admin = False
 		
 		for each in self.adminlist:
-			if client['name'].lower() == each:
+			if client['name'].lower() == each['name']:
 				admin = True
 		
 		return admin
+
+	def isSuperuser(self, client, **kwargs):
+		superuser = False
+
+		for each in self.adminlist:
+			if client['name'].lower() == each['name']:
+				if each['level'] == 'super':
+					superuser = True
+		
+		return superuser
 
 	def onMessage(self, *args, **kwargs):
 		
@@ -128,7 +160,10 @@ class admin(ConsolePlugin):
 		message = args[2]
 		
 		client = self.getPlayerByName(name)
+
 		admin = self.isAdmin(client, **kwargs)
+		superuser = self.isSuperuser(client, **kwargs)
+
 		request = re.match("request admin", message, flags=re.IGNORECASE)
 		if request:
 			for each in self.playerlist:
@@ -139,6 +174,10 @@ class admin(ConsolePlugin):
 		#ignore everything else if it isn't from admin
 		if not admin:
 			return
+
+		#Pass to superCommand if the player is a superuser
+		if superuser:
+			self.superCommand(message, **kwargs)
 
 		restart = re.match("admin restart", message, flags=re.IGNORECASE)
 		shuffle = re.match("admin shuffle", message, flags=re.IGNORECASE)
@@ -316,29 +355,57 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin report balance ^wwill send a message to ALL players that has the avg. and median SF values."\
 				 % (client['clinum']))
+
+	def superCommand(self, message, **kwargs):
+		#This allows superuser to issue any console command
+		supercommand = re.match("sudo (.*)", message, flags=re.IGNORECASE)
+		
+		if supercommand:
+			kwargs['Broadcast'].broadcast("%s" % (supercommand.group(1)))
+		
+				 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
 		self.PHASE = phase
-
+		
 		if (phase == 7):
 			self.banlist = []	
 			for each in self.playerlist:
 				each['team'] = 0
 				each['commander'] = False
-				
+					
 		if (phase == 6):
 		#fetch admin list and reload at the start of each game
-			try:
-				response = urllib2.urlopen('http://188.40.92.72/admin.ini')
-				adminlist = response.read()
-				adminfile = os.path.join(os.path.dirname(self.CONFIG),'admin.ini')
-				f = open(adminfile, 'w')
-				f.write(adminlist)
-				f.close
-				#reload the config file		
-				self.onPluginLoad(adminfile)
-			except:
-				return
+			updatethread = thread.start_new_thread(self.update, ())			
+		
+
+	def update(self):
+
+		response = urllib2.urlopen('http://188.40.92.72/admin.ini')
+		adminlist = response.read()
+			
+		f = open(self.CONFIG, 'w')
+		f.write(adminlist)
+		f.close
+		f.flush()
+		os.fsync(f.fileno())
+		self.reload_config()
+
+		#Update the wrapper
+		try:
+			gitpath = os.path.realpath(os.path.dirname (os.path.realpath (__file__)) + "/..")
+			os.system('git --git-dir %s/.git pull' % (gitpath))
+		except:
+			print 'somthing wrong with git pull'				
+			return
+			
+	def pluginreload(self, **kwargs):
+		time.sleep(5)
+		kwargs['Broadcast'].broadcast("echo SERVERVAR: TotalPlayers is #GetNumClients()#")
+	
+	def getServerVar(self, *args, **kwargs):
+				
+		print 'test'
 				
 	def logCommand(self, client, message, **kwargs):
 		localtime = time.localtime(time.time())
