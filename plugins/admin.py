@@ -132,7 +132,7 @@ class admin(ConsolePlugin):
 
 		if self.isSuperuser(client, **kwargs):
 			kwargs['Broadcast'].broadcast(\
-			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: sudo <command>."\
+			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: ^rsudo <command>."\
 			 % (cli))
 
 	def isAdmin(self, client, **kwargs):
