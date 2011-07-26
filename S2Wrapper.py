@@ -537,9 +537,12 @@ if __name__ == "__main__":
 
 	# enable listed plugins
 	for name in config.options('plugins'):
+		if name == 'admin':
+			PluginsManager.enable(name)
+			continue
 		if config.getboolean('plugins', name):
 			PluginsManager.enable(name)
-
+		
 	# write local config
 	#config_write(cfgloc, config)
 

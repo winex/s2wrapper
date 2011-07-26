@@ -4,7 +4,7 @@ import re
 import math
 import time
 import ConfigParser
-import thread
+import threading
 import random
 import os
 import PluginsManager
@@ -14,6 +14,7 @@ from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
 from numpy import median
 import urllib2
+import subprocess
 
 class admin(ConsolePlugin):
 	VERSION = "1.1.0"
@@ -23,7 +24,8 @@ class admin(ConsolePlugin):
 	ipban = []
 	PHASE = 0
 	CONFIG = None
-	
+	UPDATE = True
+	NEEDRELOAD = False
 	def onPluginLoad(self, config):
 		
 		self.ms = MasterServer ()
@@ -50,6 +52,19 @@ class admin(ConsolePlugin):
                 for (name, value) in ini.items('ipban'):
                 	self.ipban.append(name)	
 
+	def reload_plugins(self):
+	
+		config = os.path.realpath(os.path.dirname (os.path.realpath (__file__)) + "/../s2wrapper.ini")
+		print config
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
+		for name in ini.options('plugins'):
+			if name == 'admin':
+				PluginsManager.reload(name)
+				continue
+			if ini.getboolean('plugins', name):
+				PluginsManager.reload(name)
+			
 	def onStartServer(self, *args, **kwargs):
 				
 		self.playerlist = []
@@ -186,7 +201,6 @@ class admin(ConsolePlugin):
 		slap = re.match("admin slap (\S+)", message, flags=re.IGNORECASE)
 		changeworld = re.match("admin changeworld (\S+)", message, flags=re.IGNORECASE)
 		help = re.match("help", message, flags=re.IGNORECASE)
-		addadmin = re.match("admin admin (\S+) (\S+)", message, flags=re.IGNORECASE)
 		balance = re.match("admin balance", message, flags=re.IGNORECASE)
 		getbalance = re.match("admin get balance", message, flags=re.IGNORECASE)
 		reportbal = re.match("admin report balance", message, flags=re.IGNORECASE)
@@ -250,33 +264,7 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.onBalance(client['clinum'], **kwargs)
 
-		if addadmin:
 
-			if client['name'] != "stony":
-				return
-
-			added = self.getPlayerByName(addadmin.group(2))
-
-			if addadmin.group(1) == "add":
-				self.adminlist.append(addadmin.group(2))
-				
-				kwargs['Broadcast'].broadcast(\
-					"SendMessage %s You have added %s as a temporary administrator."\
-					 % (client['clinum'], added['name']))
-				kwargs['Broadcast'].broadcast(\
-					"SendMessage %s You have been added as an administrator. Send the chat message: ^chelp ^wto see commands"\
-					 % (added['clinum']))
-
-			if addadmin.group(1) == "remove":
-				for each in self.adminlist:
-					if each == addadmin.group(2):
-						self.adminlist.remove(each)
-				kwargs['Broadcast'].broadcast(\
-					"SendMessage %s You have removed %s as a temporary administrator."\
-					 % (client['clinum'], added['name']))
-				kwargs['Broadcast'].broadcast(\
-					"SendMessage %s You have been removed as an administrator."\
-					 % (added['clinum']))
 		if getbalance:
 			teamone = []
 			teamtwo = []
@@ -347,9 +335,6 @@ class admin(ConsolePlugin):
 				"SendMessage %s ^radmin balance ^wwill move two players to achieve balance."\
 				 % (client['clinum']))
 			kwargs['Broadcast'].broadcast(\
-				"SendMessage %s ^radmin add/remove playername ^wwill add or a remove a player to the admin list. Only stony can execute this."\
-				 % (client['clinum']))
-			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin get balance ^wwill report avg. and median SF values for the teams as well as a stack value."\
 				 % (client['clinum']))
 			kwargs['Broadcast'].broadcast(\
@@ -375,11 +360,15 @@ class admin(ConsolePlugin):
 				each['commander'] = False
 					
 		if (phase == 6):
-		#fetch admin list and reload at the start of each game
-			updatethread = thread.start_new_thread(self.update, ())			
-		
+			if self.UPDATE:
+			#fetch admin list and reload at the start of each game
+				updatethread = threading.Thread(target=self.update, args=(), kwargs=kwargs)
+				updatethread.start()	
+			#check if server is empty after 2 minutes, if so reload all plugins		
+				pluginthread = threading.Thread(target=self.pluginreload, args=(), kwargs=kwargs)
+				pluginthread.start()
 
-	def update(self):
+	def update(self, **kwargs):
 
 		response = urllib2.urlopen('http://188.40.92.72/admin.ini')
 		adminlist = response.read()
@@ -393,20 +382,44 @@ class admin(ConsolePlugin):
 
 		#Update the wrapper
 		try:
-			gitpath = os.path.realpath(os.path.dirname (os.path.realpath (__file__)) + "/..")
-			os.system('git --git-dir %s/.git pull' % (gitpath))
-		except:
-			print 'somthing wrong with git pull'				
-			return
-			
-	def pluginreload(self, **kwargs):
-		time.sleep(5)
-		kwargs['Broadcast'].broadcast("echo SERVERVAR: TotalPlayers is #GetNumClients()#")
+			gitpath = os.path.realpath(os.path.dirname (os.path.realpath (__file__)) + "/../.git")
+			command = ["git","--git-dir",gitpath,"pull"]
+			output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()
+			result = output[0].split("\n")[0]
 	
-	def getServerVar(self, *args, **kwargs):
-				
-		print 'test'
-				
+			needed = re.match("remote: Counting objects: (.*)", result)
+			notneeded = re.match("Already up-to-date.", result)
+		except:
+			return
+		
+		if notneeded:
+			print 'update not needed'
+			self.NEEDRELOAD = False
+			return
+		if needed:
+			print 'update needed'
+			self.NEEDRELOAD = True	
+			self.pluginreload(**kwargs)
+
+	def pluginreload(self, **kwargs):
+		#Wait a couple minutes to allow clients to connect
+		time.sleep(120)
+		#Figure out how many clients are present
+		kwargs['Broadcast'].broadcast("serverstatus")
+	
+	def onServerStatusResponse(self, *args, **kwargs):
+
+		if not self.NEEDRELOAD:
+			return
+
+		gamemap = args[0]
+		active = int(args[2])
+
+		if active == 0:
+			
+			self.reload_plugins()
+			kwargs['Broadcast'].broadcast("NextPhase; PrevPhase")
+
 	def logCommand(self, client, message, **kwargs):
 		localtime = time.localtime(time.time())
 		date = ("%s-%s-%s, %s:%s:%s" % (localtime[1], localtime[2], localtime[0], localtime[3], localtime[4], localtime[5]))
