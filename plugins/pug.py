@@ -155,7 +155,7 @@ class pug(ConsolePlugin):
 							set Pet_Shaman_Prerequisite 1;\
 							set sv_setupTimeCommander 600000000;\
 							Set sv_maxteamdifference 30;")
-			kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"echo PUG Client #GetScriptParam(clientid)# #GetScriptParam(what)# with value #GetScriptParam(value)#; echo\" scriptinput")
+			kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"echo SCRIPT Client #GetScriptParam(clientid)# #GetScriptParam(what)# with value #GetScriptParam(value)#; echo\" scriptinput")
 		if phase == 7:
 			for each in self.playerlist:
 				each['newteam'] = 0
@@ -190,7 +190,7 @@ class pug(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("SendMessage %s ^cYour Playing Status: %s%s" % (client['clinum'], color, client['play']))
 	
 	
-	def onPugEvent(self, *args, **kwargs):		
+	def onScriptEvent(self, *args, **kwargs):		
 		
 		caller = args[0]
 		client = self.getPlayerByClientNum(caller)

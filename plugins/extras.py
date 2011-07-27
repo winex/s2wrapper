@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 7/13/11 - building protection on by default
+# 7/27/11 - Included script input for following
 import re
 import math
 import time
@@ -18,7 +18,7 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class extras(ConsolePlugin):
-	VERSION = "1.0.9"
+	VERSION = "1.1.0"
 	ms = None
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
@@ -37,7 +37,7 @@ class extras(ConsolePlugin):
 	
 	def RegisterScripts(self, **kwargs):
 		
-		print 'register scripts'
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"echo SCRIPT Client #GetScriptParam(clientid)# #GetScriptParam(what)# with value #GetScriptParam(value)#; echo\" scriptinput")
 		
 	def getPlayerByClientNum(self, cli):
 
@@ -188,6 +188,26 @@ class extras(ConsolePlugin):
 				 SetPosition #_stuckindex# [_stuckx + _X] [_stucky + _Y] [_stuckz + 40]" % (client['clinum']))
 
 			client['stuck'] = True
+	
+	def onScriptEvent(self, *args, **kwargs):		
+		
+		caller = args[0]
+		client = self.getPlayerByClientNum(caller)
+		event = args[1]
+		value = args[2]
+				
+		if event == 'Follow':
+		#Determine if it is follow or stop
+			if value == 'stop':
+				action = value
+				self.followaction(action, client, followed_player=None, **kwargs)
+				return
+			else:
+				action = 'start'
+				followed_player = self.getPlayerByName(value)
+				if (followed_player ['team'] > 0) and (client ['team'] == 0):
+					self.followaction(action, client, followed_player, **kwargs)
+					return
 	
 	def followaction(self, action, client, followed_player, **kwargs):
 		

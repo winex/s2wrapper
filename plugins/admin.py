@@ -364,12 +364,12 @@ class admin(ConsolePlugin):
 			#fetch admin list and reload at the start of each game
 				updatethread = threading.Thread(target=self.update, args=(), kwargs=kwargs)
 				updatethread.start()	
-			#check if server is empty after 2 minutes, if so reload all plugins		
+			#check if server is empty after 2 minutes		
 				pluginthread = threading.Thread(target=self.pluginreload, args=(), kwargs=kwargs)
 				pluginthread.start()
 
 	def update(self, **kwargs):
-
+		
 		response = urllib2.urlopen('http://188.40.92.72/admin.ini')
 		adminlist = response.read()
 			
@@ -386,7 +386,7 @@ class admin(ConsolePlugin):
 			command = ["git","--git-dir",gitpath,"pull"]
 			output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()
 			result = output[0].split("\n")[0]
-	
+			#TODO: make sure these work on all servers?
 			needed = re.match("remote: Counting objects: (.*)", result)
 			notneeded = re.match("Already up-to-date.", result)
 		except:
