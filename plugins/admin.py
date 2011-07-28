@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Auto-update incorporation, last test
+# Auto-update incorporation, another test
 import re
 import math
 import time
@@ -393,17 +393,19 @@ class admin(ConsolePlugin):
 		except:
 			return
 		
-		if notneeded:
-			print 'update not needed'
-			self.NEEDRELOAD = False
-			return
 		if needed:
 			print 'update needed'
 			self.NEEDRELOAD = True	
 			self.pluginreload(**kwargs)
 			return
 
+		if notneeded:
+			print 'update not needed'
+			return
+
+
 	def pluginreload(self, **kwargs):
+		print 'pluginreload called'
 		#Wait a couple minutes to allow clients to connect
 		time.sleep(120)
 		#Figure out how many clients are present
@@ -411,6 +413,8 @@ class admin(ConsolePlugin):
 	
 	def onServerStatusResponse(self, *args, **kwargs):
 		print 'made it to server status'
+		print self.NEEDRELOAD
+
 		if self.NEEDRELOAD:
 			gamemap = args[0]
 			active = int(args[2])
