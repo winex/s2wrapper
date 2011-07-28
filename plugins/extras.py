@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# 7/27/11 - Included script input for following
+# 7/27/11 - Massive changes to following. Number of followers is still in variable FOLLOWERS
 import re
 import math
 import time
@@ -18,13 +18,14 @@ from S2Wrapper import Savage2DaemonHandler
 
 
 class extras(ConsolePlugin):
-	VERSION = "1.1.0"
+	VERSION = "1.2.0"
 	ms = None
 	CHAT_INTERVAL = 10
 	CHAT_STAMP = 0
 	playerlist = []
 	itemlist = []
 	followlist = []
+	FOLLOWERS = 4
 	buildingprotect = True
 
 	def onPluginLoad(self, config):
@@ -38,7 +39,37 @@ class extras(ConsolePlugin):
 	def RegisterScripts(self, **kwargs):
 		
 		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"echo SCRIPT Client #GetScriptParam(clientid)# #GetScriptParam(what)# with value #GetScriptParam(value)#; echo\" scriptinput")
+		#Setup everything for following
+		self.followlist = []
+		followers = 1
+		framestring = ""
 		
+		while followers <= self.FOLLOWERS:
+			followstring = ("\
+					RegisterGlobalScript -1 \"set _follower{0} #GetIndexFromClientNum(|#_f{0}|#)#;\
+					set _followed{0} #GetIndexFromClientNum(|#_fd{0}|#)#;\
+					set _fx{0} #GetPosX(|#_followed{0}|#)#;\
+					set _fy{0} #GetPosY(|#_followed{0}|#)#;\
+					set _x{0} #GetPosX(|#_follower{0}|#)#;\
+					set _y{0} #GetPosY(|#_follower{0}|#)#;\
+					set _z{0} #GetPosZ(|#_follower{0}|#)#;\
+					set _zs{0} #_x{0}#, #_y{0}#;\
+					set _zt{0} #GetTerrainHeight(|#_zs{0}|#)#;\
+					if [_z{0} < _zt{0}] set _z{0} [_zt{0} + 50];\
+					set _followX{0} 200;\
+					set _followY{0} 200;\
+					SetPosition #_follower{0}# [_fx{0} + _followX{0}] [_fy{0} + _followY{0}] [_z{0}]\" follow{0}").format(followers)
+			                    
+			framestring += (";if [_f{0} >= 0] ExecScript follow{0}").format(followers)
+			kwargs['Broadcast'].broadcast("%s" % (followstring))
+			f = "_f{0}".format(followers)
+			fd = "_fd{0}".format(followers)
+			kwargs['Broadcast'].broadcast("set %s -1; set %s -1" % (f, fd))
+			self.followlist.append({'follower' : -1, 'followed' : -1, 'f' : f, 'fd' : fd})
+			followers += 1
+			
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _ii 0%s\" frame" % (framestring))
+
 	def getPlayerByClientNum(self, cli):
 
 		client = None
@@ -59,9 +90,6 @@ class extras(ConsolePlugin):
 		phase = int(args[0])
 		self.RegisterScripts(**kwargs)
 		
-		self.followlist = []
-		self.follow(**kwargs)
-
 		if phase == 6:
 			for each in self.playerlist:
 				each['stuck'] = False
@@ -102,7 +130,8 @@ class extras(ConsolePlugin):
 		
 		for each in self.followlist:
 			if each ['follower'] == client['clinum'] or each['followed'] == client['clinum']:
-				self.followlist.remove(each)
+				each['follower'] = -1
+				each['followed'] = -1
 				self.follow(**kwargs)
 				
 	def onSetName(self, *args, **kwargs):
@@ -147,7 +176,12 @@ class extras(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client['team'] = team
 
-
+		for each in self.followlist:
+			if each ['follower'] == client['clinum'] or each['followed'] == client['clinum']:
+				each['follower'] = -1
+				each['followed'] = -1
+				self.follow(**kwargs)
+				
 	def onMessage(self, *args, **kwargs):
 		
 		name = args[1]
@@ -212,60 +246,31 @@ class extras(ConsolePlugin):
 	def followaction(self, action, client, followed_player, **kwargs):
 		
 		if action == 'start':
+		
 			for each in self.followlist:
 				if each ['follower'] == client['clinum']:
 					each ['followed'] = followed_player['clinum']
 					self.follow(**kwargs)
 					return
-				#append to player list			
-			self.followlist.append ({'follower' : client['clinum'], 'followed' : followed_player['clinum']})
-			
+				if each['follower'] == -1:
+					each ['follower'] = client['clinum']
+					each ['followed'] = followed_player['clinum']
+					self.follow(**kwargs)
+					return
+				kwargs['Broadcast'].broadcast(\
+				"SendMessage %s ^cThe follow list is full!" % (client['clinum']))
+				return
+						
 		if action == 'stop':
 			for each in self.followlist:
 				if each['follower'] == client['clinum']:
-					self.followlist.remove(each)
+					each['follower'] = -1
+					each['followed'] = -1
 		
 		self.follow(**kwargs)
 		
 	def follow(self, **kwargs):
-		
-		followlist = []
 		for each in self.followlist:
-			followline =  (";set _follower%s #GetIndexFromClientNum(%s)#;\
-					set _followed%s #GetIndexFromClientNum(%s)#;\
-					set _fx #GetPosX(|#_followed%s|#)#;\
-					set _fy #GetPosY(|#_followed%s|#)#;\
-					set _x #GetPosX(|#_follower%s|#)#;\
-					set _y #GetPosY(|#_follower%s|#)#;\
-					set _z #GetPosZ(|#_follower%s|#)#;\
-					set _zs #_x#, #_y#;\
-					set _zt #GetTerrainHeight(|#_zs|#)#;\
-					if [_z < _zt] set _z [_zt + 50];\
-					set _followX 200;\
-					set _followY 200;\
-					SetPosition #_follower%s# [_fx + _followX] [_fy + _followY] [_z]"\
-					 % (each['follower'],\
-					    each['follower'],\
-					    each['followed'],\
-					    each['followed'],\
-					    each['followed'],\
-					    each['followed'],\
-					    each['follower'],\
-					    each['follower'],\
-					    each['follower'],\
-					    each['follower']))
-		
-			followlist.append(followline)	
-	
-			
-		mainbody = ''.join(followlist)
-		
-		
-		if mainbody == None:
-			script = ("RegisterGlobalScript -1 \"set _xmod 1.0; set _ymod -1.0\" frame")
-			kwargs['Broadcast'].broadcast("%s" % (script))
-			return
-
-		script = ("RegisterGlobalScript -1 \"set _xmod 1.0; set _ymod -1.0 %s\" frame" % (mainbody))
+			kwargs['Broadcast'].broadcast(\
+			"set %s %s; set %s %s" % (each['f'], each['follower'], each['fd'], each['followed']))
 				
-		kwargs['Broadcast'].broadcast("%s" % (script))
