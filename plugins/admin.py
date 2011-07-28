@@ -26,6 +26,7 @@ class admin(ConsolePlugin):
 	CONFIG = None
 	UPDATE = True
 	NEEDRELOAD = False
+
 	def onPluginLoad(self, config):
 		
 		self.ms = MasterServer ()
@@ -409,16 +410,14 @@ class admin(ConsolePlugin):
 	
 	def onServerStatusResponse(self, *args, **kwargs):
 
-		if not self.NEEDRELOAD:
-			return
-
-		gamemap = args[0]
-		active = int(args[2])
-
-		if active == 0:
-			
-			self.reload_plugins()
-			kwargs['Broadcast'].broadcast("NextPhase; PrevPhase")
+		if self.NEEDRELOAD:
+			gamemap = args[0]
+			active = int(args[2])
+			print self.NEEDRELOAD, gamemap, active
+			if active == 0:
+				self.reload_plugins()
+				kwargs['Broadcast'].broadcast("NextPhase; PrevPhase")
+				self.NEEDRELOAD = False
 
 	def logCommand(self, client, message, **kwargs):
 		localtime = time.localtime(time.time())
