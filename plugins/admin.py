@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Added slap
+# Added more update functions
 import re
 import math
 import time
@@ -17,7 +17,7 @@ import urllib2
 import subprocess
 
 class admin(ConsolePlugin):
-	VERSION = "1.1.0"
+	VERSION = "1.1.1"
 	playerlist = []
 	adminlist = []
 	banlist = []
