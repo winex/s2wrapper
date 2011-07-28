@@ -389,21 +389,17 @@ class admin(ConsolePlugin):
 			result = output[0].split("\n")[0]
 			print 'result is %s' % result
 			#TODO: make sure these work on all servers?
-			needed = re.match("remote: Counting objects: .*", result)
 			notneeded = re.match("Already up-to-date.", result)
 		except:
 			return
 		
-		if needed:
-			print 'update needed'
-			self.NEEDRELOAD = True	
-			self.pluginreload(**kwargs)
-			return
-
 		if notneeded:
 			print 'update not needed'
+			self.NEEDRELOAD = False
 			return
-
+			
+		self.NEEDRELOAD = True
+		self.pluginreload(**kwargs)
 
 	def pluginreload(self, **kwargs):
 		print 'pluginreload called'
