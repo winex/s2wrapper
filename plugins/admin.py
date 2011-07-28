@@ -390,6 +390,7 @@ class admin(ConsolePlugin):
 			print 'result is %s' % result
 			#TODO: make sure these work on all servers?
 			notneeded = re.match("Already up-to-date.", result)
+			needed = re.match("Updating .*", result)
 		except:
 			return
 		
@@ -397,9 +398,12 @@ class admin(ConsolePlugin):
 			print 'update not needed'
 			self.NEEDRELOAD = False
 			return
-			
-		self.NEEDRELOAD = True
-		self.pluginreload(**kwargs)
+
+		if needed:
+			print 'update needed'
+			self.NEEDRELOAD = True
+			self.pluginreload(**kwargs)
+			return
 
 	def pluginreload(self, **kwargs):
 		print 'pluginreload called'
@@ -415,7 +419,7 @@ class admin(ConsolePlugin):
 		if self.NEEDRELOAD:
 			gamemap = args[0]
 			active = int(args[2])
-			print self.NEEDRELOAD, gamemap, active
+			
 			if active == 0:
 				self.reload_plugins()
 				kwargs['Broadcast'].broadcast("NextPhase; PrevPhase")
