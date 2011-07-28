@@ -387,8 +387,9 @@ class admin(ConsolePlugin):
 			command = ["git","--git-dir",gitpath,"pull"]
 			output = subprocess.Popen(command, stdout=subprocess.PIPE).communicate()
 			result = output[0].split("\n")[0]
+			print 'result is %s' % result
 			#TODO: make sure these work on all servers?
-			needed = re.match("remote: Counting objects: (.*)", result)
+			needed = re.match("remote: Counting objects: .*", result)
 			notneeded = re.match("Already up-to-date.", result)
 		except:
 			return
