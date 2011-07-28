@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Added more update functions
+# Auto-update incorporation
 import re
 import math
 import time
