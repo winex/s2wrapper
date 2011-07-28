@@ -116,11 +116,16 @@ class sendstats(ConsolePlugin):
 
 			except:
 				print 'upload failed. replay not sent'				
-				return
+				continue
 
 			print 'Sent replay'
-			shutil.move(infile,sentdir)
-
+			
+			try:
+				shutil.copy(infile,sentdir)
+				os.remove(os.path.join(home, self.base, infile))
+			except:
+				continue
+				
 	def getPlayerByClientNum(self, cli):
 
 		for client in self.playerlist:
