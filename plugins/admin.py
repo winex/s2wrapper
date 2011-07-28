@@ -401,6 +401,7 @@ class admin(ConsolePlugin):
 			print 'update needed'
 			self.NEEDRELOAD = True	
 			self.pluginreload(**kwargs)
+			return
 
 	def pluginreload(self, **kwargs):
 		#Wait a couple minutes to allow clients to connect
@@ -409,7 +410,7 @@ class admin(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("serverstatus")
 	
 	def onServerStatusResponse(self, *args, **kwargs):
-
+		print 'made it to server status'
 		if self.NEEDRELOAD:
 			gamemap = args[0]
 			active = int(args[2])
