@@ -248,18 +248,23 @@ class extras(ConsolePlugin):
 		if action == 'start':
 		
 			for each in self.followlist:
+				#first check if they are already a follower
 				if each ['follower'] == client['clinum']:
 					each ['followed'] = followed_player['clinum']
 					self.follow(**kwargs)
 					return
+				
+			for each in self.followlist:
+				#if not already follower, grab the first available spot
 				if each['follower'] == -1:
 					each ['follower'] = client['clinum']
 					each ['followed'] = followed_player['clinum']
 					self.follow(**kwargs)
 					return
-				kwargs['Broadcast'].broadcast(\
-				"SendMessage %s ^cThe follow list is full!" % (client['clinum']))
-				return
+			#If all the spots are filled, report it
+			kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^cThe follow list is full!" % (client['clinum']))
+			return
 						
 		if action == 'stop':
 			for each in self.followlist:
