@@ -252,6 +252,7 @@ class pug(ConsolePlugin):
 				kwargs['Broadcast'].broadcast("set State_SuccessfulBlock_Description %s; set Gadget_Hail_Description \"trigger UpdatePercent %s\"" % (info['h_captain'],info['h_captain'] ))
 		#Ready
 		if event == 'Ready':
+			#TODO:only make the button do something if the minimum number of players are reached
 			if self.STARTED:
 				return
 			if caller == info['h_captain']:
