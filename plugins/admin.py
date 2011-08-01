@@ -194,6 +194,9 @@ class admin(ConsolePlugin):
 		#Pass to superCommand if the player is a superuser
 		if superuser:
 			self.superCommand(message, **kwargs)
+		
+		#Attempt to recover proper player number
+		
 
 		restart = re.match("admin restart", message, flags=re.IGNORECASE)
 		shuffle = re.match("admin shuffle", message, flags=re.IGNORECASE)
@@ -217,9 +220,12 @@ class admin(ConsolePlugin):
 					"SendMessage %s Cannot shuffle until the game has started!"\
 					 % (client['clinum']))
 				return
-			kwargs['Broadcast'].broadcast("SendMessage -1 %s has shuffled the game." % (name))	
-			self.onShuffle(client['clinum'], **kwargs)						
 			
+			kwargs['Broadcast'].broadcast("SendMessage -1 %s has shuffled the game." % (name))
+			self.listClients(**kwargs)	
+			shufflethread = threading.Thread(target=self.onShuffle, args=(client['clinum']), kwargs=kwargs)
+			shufflethread.start()
+
 		if kick:
 			#kicks a player from the server
 			reason = "An administrator has removed you from the server, probably for being annoying"
@@ -262,51 +268,23 @@ class admin(ConsolePlugin):
 					"SendMessage %s Cannot balance if the game has not started!"\
 					 % (client['clinum']))
 				return
-			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
-			self.onBalance(client['clinum'], **kwargs)
 
+			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
+			self.listClients(**kwargs)
+			balancethread = threading.Thread(target=self.onBalance, args=(client['clinum']), kwargs=kwargs)
+			balancethread.start()
+			
 
 		if getbalance:
-			teamone = []
-			teamtwo = []
+			self.listClients(**kwargs)
+			balancethread = threading.Thread(target=self.getBalance, args=(), kwargs=kwargs)
+			balancethread.start()
 
-			#populate current team lists:
-			for each in self.playerlist:
-				if not each['active']:
-					continue
-				if each['team'] == 1:
-					teamone.append(each)
-				if each['team'] == 2:
-					teamtwo.append(each)
-			
-			teamonestats = self.getTeamInfo(teamone)
-			teamtwostats = self.getTeamInfo(teamtwo)
-			stack = self.evaluateBalance(teamone, teamtwo)
-
-			kwargs['Broadcast'].broadcast(\
-			"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
-			 % (client['clinum'], teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
 
 		if reportbal:
-			teamone = []
-			teamtwo = []
-			#populate current team lists:
-			for each in self.playerlist:
-				if not each['active']:
-					continue
-				if each['team'] == 1:
-					teamone.append(each)
-				if each['team'] == 2:
-					teamtwo.append(each)
-
-			teamonestats = self.getTeamInfo(teamone)
-			teamtwostats = self.getTeamInfo(teamtwo)
-			stack = self.evaluateBalance(teamone, teamtwo)
-
-			kwargs['Broadcast'].broadcast(\
-			"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
-			 % (teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
-
+			self.listClients(**kwargs)
+			balancethread = threading.Thread(target=self.reportBalance, args=(), kwargs=kwargs)
+			balancethread.start()
 
 		self.logCommand(client['name'],message)
 
@@ -341,6 +319,46 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 				"SendMessage %s ^radmin report balance ^wwill send a message to ALL players that has the avg. and median SF values."\
 				 % (client['clinum']))
+
+	def getBalance(self, *args, **kwargs):
+		time.sleep(0.5)
+		teamone = []
+		teamtwo = []
+
+		#populate current team lists:
+		for each in self.playerlist:
+			if not each['active']:
+				continue
+			if each['team'] == 1:
+				teamone.append(each)
+			if each['team'] == 2:
+				teamtwo.append(each)
+		
+		teamonestats = self.getTeamInfo(teamone)
+		teamtwostats = self.getTeamInfo(teamtwo)
+		stack = self.evaluateBalance(teamone, teamtwo)
+		kwargs['Broadcast'].broadcast(\
+		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+		 % (client['clinum'], teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
+
+	def reportBalance(self, *args, **kwargs):
+		time.sleep(0.5)
+		teamone = []
+		teamtwo = []
+		#populate current team lists:
+		for each in self.playerlist:
+			if not each['active']:
+				continue
+			if each['team'] == 1:
+				teamone.append(each)
+			if each['team'] == 2:
+				teamtwo.append(each)
+			teamonestats = self.getTeamInfo(teamone)
+		teamtwostats = self.getTeamInfo(teamtwo)
+		stack = self.evaluateBalance(teamone, teamtwo)
+		kwargs['Broadcast'].broadcast(\
+		"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+		 % (teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
 
 	def superCommand(self, message, **kwargs):
 		#This allows superuser to issue any console command
@@ -417,8 +435,6 @@ class admin(ConsolePlugin):
 		kwargs['Broadcast'].broadcast("serverstatus")
 	
 	def onServerStatusResponse(self, *args, **kwargs):
-		print 'made it to server status'
-		print self.NEEDRELOAD
 
 		if self.NEEDRELOAD:
 			gamemap = args[0]
@@ -444,7 +460,7 @@ class admin(ConsolePlugin):
 		client['team'] = team
 
 	def onShuffle (self, client, **kwargs):
-
+		time.sleep(1)
 		shufflelist = []
 
 		#Put all the active players in a list
@@ -483,7 +499,7 @@ class admin(ConsolePlugin):
 		self.onBalance(client, **kwargs)
 
 	def onBalance(self, client, **kwargs):
-
+		time.sleep(1)
 		teamone = []
 		teamtwo = []
 
@@ -618,3 +634,23 @@ class admin(ConsolePlugin):
 		cli = args[0]
 		client = self.getPlayerByClientNum(cli)
 		client['commander'] = True
+
+	def listClients(self, *args, **kwargs):
+
+		kwargs['Broadcast'].broadcast("listclients")
+
+	def onListClients(self, *args, **kwargs):
+		clinum = args[0]
+		name = args[2]
+		client = self.getPlayerByName(name)
+		client['active'] = True
+		kwargs['Broadcast'].broadcast(\
+		"set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#"\
+		 % (client['clinum'], client['clinum']))
+
+	def onRefreshTeams(self, *args, **kwargs):
+		clinum = args[0]
+		team = int(args[1])
+		client = self.getPlayerByClientNum(clinum)
+		client['team'] = team
+
