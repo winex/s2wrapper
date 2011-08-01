@@ -381,6 +381,10 @@ class admin(ConsolePlugin):
 		os.fsync(f.fileno())
 		self.reload_config()
 
+		if self.NEEDRELOAD:
+			self.pluginreload(**kwargs)
+			return
+
 		#Update the wrapper
 		try:
 			gitpath = os.path.realpath(os.path.dirname (os.path.realpath (__file__)) + "/../.git")
