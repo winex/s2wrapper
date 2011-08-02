@@ -90,7 +90,8 @@ class admin(ConsolePlugin):
 		
 		for each in self.ipban:
 			if each == ip:
-				kwargs['Broadcast'].broadcast("kick %s You are banned from this server" % (cli))
+				reason = "You are banned from this server."
+				kwargs['Broadcast'].broadcast("kick %s \"%s\"" % (id, reason))
 				return
 
 		reason = "An administrator has removed you from this server. You may rejoin the server after the current game ends."
