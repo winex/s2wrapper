@@ -70,6 +70,7 @@ class helper(ConsolePlugin):
 					 'acctid' : 0,\
 					 'name' : 'X',\
 					 'active' : False,\
+					 'helper' : False,\
 					 'level' : 0})
 	
 	def onDisconnect(self, *args, **kwargs):
@@ -103,7 +104,7 @@ class helper(ConsolePlugin):
 			self.helperNotify(client, **kwargs)
 
 		for each in self.helperlist:
-			if client['name'].lower == each['name']:
+			if client['name'].lower() == each['name']:
 				client['helper'] = True
 
 	def onPhaseChange(self, *args, **kwargs):
