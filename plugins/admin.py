@@ -278,13 +278,13 @@ class admin(ConsolePlugin):
 
 		if getbalance:
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.getBalance, args=(), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.getBalance, args=(client['clinum']), kwargs=kwargs)
 			balancethread.start()
 
 
 		if reportbal:
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.reportBalance, args=(), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.reportBalance, args=(client['clinum']), kwargs=kwargs)
 			balancethread.start()
 
 		self.logCommand(client['name'],message)
@@ -321,7 +321,7 @@ class admin(ConsolePlugin):
 				"SendMessage %s ^radmin report balance ^wwill send a message to ALL players that has the avg. and median SF values."\
 				 % (client['clinum']))
 
-	def getBalance(self, *args, **kwargs):
+	def getBalance(self, client, **kwargs):
 		time.sleep(0.5)
 		teamone = []
 		teamtwo = []
@@ -340,9 +340,9 @@ class admin(ConsolePlugin):
 		stack = self.evaluateBalance(teamone, teamtwo)
 		kwargs['Broadcast'].broadcast(\
 		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
-		 % (client['clinum'], teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
+		 % (client, teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
 
-	def reportBalance(self, *args, **kwargs):
+	def reportBalance(self, client, **kwargs):
 		time.sleep(0.5)
 		teamone = []
 		teamtwo = []
@@ -354,7 +354,8 @@ class admin(ConsolePlugin):
 				teamone.append(each)
 			if each['team'] == 2:
 				teamtwo.append(each)
-			teamonestats = self.getTeamInfo(teamone)
+
+		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
 		stack = self.evaluateBalance(teamone, teamtwo)
 		kwargs['Broadcast'].broadcast(\
