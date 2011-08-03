@@ -177,7 +177,7 @@ class admin(ConsolePlugin):
 		message = args[2]
 		
 		client = self.getPlayerByName(name)
-
+		clinum = client['clinum']
 		admin = self.isAdmin(client, **kwargs)
 		superuser = self.isSuperuser(client, **kwargs)
 
@@ -272,19 +272,19 @@ class admin(ConsolePlugin):
 
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.onBalance, args=(client['clinum']), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.onBalance, args=(clinum), kwargs=kwargs)
 			balancethread.start()
 			
 
 		if getbalance:
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.getBalance, args=(client['clinum']), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.getBalance, args=(clinum), kwargs=kwargs)
 			balancethread.start()
 
 
 		if reportbal:
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.reportBalance, args=(client['clinum']), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.reportBalance, args=(), kwargs=kwargs)
 			balancethread.start()
 
 		self.logCommand(client['name'],message)
@@ -321,8 +321,8 @@ class admin(ConsolePlugin):
 				"SendMessage %s ^radmin report balance ^wwill send a message to ALL players that has the avg. and median SF values."\
 				 % (client['clinum']))
 
-	def getBalance(self, client, **kwargs):
-		time.sleep(0.5)
+	def getBalance(self, clinum, **kwargs):
+		time.sleep(1)
 		teamone = []
 		teamtwo = []
 
@@ -340,10 +340,10 @@ class admin(ConsolePlugin):
 		stack = self.evaluateBalance(teamone, teamtwo)
 		kwargs['Broadcast'].broadcast(\
 		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
-		 % (client, teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
+		 % (clinum, teamonestats['size'], teamonestats['avg'], teamonestats['median'], teamtwostats['size'], teamtwostats['avg'], teamtwostats['median'], stack))
 
-	def reportBalance(self, client, **kwargs):
-		time.sleep(0.5)
+	def reportBalance(self, **kwargs):
+		time.sleep(1)
 		teamone = []
 		teamtwo = []
 		#populate current team lists:
@@ -461,7 +461,7 @@ class admin(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client['team'] = team
 
-	def onShuffle (self, client, **kwargs):
+	def onShuffle (self, clinum, **kwargs):
 		time.sleep(1)
 		shufflelist = []
 
@@ -496,11 +496,11 @@ class admin(ConsolePlugin):
 		kwargs['Broadcast'].broadcast(\
 			"nextphase")
 		kwargs['Broadcast'].broadcast(\
-			"SendMessage %s You have shuffled the game." % (client))
+			"SendMessage %s You have shuffled the game." % (clinum))
 		#Run balancer to get it nice and even
-		self.onBalance(client, **kwargs)
+		self.onBalance(clinum, **kwargs)
 
-	def onBalance(self, client, **kwargs):
+	def onBalance(self, clinum, **kwargs):
 		time.sleep(1)
 		teamone = []
 		teamtwo = []
@@ -523,7 +523,7 @@ class admin(ConsolePlugin):
 		#Send message to admin that called the shuffle/balance
 		kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" \
-			 % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+			 % (clinum, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
 				
 		#Find the players to swap
