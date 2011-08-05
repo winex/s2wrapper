@@ -297,6 +297,7 @@ class ConsoleParser:
 			self.getHashCheck : re.compile('Sv: HACKCHECK ClientNumber: (\d+), AccountID: (\d+), Hashcheck result: (\S+)'),
 			self.getMatchID   : re.compile('SGame: Authenticated server successfully, stats will be recorded this game. Match ID: (/d+), Server ID: (/d+)'),
 			self.getEvent : re.compile('(?:SGame: |Sv: )*?EVENT (\S+) (\S+) on (\S+) by (\S+) at (\d+\.\d+) (\d+\.\d+) (\d+\.\d+)'),
+			self.mapDimensions : re.compile('Error: CWorld::GetTerrainHeight\(\) - Coordinates are out of bounds'),
 			self.onScriptEvent : re.compile('(?:SGame: |Sv: )*?SCRIPT Client (\d+) (\S+) with value (\S+)')
 		})
 
@@ -403,6 +404,8 @@ class ConsoleParser:
 	def getMatchID(self, *args, **kwargs):
 		pass
 	def getEvent(self, *args, **kwargs):
+		pass
+	def mapDimensions(self, *args, **kwargs):
 		pass
 	def onScriptEvent(self, *args, **kwargs):
 		pass

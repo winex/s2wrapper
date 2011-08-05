@@ -26,7 +26,8 @@ class extras(ConsolePlugin):
 	itemlist = []
 	followlist = []
 	FOLLOWERS = 4
-	buildingprotect = True
+	MAPSIZE = 10
+	buildingprotect = False
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -43,7 +44,7 @@ class extras(ConsolePlugin):
 		self.followlist = []
 		followers = 1
 		framestring = ""
-		
+		'''
 		while followers <= self.FOLLOWERS:
 			followstring = ("\
 					RegisterGlobalScript -1 \"set _follower{0} #GetIndexFromClientNum(|#_f{0}|#)#;\
@@ -70,6 +71,8 @@ class extras(ConsolePlugin):
 			
 		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _ii 0%s\" frame" % (framestring))
 
+		'''
+
 	def getPlayerByClientNum(self, cli):
 
 		client = None
@@ -91,12 +94,20 @@ class extras(ConsolePlugin):
 		self.RegisterScripts(**kwargs)
 		
 		if phase == 6:
+			#get the map size
+			self.getMapSize(**kwargs)
+			#remove stuck for players
 			for each in self.playerlist:
 				each['stuck'] = False
+			#set buildig protect scripts
 			if self.buildingprotect:
 				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#; ExecScript Death\\\"; set _index #GetScriptParam(index)#; set _mz 350; set _type #GetScriptParam(type)#; echo #_type#; if #StringEquals(|#_type|#,Building_HumanHellShrine)# set _mz 2000; if #StringEquals(|#_type|#,Building_ArrowTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_CannonTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_ChlorophilicSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_EntangleSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_ShieldTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_StrataSpire)# set _mz 2000; set _x #GetPosX(|#_index|#)#; set _y #GetPosY(|#_index|#)#; set _z #GetPosZ(|#_index|#)#; SpawnEntityatEntity #_index# Trigger_Proximity model /core/null/null.mdf name DeathTrigger#_index# triggeronplayer 1 triggerradius 250 triggerenter \\\"set _domove 1; set _xindex #GetScriptParam(index)#; set _xtype #GetType(|#_xindex|#)#; if #StringEquals(|#_xtype|#,Player_Behemoth)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Malphas)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Devourer)# set _domove 0; set _xx #GetPosX(|#_xindex|#)#; set _xy #GetPosY(|#_xindex|#)#; set _xz #GetPosZ(|#_xindex|#)#; if [_domove == 1] SetPosition #_xindex# [_xx + 300] [_xy - 300] #_xz#\\\"; SetPosition #GetIndexFromName(DeathTrigger|#_index|#)# #_x# #_y# [_z + _mz]; echo\" buildingplaced")
 				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
 
+		if phase == 7:
+			for each in self.playerlist:
+				each['team'] = 0
+			self.MAPSIZE = 10
 
 	def onConnect(self, *args, **kwargs):
 		
@@ -242,7 +253,21 @@ class extras(ConsolePlugin):
 				if (followed_player ['team'] > 0) and (client ['team'] == 0):
 					self.followaction(action, client, followed_player, **kwargs)
 					return
-	
+
+		if event == 'SetMapPosition':
+			
+			if client['team'] != 0:
+				return
+			
+			maxcoord = ((self.MAPSIZE - 1) * 64 * 64)
+			print maxcoord
+			location = re.match("(0\.\d+)_(0.\d+)", value)
+			print location.group(1), location.group(2)
+			coordx = float(location.group(1))*maxcoord
+			coordy = float(location.group(2))*maxcoord
+			print coordx, coordy
+			kwargs['Broadcast'].broadcast(\
+				 "SetPosition #GetIndexFromClientNum(%s)# %s %s #GetPosZ(|#GetIndexFromClientNum(%s)|#)#" % (client['clinum'], coordx, coordy, client['clinum']))
 	def followaction(self, action, client, followed_player, **kwargs):
 		
 		if action == 'start':
@@ -278,4 +303,15 @@ class extras(ConsolePlugin):
 		for each in self.followlist:
 			kwargs['Broadcast'].broadcast(\
 			"set %s %s; set %s %s" % (each['f'], each['follower'], each['fd'], each['followed']))
-				
+
+	def getMapSize(self,**kwargs):
+		
+		checkdimension = ((self.MAPSIZE - 1) * 64 * 64) - 1
+		kwargs['Broadcast'].broadcast("echo #GetTerrainHeight(%s, 0)#" % (checkdimension))
+		print 'Map Size =', self.MAPSIZE
+
+	def mapDimensions(self, *args, **kwargs):
+		print 'made it to MAP DIMENSONS'
+		self.MAPSIZE -= 1
+		self.getMapSize(**kwargs)
+	
