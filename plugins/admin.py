@@ -272,13 +272,13 @@ class admin(ConsolePlugin):
 
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.onBalance, args=(clinum), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.onBalance, args=clinum, kwargs=kwargs)
 			balancethread.start()
 			
 
 		if getbalance:
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.getBalance, args=(clinum), kwargs=kwargs)
+			balancethread = threading.Thread(target=self.getBalance, args=clinum, kwargs=kwargs)
 			balancethread.start()
 
 
@@ -647,7 +647,7 @@ class admin(ConsolePlugin):
 		client = self.getPlayerByName(name)
 		client['active'] = True
 		kwargs['Broadcast'].broadcast(\
-		"set _idx #GetIndexFromClientNum(%s)#; set _team #GetTeam(|#_idx|#)#; echo CLIENT %s is on TEAM #_team#"\
+		"echo CLIENT %s is on TEAM #GetTeam(|#GetIndexFromClientNum(%s)|#)#"\
 		 % (client['clinum'], client['clinum']))
 
 	def onRefreshTeams(self, *args, **kwargs):
