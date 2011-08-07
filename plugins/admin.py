@@ -224,7 +224,7 @@ class admin(ConsolePlugin):
 			
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has shuffled the game." % (name))
 			self.listClients(**kwargs)	
-			shufflethread = threading.Thread(target=self.onShuffle, args=(client['clinum']), kwargs=kwargs)
+			shufflethread = threading.Thread(target=self.onShuffle, args=(), kwargs=kwargs)
 			shufflethread.start()
 
 		if kick:
@@ -272,7 +272,8 @@ class admin(ConsolePlugin):
 
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.listClients(**kwargs)
-			balancethread = threading.Thread(target=self.onBalance, args=clinum, kwargs=kwargs)
+			#balancethread = threading.Thread(target=self.onBalance, args=clinum, kwargs=kwargs)
+			balancethread = threading.Thread(target=self.onBalance, args=(), kwargs=kwargs)
 			balancethread.start()
 			
 
@@ -461,7 +462,8 @@ class admin(ConsolePlugin):
 		client = self.getPlayerByClientNum(cli)
 		client['team'] = team
 
-	def onShuffle (self, clinum, **kwargs):
+	#def onShuffle (self, clinum, **kwargs):
+	def onShuffle (self, **kwargs):
 		time.sleep(1)
 		shufflelist = []
 
@@ -490,17 +492,21 @@ class admin(ConsolePlugin):
 		#Now actually do the shuffling
 		for each in shufflelist:
 			kwargs['Broadcast'].broadcast(\
-				"set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s"\
+				"SetTeam #GetIndexFromClientNum(%s)# %s"\
 				 % (each['clinum'], each['team']))
 		#Finish it off by going forward a phase
 		kwargs['Broadcast'].broadcast(\
 			"nextphase")
-		kwargs['Broadcast'].broadcast(\
-			"SendMessage %s You have shuffled the game." % (clinum))
+		#removed temporarily
+		
+		#kwargs['Broadcast'].broadcast(\
+		#	"SendMessage %s You have shuffled the game." % (clinum))
 		#Run balancer to get it nice and even
-		self.onBalance(clinum, **kwargs)
-
-	def onBalance(self, clinum, **kwargs):
+		#self.onBalance(clinum, **kwargs)
+		self.onBalance(**kwargs)
+		
+	#def onBalance(self, clinum, **kwargs):
+	def onBalance(self, **kwargs):
 		time.sleep(1)
 		teamone = []
 		teamtwo = []
@@ -521,9 +527,9 @@ class admin(ConsolePlugin):
 		startstack = self.evaluateBalance(teamone, teamtwo)
 		
 		#Send message to admin that called the shuffle/balance
-		kwargs['Broadcast'].broadcast(\
-			"SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" \
-			 % (clinum, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+		#kwargs['Broadcast'].broadcast(\
+		#	"SendMessage %s ^yPrior to balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s" \
+		#	 % (clinum, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
 				
 		#Find the players to swap
@@ -570,9 +576,9 @@ class admin(ConsolePlugin):
 		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
 
-		kwargs['Broadcast'].broadcast(\
-			"SendMessage %s ^yAfter balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s"\
-			 % (client, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
+		#kwargs['Broadcast'].broadcast(\
+		#	"SendMessage %s ^yAfter balance: Team One Avg. SF was ^r%s^y median was ^r%s^y, Team Two Avg. SF was ^r%s^y median was ^r%s"\
+		#	 % (clinum, teamonestats['avg'], teamonestats['median'], teamtwostats['avg'], teamtwostats['median']))
 
 
 	def getTeamInfo(self, teamlist, **kwargs):
