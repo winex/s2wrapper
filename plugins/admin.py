@@ -392,16 +392,18 @@ class admin(ConsolePlugin):
 
 	def update(self, **kwargs):
 		
+		'''
 		response = urllib2.urlopen('http://188.40.92.72/admin.ini')
 		adminlist = response.read()
-			
+		
 		f = open(self.CONFIG, 'w')
 		f.write(adminlist)
 		f.close
 		f.flush()
 		os.fsync(f.fileno())
 		self.reload_config()
-
+		
+		'''	
 		if self.NEEDRELOAD:
 			self.pluginreload(**kwargs)
 			return
@@ -417,6 +419,7 @@ class admin(ConsolePlugin):
 			notneeded = re.match("Already up-to-date.", result)
 			needed = re.match("Updating .*", result)
 		except:
+			print 'error getting git update'
 			return
 		
 		if notneeded:

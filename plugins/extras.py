@@ -27,7 +27,7 @@ class extras(ConsolePlugin):
 	followlist = []
 	FOLLOWERS = 4
 	MAPSIZE = 10
-	buildingprotect = True
+	buildingprotect = False
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -95,8 +95,8 @@ class extras(ConsolePlugin):
 		
 		if phase == 6:
 			#get the map size
-			mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
-			mapthread.start()
+			#mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
+			#mapthread.start()
 			#remove stuck for players
 			for each in self.playerlist:
 				each['stuck'] = False
@@ -307,7 +307,7 @@ class extras(ConsolePlugin):
 
 	def getMapSize(self,**kwargs):
 		time.sleep(1)
-		checkdimension = ((self.MAPSIZE - 1) * 64 * 64) - 1
+		checkdimension = ((self.MAPSIZE - 1) * 64 * 64) - 2
 		kwargs['Broadcast'].broadcast("echo #GetTerrainHeight(%s, 0)#" % (checkdimension))
 		print 'Map Size =', self.MAPSIZE
 
