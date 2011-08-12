@@ -26,8 +26,9 @@ class extras(ConsolePlugin):
 	itemlist = []
 	followlist = []
 	FOLLOWERS = 4
-	MAPSIZE = 10
-	buildingprotect = False
+	MAPSIZE = 0
+	MAPSIZESET = False
+	buildingprotect = True
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
@@ -94,21 +95,51 @@ class extras(ConsolePlugin):
 		self.RegisterScripts(**kwargs)
 		
 		if phase == 6:
-			#get the map size
-			#mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
-			#mapthread.start()
+			
 			#remove stuck for players
 			for each in self.playerlist:
 				each['stuck'] = False
 			#set buildig protect scripts
-			if self.buildingprotect:
-				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#; ExecScript Death\\\"; set _index #GetScriptParam(index)#; set _mz 350; set _type #GetScriptParam(type)#; echo #_type#; if #StringEquals(|#_type|#,Building_HumanHellShrine)# set _mz 2000; if #StringEquals(|#_type|#,Building_ArrowTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_CannonTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_ChlorophilicSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_EntangleSpire)# set _mz 2000; if #StringEquals(|#_type|#,Building_ShieldTower)# set _mz 2000; if #StringEquals(|#_type|#,Building_StrataSpire)# set _mz 2000; set _x #GetPosX(|#_index|#)#; set _y #GetPosY(|#_index|#)#; set _z #GetPosZ(|#_index|#)#; SpawnEntityatEntity #_index# Trigger_Proximity model /core/null/null.mdf name DeathTrigger#_index# triggeronplayer 1 triggerradius 250 triggerenter \\\"set _domove 1; set _xindex #GetScriptParam(index)#; set _xtype #GetType(|#_xindex|#)#; if #StringEquals(|#_xtype|#,Player_Behemoth)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Malphas)# set _domove 0; if #StringEquals(|#_xtype|#,Player_Devourer)# set _domove 0; set _xx #GetPosX(|#_xindex|#)#; set _xy #GetPosY(|#_xindex|#)#; set _xz #GetPosZ(|#_xindex|#)#; if [_domove == 1] SetPosition #_xindex# [_xx + 300] [_xy - 300] #_xz#\\\"; SetPosition #GetIndexFromName(DeathTrigger|#_index|#)# #_x# #_y# [_z + _mz]; echo\" buildingplaced")
-				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
 
+			#TODO: make sure the place it moves them is a valid position
+			if self.buildingprotect:
+				kwargs['Broadcast'].broadcast("\
+				RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead\
+					#GetScriptParam(index)#; ExecScript Death\\\";\
+				set _index #GetScriptParam(index)#; set _mz 350;\
+				set _type #GetScriptParam(type)#; echo #_type#; if #StringEquals(|#_type|#,Building_HumanHellShrine)#\
+				set _mz 2000; if #StringEquals(|#_type|#,Building_ArrowTower)# set _mz 2000;\
+				if #StringEquals(|#_type|#,Building_CannonTower)# set _mz 2000;\
+				if #StringEquals(|#_type|#,Building_ChlorophilicSpire)# set _mz 2000;\
+				if #StringEquals(|#_type|#,Building_EntangleSpire)# set _mz 2000;\
+				if #StringEquals(|#_type|#,Building_ShieldTower)# set _mz 2000;\
+				if #StringEquals(|#_type|#,Building_StrataSpire)# set _mz 2000;\
+				set _x #GetPosX(|#_index|#)#;\
+				set _y #GetPosY(|#_index|#)#;\
+				set _z #GetPosZ(|#_index|#)#;\
+				SpawnEntityatEntity #_index# Trigger_Proximity model /core/null/null.mdf name DeathTrigger#_index# triggeronplayer 1 triggerradius\
+					 250 triggerenter\
+					 \\\"set _domove 1; set _xindex #GetScriptParam(index)#;\
+					 set _xtype #GetType(|#_xindex|#)#;\
+					 if #StringEquals(|#_xtype|#,Player_Behemoth)# set _domove 0;\
+					 if #StringEquals(|#_xtype|#,Player_Malphas)# set _domove 0;\
+					 if #StringEquals(|#_xtype|#,Player_Devourer)# set _domove 0;\
+					 set _xx #GetPosX(|#_xindex|#)#;\
+					 set _xy #GetPosY(|#_xindex|#)#;\
+					 set _xz #GetPosZ(|#_xindex|#)#;\
+					 if [_domove == 1] SetPosition #_xindex# [_xx + 300] [_xy - 300] #_xz#\\\";\
+				 SetPosition #GetIndexFromName(DeathTrigger|#_index|#)# #_x# #_y# [_z + _mz];\
+				 echo\" buildingplaced")
+
+				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
+				#get the map size
+				mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
+				mapthread.start()
+				
 		if phase == 7:
 			for each in self.playerlist:
 				each['team'] = 0
-			self.MAPSIZE = 10
+			self.MAPSIZESET = False
 
 	def onConnect(self, *args, **kwargs):
 		
@@ -306,13 +337,19 @@ class extras(ConsolePlugin):
 			"set %s %s; set %s %s" % (each['f'], each['follower'], each['fd'], each['followed']))
 
 	def getMapSize(self,**kwargs):
-		time.sleep(1)
-		checkdimension = ((self.MAPSIZE - 1) * 64 * 64) - 2
-		kwargs['Broadcast'].broadcast("echo #GetTerrainHeight(%s, 0)#" % (checkdimension))
-		print 'Map Size =', self.MAPSIZE
+		
+		checkdimension = 131071
+		self.MAPSIZE = 10
+		while not self.MAPSIZESET:
+			self.MAPSIZESET = True
+			checkdimension = checkdimension/2
+			kwargs['Broadcast'].broadcast("echo #GetTerrainHeight(%s,0)#" % (checkdimension))
+			time.sleep(1)
+			print 'Map Size =', self.MAPSIZE
 
 	def mapDimensions(self, *args, **kwargs):
-		print 'made it to MAP DIMENSONS'
-		self.MAPSIZE -= 1
-		self.getMapSize(**kwargs)
-	
+		if self.MAPSIZE > 0:
+			print 'made it to MAP DIMENSONS'
+			self.MAPSIZE -= 1
+			self.MAPSIZESET = False
+

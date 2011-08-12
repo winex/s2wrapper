@@ -41,6 +41,7 @@ class sendstats(ConsolePlugin):
 		if (phase == 6):
 						 
 			uploadthread = thread.start_new_thread(self.uploadstats, ())
+			eventthread  = thread.start_new_thread(self.uploadevent, ())
 			replaythread = thread.start_new_thread(self.uploadreplay, ())
 			
 		
@@ -76,6 +77,29 @@ class sendstats(ConsolePlugin):
 				return
 
 			print 'Sent stat string'
+			shutil.move(infile,sentdir)
+
+	def uploadevent(self):
+
+		self.ss = StatsServers ()
+		home  = os.environ['HOME']
+		path = 	os.path.join(home, self.base)
+		sentdir = os.path.join(home, self.sent)
+		
+		for infile in glob.glob( os.path.join(home, self.base,'*.event') ):
+
+			s2pfile = infile
+			statstring = open(infile, 'r').read()
+			decoded = urllib.quote(statstring)
+			stats = ("event=%s" % (decoded))
+
+			try:
+				self.ss.s2pstats(statstring)
+	
+			except:
+				print 'upload failed. no stats sent'				
+				return
+
 			shutil.move(infile,sentdir)
 			
 	def getServerVar(self, *args, **kwargs):

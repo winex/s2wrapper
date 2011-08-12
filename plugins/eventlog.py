@@ -3,6 +3,8 @@
 import os
 import re
 import time
+import threading
+import ConfigParser
 from PluginsManager import ConsolePlugin
 from S2Wrapper import Savage2DaemonHandler
 from operator import itemgetter
@@ -24,21 +26,27 @@ class eventlog(ConsolePlugin):
 	TIME = 0
 	GAMETIME = 0
 	EVENT = 0
-	def onPluginLoad(self, config, **kwargs):
-		
-		#ini = ConfigParser.ConfigParser()
-		#ini.read(config)
-		#for (name, value) in config.items('balancer'):
-		#	if (name == "level"):
-		#		self._level = int(value)
+	MATCH = 0
+	SERVER = 0
+	MAP = None
+	base = None
+	sent = None
 
-		#	if (name == "sf"):
-		#		self._sf = int(value)
+	def onPluginLoad(self, config, **kwargs):
+		#TODO: read stats directory from sendstats.ini, put that before .event file that gets written
+		ini = ConfigParser.ConfigParser()
+		ini.read(config)
+
+		stats = os.path.join(os.path.dirname(config),'sendstats.ini')	
+		ini.read(stats)
 		
-		#f = open('objectlist.txt', 'r')
-		#self.objectlist = f.readlines()
-		#f.close()
-		#print self.objectlist
+		for (name, value) in ini.items('paths'):
+			if (name == "base"):
+				self.base = value
+			if (name == "sent"):
+				self.sent = value
+
+	
 		self.objectlist = [
 ('Building_Academy','Academy'),\
 ('Building_Armory','Armory'),\
@@ -155,17 +163,21 @@ class eventlog(ConsolePlugin):
 			 set _dz #GetPosZ(|#_dead|#)#;\
 			 echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
 
+			
 		if phase == 7:
-			self.eventlist = sorted(self.eventlist, key=itemgetter('event','time'), reverse=False)
+
+			self.eventlist.append({'map' : self.MAP, 'match' : self.MATCH, 'event' : -1})
+			self.eventlist = sorted(self.eventlist, key=itemgetter('event'), reverse=False)
 			self.endGame(**kwargs)
 			self.STARTSTAMP = 0
+
 		if phase == 5:
 			self.GAMETIME = 0
 			self.EVENT = 0
 			self.STARTSTAMP = args[1]
-	def getEvent(self, *args, **kwargs):
 
-		
+
+	def getEvent(self, *args, **kwargs):
 
 		if self.PHASE != 5:
 			return
@@ -187,14 +199,21 @@ class eventlog(ConsolePlugin):
 		eventbuffer =  ({'action' : event,\
 				 'type' : objecttype,\
 				 'by' : clientby['name'],\
+				 'byid' : clientby['acctid'],\
 				 'on': clienton['name'],\
 				 'time' : self.GAMETIME,\
 				 'coord' : location,\
 				 'event' : tm})	
 		
 		self.eventlist.append(eventbuffer)
+		print self.eventlist
 
-		
+	def getMatchID(self, *args, **kwargs):
+
+		self.MATCH = args[0]
+		self.SERVER = args[1]
+		print self.MATCH
+
 	def getObjectType(self, indextype):
 		
 		for each in self.objectlist:
@@ -207,7 +226,7 @@ class eventlog(ConsolePlugin):
 		for client in self.playerlist:
 			if (client['clinum'] == cli):
 				return client
-		client = {'name' : 'None'}
+		client = {'name' : 'None', 'acctid' : 'None'}
 		return client
 
 
@@ -217,7 +236,7 @@ class eventlog(ConsolePlugin):
 			if (client['name'].lower() == name.lower()):
 				return client
 
-		client = {'name' : 'None'}
+		client = {'name' : 'None', 'acctid' : 'None'}
 		return client
 
 
@@ -232,9 +251,18 @@ class eventlog(ConsolePlugin):
 		
 		self.playerlist.append ({'clinum' : id,\
 					 'name' : 'X',\
+					 'acctid' : 0,\
 					 'active' : True
 					 })
 
+	def onAccountId(self, *args, **kwargs):
+
+		cli = args[0]
+		id = args[1]
+				
+		client = self.getPlayerByClientNum(cli)
+
+		client['acctid'] = int(id)
 		
 	def onDisconnect(self, *args, **kwargs):
 		
@@ -252,14 +280,19 @@ class eventlog(ConsolePlugin):
 		
 	def onServerStatus(self, *args, **kwargs):
 		CURRENTSTAMP = int(args[1])
+		self.MAP = args[0]
 		self.TIME = int(CURRENTSTAMP) - int(self.STARTSTAMP)
 		self.GAMETIME += 1
 		
 	def endGame(self, **kwargs):
-	
-		f = open('event.txt', 'a')
+		home  = os.environ['HOME']
+		fname = ("%s.event" % (self.MATCH))
+		full = os.path.join(home, self.base, fname)
+		f = open(full, 'w')
 		for each in self.eventlist:
 			f.write("%s" % (each))
 		f.close()
 		
 		self.eventlist = []
+
+
