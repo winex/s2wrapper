@@ -28,7 +28,7 @@ class extras(ConsolePlugin):
 	FOLLOWERS = 4
 	MAPSIZE = 0
 	MAPSIZESET = False
-	buildingprotect = True
+	buildingprotect = False
 
 	def onPluginLoad(self, config):
 		self.ms = MasterServer ()
