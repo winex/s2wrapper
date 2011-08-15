@@ -84,8 +84,8 @@ class Savage2Thread(threading.Thread):
 
 		if not self.process:
 			return
-		#self.pingAlive()
-		#self.checkAlive()
+		self.pingAlive()
+		self.checkAlive()
 		self.read ()
 		
 	def read(self):

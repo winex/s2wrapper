@@ -133,8 +133,8 @@ class extras(ConsolePlugin):
 
 				kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"RemoveEntity #GetIndexFromName(DeathTrigger|#_dead|#)#; echo\" Death");
 				#get the map size
-				mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
-				mapthread.start()
+			mapthread = threading.Thread(target=self.getMapSize, args=(), kwargs=kwargs)
+			mapthread.start()
 				
 		if phase == 7:
 			for each in self.playerlist:
@@ -341,11 +341,12 @@ class extras(ConsolePlugin):
 		checkdimension = 131071
 		self.MAPSIZE = 10
 		while not self.MAPSIZESET:
+			time.sleep(0.5)
 			self.MAPSIZESET = True
 			checkdimension = checkdimension/2
 			kwargs['Broadcast'].broadcast("echo #GetTerrainHeight(%s,0)#" % (checkdimension))
-			time.sleep(1)
 			print 'Map Size =', self.MAPSIZE
+			time.sleep(1)
 
 	def mapDimensions(self, *args, **kwargs):
 		if self.MAPSIZE > 0:

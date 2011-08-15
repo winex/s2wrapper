@@ -206,7 +206,7 @@ class eventlog(ConsolePlugin):
 				 'event' : tm})	
 		
 		self.eventlist.append(eventbuffer)
-		print self.eventlist
+
 
 	def getMatchID(self, *args, **kwargs):
 
