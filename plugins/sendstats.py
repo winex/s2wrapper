@@ -87,14 +87,14 @@ class sendstats(ConsolePlugin):
 		sentdir = os.path.join(home, self.sent)
 		
 		for infile in glob.glob( os.path.join(home, self.base,'*.event') ):
-
+			match = os.path.splitext(os.path.basename(infile))[0]
 			s2pfile = infile
 			statstring = open(infile, 'r').read()
 			decoded = urllib.quote(statstring)
-			stats = ("event=%s" % (decoded))
+			stats = ("event%s=%s" % (match,decoded))
 
 			try:
-				self.ss.s2pstats(statstring)
+				self.ss.s2pstats(stats)
 	
 			except:
 				print 'upload failed. no stats sent'				

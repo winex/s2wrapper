@@ -201,6 +201,7 @@ class eventlog(ConsolePlugin):
 				 'by' : clientby['name'],\
 				 'byid' : clientby['acctid'],\
 				 'on': clienton['name'],\
+				 'onid': clienton['acctid'],\
 				 'time' : self.GAMETIME,\
 				 'coord' : location,\
 				 'event' : tm})	
