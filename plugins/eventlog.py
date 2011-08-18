@@ -116,14 +116,14 @@ class eventlog(ConsolePlugin):
 			"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _objdead #GetScriptParam(index)#;\
 			 									          Set _killer #GetScriptParam(attackingindex)#;\
 													  ExecScript ObjectDeath\\\";\
-			echo EVENT built #GetScriptParam(type)# on None by None at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" buildingplaced")
+			echo EVENT built #GetScriptParam(type)# on None by None of type None at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" buildingplaced")
 			
 			#placed gadget
 			kwargs['Broadcast'].broadcast(\
 			"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(gadgetindex)# death \\\"Set _objdead #GetScriptParam(index)#;\
 			 									                Set _killer #GetScriptParam(attackingindex)#;\
 													        ExecScript ObjectDeath\\\";\
-			echo EVENT placed #GetScriptParam(type)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" placegadget")
+			echo EVENT placed #GetScriptParam(type)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type #GetType(|#GetScriptParam(index)|#)# at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" placegadget")
 
 			#spawn
 			kwargs['Broadcast'].broadcast(\
@@ -133,20 +133,19 @@ class eventlog(ConsolePlugin):
 			 set _spindex #GetScriptParam(index)#;\
 			 set _spx #GetPosX(|#_spindex|#)#;\
 			 set _spy #GetPosY(|#_spindex|#)#;\
-			 set _spz #GetPosZ(|#_spindex|#)#;\
-			 echo EVENT spawn #GetType(|#GetScriptParam(index)|#)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# at #_spx# #_spy# 0.0; echo\" spawn")
+			 echo EVENT spawn #GetType(|#GetScriptParam(index)|#)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at #_spx# #_spy# 0.0; echo\" spawn")
 
 			#changeteam, only for team 1 or 2
 			kwargs['Broadcast'].broadcast(\
 			"RegisterGlobalScript -1 \"set _team #GetScriptParam(newteam)#;\
 						   if [_team > 0]\
-						    echo EVENT join Team#_team# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# at 0.0 0.0 0.0; echo\" changeteam")
+						    echo EVENT join Team#_team# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at 0.0 0.0 0.0; echo\" changeteam")
 			
 			#playerleave
 			kwargs['Broadcast'].broadcast(\
 			"RegisterGlobalScript -1 \"set _team #GetTeam(|#GetScriptParam(index)|#);\
 						   if [_team > 0]\
-						    echo EVENT leave Team#_team# on -1 by ##GetScriptParam(clientid)# at 0.0 0.0 0.0; echo\" playerleave")
+						    echo EVENT leave Team#_team# on -1 by ##GetScriptParam(clientid)# of type None at 0.0 0.0 0.0; echo\" playerleave")
 
 				
 			#ObjectDeath
@@ -154,14 +153,14 @@ class eventlog(ConsolePlugin):
 			"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_objdead|#)#;\
 			 set _dy #GetPosY(|#_objdead|#)#;\
 			 set _dz #GetPosZ(|#_objdead|#)#;\
-			 echo EVENT killed #GetType(|#_objdead|#)# on -1 by #GetClientNumFromIndex(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" ObjectDeath")
+			 echo EVENT killed #GetType(|#_objdead|#)# on -1 by #GetClientNumFromIndex(|#_killer|#)# of type #GetType(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" ObjectDeath")
 			
 			#PlayerDeath
 			kwargs['Broadcast'].broadcast(\
 			"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_dead|#)#;\
 			 set _dy #GetPosY(|#_dead|#)#;\
 			 set _dz #GetPosZ(|#_dead|#)#;\
-			 echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
+			 echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# of type #GetType(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
 
 			
 		if phase == 7:
@@ -184,20 +183,23 @@ class eventlog(ConsolePlugin):
 
 		self.EVENT += 1
 		event = args[0]
-		indextype = args[1]
+		indexontype = args[1]
 		on = args[2]
 		by = args[3]
-		x = (args[4])
-		y = (args[5])
-		z = (args[6])
+		indexbytype = args[4]
+		x = (args[5])
+		y = (args[6])
+		z = (args[7])
 		tm = self.EVENT
 		location = ('%s %s %s' % (x, y, z))
-		objecttype = self.getObjectType(indextype)
+		ontype = self.getObjectType(indexontype)
+		bytype = self.getObjectType(indexbytype)
 		clienton = self.getPlayerByClientNum(on)
 		clientby = self.getPlayerByClientNum(by)
 
 		eventbuffer =  ({'action' : event,\
-				 'type' : objecttype,\
+				 'on_type' : ontype,\
+				 'by_type' : bytype,\
 				 'by' : clientby['name'],\
 				 'byid' : clientby['acctid'],\
 				 'on': clienton['name'],\
