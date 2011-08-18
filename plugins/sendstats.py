@@ -76,8 +76,11 @@ class sendstats(ConsolePlugin):
 				print 'upload failed. no stats sent'				
 				return
 
-			print 'Sent stat string'
-			shutil.move(infile,sentdir)
+			try:
+				shutil.copy(infile,sentdir)
+				os.remove(os.path.join(home, self.base, infile))
+			except:
+				continue
 
 	def uploadevent(self):
 
@@ -100,7 +103,11 @@ class sendstats(ConsolePlugin):
 				print 'upload failed. no stats sent'				
 				return
 
-			shutil.move(infile,sentdir)
+			try:
+				shutil.copy(infile,sentdir)
+				os.remove(os.path.join(home, self.base, infile))
+			except:
+				continue
 			
 	def getServerVar(self, *args, **kwargs):
 	
