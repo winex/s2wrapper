@@ -160,7 +160,15 @@ class eventlog(ConsolePlugin):
 			"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_dead|#)#;\
 			 set _dy #GetPosY(|#_dead|#)#;\
 			 set _dz #GetPosZ(|#_dead|#)#;\
-			 echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# of type #GetType(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
+			 set _nonplayer 0;\
+			 set _ktype #GetType(|#_killer|#)#;\
+			 if #StringEquals(|#_ktype|#,Npc_Critter)# set _nonplayer 1;\
+			 if #StringEquals(|#_ktype|#,Building_ArrowTower)# set _nonplayer 1;\
+			 if #StringEquals(|#_ktype|#,Building_CannonTower)# set _nonplayer 1;\
+			 if #StringEquals(|#_ktype|#,Building_StrataSpire)# set _nonplayer 1;\
+			 if #StringEquals(|#_ktype|#,Building_EntangleSpire)# set _nonplayer 1;\
+			 if [_nonplayer == 0] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# of type #_ktype# at #_dx# #_dy# 0.0;\
+			 if [_nonplayer == 1] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by None of type #_ktype# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
 
 			
 		if phase == 7:
