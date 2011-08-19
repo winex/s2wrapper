@@ -143,7 +143,7 @@ class eventlog(ConsolePlugin):
 			
 			#playerleave
 			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"set _team #GetTeam(|#GetScriptParam(index)|#);\
+			"RegisterGlobalScript -1 \"set _team #GetTeam(|#GetScriptParam(index)|#)#;\
 						   if [_team > 0]\
 						    echo EVENT leave Team#_team# on -1 by ##GetScriptParam(clientid)# of type None at 0.0 0.0 0.0; echo\" playerleave")
 
