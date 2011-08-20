@@ -389,6 +389,9 @@ class admin(ConsolePlugin):
 			#check if server is empty after 2 minutes		
 				pluginthread = threading.Thread(target=self.pluginreload, args=(), kwargs=kwargs)
 				pluginthread.start()
+		
+		if (phase == 4):
+			kwargs['Broadcast'].broadcast("listclients")
 
 	def update(self, **kwargs):
 		
