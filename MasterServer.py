@@ -44,8 +44,6 @@ class MasterServer:
 		stub = "&nickname[%s]=%s"
 		lookup = ""
 
-		
-
 		return self.decode (self.query ("f=nick2id&nickname[0]=%s" % nick))
 		
 	def getServer (self, login, lpass, broadcast, *args):

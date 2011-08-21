@@ -148,3 +148,18 @@ class helper(ConsolePlugin):
 		"SendMessage %s ^rATTENTION: ^cAs a new player it so good to get help from more experienced players. The following players on this server have \
 		indicated their willingness to help newer players: ^y%s. ^cYou can contact them by using chat (^wCTRL+ENTER^c) and whispering them (^y/w playername^c with your message)."
 			 % (client['clinum'], activestring))
+			 
+	def onListClients(self, *args, **kwargs):
+		clinum = args[0]
+		name = args[2]
+		ip = args[1]
+		
+		try:
+			client = self.getPlayerByName(name)
+		except:
+		#if a player is missing from the list this will put them as an active player
+			acct = self.ms.getAccount(name)
+			acctid = acct[name]
+			self.onConnect(clinum, 0000, ip, 0000, **kwargs)
+			self.onSetName(clinum, name, **kwargs)
+			self.onAccountId(clinum, acctid, **kwargs)

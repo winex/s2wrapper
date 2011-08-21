@@ -205,4 +205,18 @@ class sendstats(ConsolePlugin):
 		playerinfo = ("sync_user=2&username=%s&acc=%s&svr=%s" % (name, id, server))
 		#Send info to PS2	
 		self.ss.salvagestats(playerinfo)
-			
+		
+	def onListClients(self, *args, **kwargs):
+		clinum = args[0]
+		name = args[2]
+		ip = args[1]
+		
+		try:
+			client = self.getPlayerByName(name)
+		except:
+		#if a player is missing from the list this will put them as an active player
+			acct = self.ms.getAccount(name)
+			acctid = acct[name]
+			self.onConnect(clinum, 0000, ip, 0000, **kwargs)
+			self.onSetName(clinum, name, **kwargs)
+			self.onAccountId(clinum, acctid, **kwargs)		

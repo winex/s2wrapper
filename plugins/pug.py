@@ -291,3 +291,18 @@ class pug(ConsolePlugin):
 				kwargs['Broadcast'].broadcast("set _index #GetIndexFromClientNum(%s)#; SetTeam #_index# %s" % (each['clinum'], each['newteam']))
 		#Send to the next phase
 		kwargs['Broadcast'].broadcast("NextPhase; set sv_setupTimeCommander 60000; PrevPhase")
+		
+	def onListClients(self, *args, **kwargs):
+		clinum = args[0]
+		name = args[2]
+		ip = args[1]
+		
+		try:
+			client = self.getPlayerByName(name)
+		except:
+		#if a player is missing from the list this will put them as an active player
+			acct = self.ms.getAccount(name)
+			acctid = acct[name]
+			self.onConnect(clinum, 0000, ip, 0000, **kwargs)
+			self.onSetName(clinum, name, **kwargs)
+			self.onAccountId(clinum, acctid, **kwargs)

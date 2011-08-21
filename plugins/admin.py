@@ -151,7 +151,8 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: ^rsudo <command>."\
 			 % (cli))
-
+			 
+		
 	def isAdmin(self, client, **kwargs):
 		admin = False
 		
@@ -656,12 +657,26 @@ class admin(ConsolePlugin):
 	def onListClients(self, *args, **kwargs):
 		clinum = args[0]
 		name = args[2]
-		client = self.getPlayerByName(name)
+		ip = args[1]
+		
+		try:
+			client = self.getPlayerByName(name)
+		except:
+		#if a player is missing from the list this will put them as an active player and get stats
+		#TODO: listclients clinum is always double diget (00, 01, etc.) so this might be a problem
+			acct = self.ms.getAccount(name)
+			acctid = acct[name]
+			self.onConnect(clinum, 0000, ip, 0000, **kwargs)
+			self.onSetName(clinum, name, **kwargs)
+			self.onAccountId(clinum, acctid, **kwargs)
+			client = self.getPlayerByName(name)
+			
 		client['active'] = True
 		kwargs['Broadcast'].broadcast(\
 		"echo CLIENT %s is on TEAM #GetTeam(|#GetIndexFromClientNum(%s)|#)#"\
 		 % (client['clinum'], client['clinum']))
-
+		
+		
 	def onRefreshTeams(self, *args, **kwargs):
 		clinum = args[0]
 		team = int(args[1])
