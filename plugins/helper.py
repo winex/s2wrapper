@@ -154,9 +154,9 @@ class helper(ConsolePlugin):
 		name = args[2]
 		ip = args[1]
 		
-		try:
-			client = self.getPlayerByName(name)
-		except:
+		
+		client = self.getPlayerByName(name)
+		if not client:
 		#if a player is missing from the list this will put them as an active player
 			acct = self.ms.getAccount(name)
 			acctid = acct[name]
