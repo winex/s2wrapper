@@ -32,7 +32,14 @@ class sendstats(ConsolePlugin):
 				self.base = value
 			if (name == "sent"):
 				self.sent = value
+				
+	def getPlayerByName(self, name):
 
+		client = None
+
+		for client in self.playerlist:
+			if (client['name'].lower() == name.lower()):
+				return client
 
 	def onPhaseChange(self, *args, **kwargs):
 		phase = int(args[0])
