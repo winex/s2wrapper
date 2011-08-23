@@ -225,7 +225,7 @@ class admin(ConsolePlugin):
 			
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has shuffled the game." % (name))
 			self.listClients(**kwargs)	
-			shufflethread = threading.Thread(target=self.onShuffle, args=(), kwargs=kwargs)
+			shufflethread = threading.Thread(target=self.onShuffle, args=(clinum,None), kwargs=kwargs)
 			shufflethread.start()
 
 		if kick:
@@ -274,18 +274,17 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast("SendMessage -1 %s has balanced the game." % (name))
 			self.listClients(**kwargs)
 			balancethread = threading.Thread(target=self.onBalance, args=(clinum, None), kwargs=kwargs)
-			#balancethread = threading.Thread(target=self.onBalance, args=(), kwargs=kwargs)
 			balancethread.start()
 			
 
 		if getbalance:
-			
+			self.listClients(**kwargs)
 			balancethread = threading.Thread(target=self.getBalance, args=(clinum, None), kwargs=kwargs)
 			balancethread.start()
 
 
 		if reportbal:
-			
+			self.listClients(**kwargs)
 			balancethread = threading.Thread(target=self.reportBalance, args=(), kwargs=kwargs)
 			balancethread.start()
 
@@ -325,7 +324,7 @@ class admin(ConsolePlugin):
 
 	def getBalance(self, *args, **kwargs):
 		clinum = args[0]
-		self.listClients(**kwargs)
+		
 		time.sleep(2)
 		teamone = []
 		teamtwo = []
@@ -347,7 +346,7 @@ class admin(ConsolePlugin):
 		 % (clinum, teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'],1), round(teamtwostats['median'], 1), stack))
 
 	def reportBalance(self, **kwargs):
-		self.listClients(**kwargs)
+		
 		time.sleep(2)
 		teamone = []
 		teamtwo = []
