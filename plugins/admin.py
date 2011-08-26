@@ -325,6 +325,9 @@ class admin(ConsolePlugin):
 	def getBalance(self, *args, **kwargs):
 		clinum = args[0]
 		
+		for each in self.playerlist:
+			each['team'] = 0
+			
 		time.sleep(2)
 		teamone = []
 		teamtwo = []
@@ -347,6 +350,9 @@ class admin(ConsolePlugin):
 
 	def reportBalance(self, **kwargs):
 		
+		for each in self.playerlist:
+			each['team'] = 0
+			
 		time.sleep(2)
 		teamone = []
 		teamtwo = []
@@ -473,7 +479,9 @@ class admin(ConsolePlugin):
 
 	def onShuffle (self, *args, **kwargs):
 		
-	
+		for each in self.playerlist:
+			each['team'] = 0
+			
 		clinum = args[0]
 		time.sleep(2)
 		shufflelist = []
@@ -518,6 +526,9 @@ class admin(ConsolePlugin):
 		
 	def onBalance(self, *args, **kwargs):
 
+		for each in self.playerlist:
+			each['team'] = 0
+			
 		time.sleep(2)
 		teamone = []
 		teamtwo = []
