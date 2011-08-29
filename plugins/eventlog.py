@@ -204,6 +204,11 @@ class eventlog(ConsolePlugin):
 		bytype = self.getObjectType(indexbytype)
 		clienton = self.getPlayerByClientNum(on)
 		clientby = self.getPlayerByClientNum(by)
+		
+		#added to reset events on map change
+		if event == 'built' and indexontype == 'Building_Stronghold':
+			self.eventlist = []
+			return
 
 		eventbuffer =  ({'action' : event,\
 				 'on_type' : ontype,\
