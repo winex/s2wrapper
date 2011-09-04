@@ -17,11 +17,12 @@ import urllib2
 import subprocess
 
 class admin(ConsolePlugin):
-	VERSION = "1.1.1"
+	VERSION = "1.3.1"
 	playerlist = []
 	adminlist = []
 	banlist = []
 	ipban = []
+	itemlist = []
 	PHASE = 0
 	CONFIG = None
 	UPDATE = True
@@ -71,6 +72,12 @@ class admin(ConsolePlugin):
 		self.playerlist = []
 		self.banlist = []	
 
+	def RegisterScripts(self, **kwargs):
+		#any extra scripts that need to go in can be done here
+		#these are for identifying bought and sold items
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# SOLD #_item#; echo\" sellitem")
+		kwargs['Broadcast'].broadcast("RegisterGlobalScript -1 \"set _client #GetScriptParam(clientid)#; set _item #GetScriptParam(itemname)#; echo ITEM: Client #_client# BOUGHT #_item#; echo\" buyitem")
+
 	def getPlayerByClientNum(self, cli):
 
 		for client in self.playerlist:
@@ -114,6 +121,7 @@ class admin(ConsolePlugin):
 					 'active' : False,\
 					 'level' : 0,\
 					 'admin' : False,\
+					 'value' : 0,\
 					 'commander' : False})
 	
 	def onDisconnect(self, *args, **kwargs):
@@ -151,7 +159,9 @@ class admin(ConsolePlugin):
 			kwargs['Broadcast'].broadcast(\
 			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: ^rsudo <command>."\
 			 % (cli))
-			 
+		
+		#If client has disconnected, give them their gold back
+		self.giveGold(False, client, **kwargs)	 
 		
 	def isAdmin(self, client, **kwargs):
 		admin = False
@@ -345,7 +355,7 @@ class admin(ConsolePlugin):
 		teamtwostats = self.getTeamInfo(teamtwo)
 		stack = round(self.evaluateBalance(teamone, teamtwo),1)
 		kwargs['Broadcast'].broadcast(\
-		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. ^yStack value: ^r%s" \
 		 % (clinum, teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'],1), round(teamtwostats['median'], 1), stack))
 
 	def reportBalance(self, **kwargs):
@@ -369,7 +379,7 @@ class admin(ConsolePlugin):
 		teamtwostats = self.getTeamInfo(teamtwo)
 		stack = round(self.evaluateBalance(teamone, teamtwo), 1)
 		kwargs['Broadcast'].broadcast(\
-		"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. Stack value: %s" \
+		"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s.^y Stack value: ^r%s" \
 		 % (teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'], 1), round(teamtwostats['median'],1), stack))
 
 	def superCommand(self, message, **kwargs):
@@ -389,6 +399,7 @@ class admin(ConsolePlugin):
 			for each in self.playerlist:
 				each['team'] = 0
 				each['commander'] = False
+				each['value'] = 0
 					
 		if (phase == 6):
 			if self.UPDATE:
@@ -398,7 +409,10 @@ class admin(ConsolePlugin):
 			#check if server is empty after 2 minutes		
 				pluginthread = threading.Thread(target=self.pluginreload, args=(), kwargs=kwargs)
 				pluginthread.start()
-		
+
+			self.RegisterScripts(**kwargs)
+			self.ItemList()
+
 		if (phase == 4):
 			kwargs['Broadcast'].broadcast("listclients")
 
@@ -481,7 +495,8 @@ class admin(ConsolePlugin):
 		
 		for each in self.playerlist:
 			each['team'] = 0
-			
+			each['value'] = 0
+
 		clinum = args[0]
 		time.sleep(2)
 		shufflelist = []
@@ -594,6 +609,10 @@ class admin(ConsolePlugin):
 			 set _index #GetIndexFromClientNum(%s)#;\
 			 SetTeam #_index# 1"\
 			 % (pick1['clinum'], pick2['clinum']))
+		
+		#Give them gold if needed
+		self.giveGold(True, pick1, **kwargs)
+		self.giveGold(True, pick2, **kwargs)
 
 		teamonestats = self.getTeamInfo(teamone)
 		teamtwostats = self.getTeamInfo(teamtwo)
@@ -697,4 +716,62 @@ class admin(ConsolePlugin):
 		team = int(args[1])
 		client = self.getPlayerByClientNum(clinum)
 		client['team'] = team
+
+	def ItemList(self, *args, **kwargs):
+		
+		self.itemlist = {
+			'Advanced Sights' : 700,
+			'Ammo Pack' : 500,
+			'Ammo Satchel' : 200,
+			'Chainmail' : 300,
+			'Gust of Wind' : 450,
+			'Magic Amplifier' : 700,
+			'Brain of Maliken' : 750,
+			'Heart of Maliken' : 950,
+			'Lungs of Maliken' : 800,
+			'Mana Crystal' : 500,
+			'Mana Stone' : 200,
+			'Platemail' : 650,
+			'Power Absorption' : 350,
+			'Shield of Wisdom' : 650,
+			'Stone Hide' : 650,
+			'Tough Skin' : 300,
+			'Trinket of Restoration' : 575
+		}
+
+
+	def onItemTransaction(self, *args, **kwargs):
+		#adjust 'value' in playerlist to reflect what the player has bought or sold
+		cli = args[0]
+		trans = args[1]
+		newitem = args[2]
+		client = self.getPlayerByClientNum(cli)
+
+		try:
+			value = self.itemlist[newitem]
+		except:
+			return
+		
+		if (trans == 'BOUGHT'):
+			client['value'] += value
+		elif (trans == 'SOLD'):
+			client['value'] -= value
+		
+
+	def giveGold(self, balance, client, **kwargs):
+
+		if client['value'] == 0:
+
+			return
+		
+		gold = int(client['value']/2, 0)
+
+		if balance:
+			gold = client['value']
+
+		kwargs['Broadcast'].broadcast(\
+			"SendMessage %s ^cYou have been compensated %s gold for your lost items.; GiveGold %s %s"\
+			 % (client['clinum'], gold, client['clinum'], gold))
+		
+		client['value'] = 0
 

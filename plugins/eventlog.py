@@ -104,72 +104,73 @@ class eventlog(ConsolePlugin):
 ('Player_Tempest','Tempest'),\
 ('None','None')]		
 		pass
-	
+
+	def RegisterScripts(self, **kwargs):
+		#built
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _objdead #GetScriptParam(index)#;\
+		 									          Set _killer #GetScriptParam(attackingindex)#;\
+												  ExecScript ObjectDeath\\\";\
+		echo EVENT built #GetScriptParam(type)# on None by None of type None at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" buildingplaced")
+		
+		#placed gadget
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(gadgetindex)# death \\\"Set _objdead #GetScriptParam(index)#;\
+		 									                Set _killer #GetScriptParam(attackingindex)#;\
+												        ExecScript ObjectDeath\\\";\
+		echo EVENT placed #GetScriptParam(type)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type #GetType(|#GetScriptParam(index)|#)# at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" placegadget")
+		#spawn
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#;\
+		 									          Set _killer #GetScriptParam(attackingindex)#;\
+												  ExecScript PlayerDeath\\\";\
+		 set _spindex #GetScriptParam(index)#;\
+		 set _spx #GetPosX(|#_spindex|#)#;\
+		 set _spy #GetPosY(|#_spindex|#)#;\
+		 echo EVENT spawn #GetType(|#GetScriptParam(index)|#)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at #_spx# #_spy# 0.0; echo\" spawn")
+		#changeteam, only for team 1 or 2
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"set _team #GetScriptParam(newteam)#;\
+					   if [_team > 0]\
+					    echo EVENT join Team#_team# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at 0.0 0.0 0.0; echo\" changeteam")
+		
+		#playerleave
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"set _team #GetTeam(|#GetScriptParam(index)|#)#;\
+					   if [_team > 0]\
+					    echo EVENT leave Team#_team# on -1 by #GetScriptParam(clientid)# of type None at 0.0 0.0 0.0; echo\" playerleave")
+
+				
+		#ObjectDeath
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_objdead|#)#;\
+		 set _dy #GetPosY(|#_objdead|#)#;\
+		 set _dz #GetPosZ(|#_objdead|#)#;\
+		 echo EVENT killed #GetType(|#_objdead|#)# on -1 by #GetClientNumFromIndex(|#_killer|#)# of type #GetType(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" ObjectDeath")
+			
+		#PlayerDeath
+		kwargs['Broadcast'].broadcast(\
+		"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_dead|#)#;\
+		 set _dy #GetPosY(|#_dead|#)#;\
+		 set _dz #GetPosZ(|#_dead|#)#;\
+		 set _nonplayer 0;\
+		 set _ktype #GetType(|#_killer|#)#;\
+		 if #StringEquals(|#_ktype|#,Npc_Critter)# set _nonplayer 1;\
+		 if #StringEquals(|#_ktype|#,Building_ArrowTower)# set _nonplayer 1;\
+		 if #StringEquals(|#_ktype|#,Building_CannonTower)# set _nonplayer 1;\
+		 if #StringEquals(|#_ktype|#,Building_StrataSpire)# set _nonplayer 1;\
+		 if #StringEquals(|#_ktype|#,Building_EntangleSpire)# set _nonplayer 1;\
+		 if [_nonplayer == 0] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# of type #_ktype# at #_dx# #_dy# 0.0;\
+		 if [_nonplayer == 1] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by None of type #_ktype# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
+
 	def onPhaseChange(self, *args, **kwargs):
 
 		phase = int(args[0])
 		self.PHASE = phase
 
-		if phase == 6:
-			#built
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _objdead #GetScriptParam(index)#;\
-			 									          Set _killer #GetScriptParam(attackingindex)#;\
-													  ExecScript ObjectDeath\\\";\
-			echo EVENT built #GetScriptParam(type)# on None by None of type None at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" buildingplaced")
+		if phase == 6 or phase == 4:
 			
-			#placed gadget
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(gadgetindex)# death \\\"Set _objdead #GetScriptParam(index)#;\
-			 									                Set _killer #GetScriptParam(attackingindex)#;\
-													        ExecScript ObjectDeath\\\";\
-			echo EVENT placed #GetScriptParam(type)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type #GetType(|#GetScriptParam(index)|#)# at #GetScriptParam(posx)# #GetScriptParam(posy)# 0.0; echo\" placegadget")
-
-			#spawn
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"RegisterEntityScript #GetScriptParam(index)# death \\\"Set _dead #GetScriptParam(index)#;\
-			 									          Set _killer #GetScriptParam(attackingindex)#;\
-													  ExecScript PlayerDeath\\\";\
-			 set _spindex #GetScriptParam(index)#;\
-			 set _spx #GetPosX(|#_spindex|#)#;\
-			 set _spy #GetPosY(|#_spindex|#)#;\
-			 echo EVENT spawn #GetType(|#GetScriptParam(index)|#)# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at #_spx# #_spy# 0.0; echo\" spawn")
-
-			#changeteam, only for team 1 or 2
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"set _team #GetScriptParam(newteam)#;\
-						   if [_team > 0]\
-						    echo EVENT join Team#_team# on -1 by #GetClientNumFromIndex(|#GetScriptParam(index)|#)# of type None at 0.0 0.0 0.0; echo\" changeteam")
-			
-			#playerleave
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"set _team #GetTeam(|#GetScriptParam(index)|#)#;\
-						   if [_team > 0]\
-						    echo EVENT leave Team#_team# on -1 by #GetScriptParam(clientid)# of type None at 0.0 0.0 0.0; echo\" playerleave")
-
-				
-			#ObjectDeath
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_objdead|#)#;\
-			 set _dy #GetPosY(|#_objdead|#)#;\
-			 set _dz #GetPosZ(|#_objdead|#)#;\
-			 echo EVENT killed #GetType(|#_objdead|#)# on -1 by #GetClientNumFromIndex(|#_killer|#)# of type #GetType(|#_killer|#)# at #_dx# #_dy# 0.0; echo\" ObjectDeath")
-			
-			#PlayerDeath
-			kwargs['Broadcast'].broadcast(\
-			"RegisterGlobalScript -1 \"set _dx #GetPosX(|#_dead|#)#;\
-			 set _dy #GetPosY(|#_dead|#)#;\
-			 set _dz #GetPosZ(|#_dead|#)#;\
-			 set _nonplayer 0;\
-			 set _ktype #GetType(|#_killer|#)#;\
-			 if #StringEquals(|#_ktype|#,Npc_Critter)# set _nonplayer 1;\
-			 if #StringEquals(|#_ktype|#,Building_ArrowTower)# set _nonplayer 1;\
-			 if #StringEquals(|#_ktype|#,Building_CannonTower)# set _nonplayer 1;\
-			 if #StringEquals(|#_ktype|#,Building_StrataSpire)# set _nonplayer 1;\
-			 if #StringEquals(|#_ktype|#,Building_EntangleSpire)# set _nonplayer 1;\
-			 if [_nonplayer == 0] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by #GetClientNumFromIndex(|#_killer|#)# of type #_ktype# at #_dx# #_dy# 0.0;\
-			 if [_nonplayer == 1] echo EVENT killed #GetType(|#_dead|#)# on #GetClientNumFromIndex(|#_dead|#)# by None of type #_ktype# at #_dx# #_dy# 0.0; echo\" PlayerDeath")
-
+			self.RegisterScripts(**kwargs)
 			
 		if phase == 7:
 
@@ -183,7 +184,7 @@ class eventlog(ConsolePlugin):
 			self.EVENT = 0
 			self.STARTSTAMP = args[1]
 
-
+		
 	def getEvent(self, *args, **kwargs):
 
 		if self.PHASE != 5:
