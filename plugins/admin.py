@@ -764,7 +764,7 @@ class admin(ConsolePlugin):
 
 			return
 		
-		gold = int(client['value']/2, 0)
+		gold = round(client['value']/2, 0)
 
 		if balance:
 			gold = client['value']
