@@ -17,7 +17,7 @@ import urllib2
 import subprocess
 
 class admin(ConsolePlugin):
-	VERSION = "1.3.1"
+	VERSION = "1.3.5"
 	playerlist = []
 	adminlist = []
 	banlist = []
@@ -27,6 +27,8 @@ class admin(ConsolePlugin):
 	CONFIG = None
 	UPDATE = True
 	NEEDRELOAD = False
+	LASTMESSAGE = {'client' : None, 'firsttime' : 0, 'lasttime' : 0, 'repeat' : 0}
+
 
 	def onPluginLoad(self, config):
 		
@@ -39,6 +41,7 @@ class admin(ConsolePlugin):
 			self.adminlist.append({'name': name, 'level' : value})
 		for (name, value) in ini.items('ipban'):
 			self.ipban.append(name)	
+		
 		
 		pass
 		
@@ -136,18 +139,29 @@ class admin(ConsolePlugin):
 		playername = args[1]
 		client = self.getPlayerByClientNum(cli)
 		client ['name'] = playername
-					
-	def onAccountId(self, *args, **kwargs):
-		cli = args[0]
-		id = args[1]
-		stats = self.ms.getStatistics (id).get ('all_stats').get (int(id))
+
+	def getAccountInfo(self, *args, **kwargs):
+		client = self.getPlayerByClientNum(args[0])
+		stats = self.ms.getStatistics (client['acctid']).get ('all_stats').get (client['acctid'])
 		level = int(stats['level'])
 		sf = int(stats['sf'])
 					
-		client = self.getPlayerByClientNum(cli)
 		client['sf'] = sf
 		client['level'] = level
 		client['active'] = True
+		
+		#If client has disconnected, give them their gold back
+		self.giveGold(False, client, **kwargs)
+		
+
+	def onAccountId(self, *args, **kwargs):
+		cli = args[0]
+		id = args[1]
+		client = self.getPlayerByClientNum(cli)
+		client['acctid'] = int(id)
+
+		statthread = threading.Thread(target=self.getAccountInfo, args=(cli,None), kwargs=kwargs)
+		statthread.start()	
 
 		if self.isAdmin(client, **kwargs):
 			kwargs['Broadcast'].broadcast(\
@@ -160,8 +174,7 @@ class admin(ConsolePlugin):
 			"SendMessage %s ^cYou are registered as superuser on this server. You can send console commands with chat message: ^rsudo <command>."\
 			 % (cli))
 		
-		#If client has disconnected, give them their gold back
-		self.giveGold(False, client, **kwargs)	 
+ 
 		
 	def isAdmin(self, client, **kwargs):
 		admin = False
@@ -192,13 +205,45 @@ class admin(ConsolePlugin):
 		admin = self.isAdmin(client, **kwargs)
 		superuser = self.isSuperuser(client, **kwargs)
 
+		#ADDED: more than 5 message in 1 second = kick
+		tm = time.time()
+		last = self.LASTMESSAGE['lasttime']
+		first = self.LASTMESSAGE['firsttime']
+		
+		
+		if (self.LASTMESSAGE['client'] == name):
+			self.LASTMESSAGE['lasttime'] = tm
+			#commanders are immune
+			if not client['commander']:
+				self.LASTMESSAGE['repeat'] += 1
+				print 'repeat'
+			
+		else:
+			self.LASTMESSAGE['client'] = name
+			self.LASTMESSAGE['firsttime'] = tm
+			self.LASTMESSAGE['repeat'] = 0	
+			
+		if self.LASTMESSAGE['repeat'] > 4:
+			if ((last - first) < 1):
+				reason = "Spamming chat results in automatic kicking."
+				kwargs['Broadcast'].broadcast(\
+					"Kick %s \"%s\"" % (clinum, reason))
+				self.LASTMESSAGE['client'] = None
+				self.LASTMESSAGE['repeat'] = 0
+				self.LASTMESSAGE['firsttime'] = 0
+				self.LASTMESSAGE['lasttime'] = 0
+			else:
+				self.LASTMESSAGE['repeat'] = 0
+				self.LASTMESSAGE['client'] = None
+				self.LASTMESSAGE['firsttime'] = 0
+				self.LASTMESSAGE['lasttime'] = 0
+		
 		request = re.match("request admin", message, flags=re.IGNORECASE)
 		if request:
 			for each in self.playerlist:
 				if each['active'] and each['admin']:
 					kwargs['Broadcast'].broadcast("SendMessage %s Admin present: ^y%s" % (client['clinum'], each['name']))
 
-		
 		#ignore everything else if it isn't from admin
 		if not admin:
 			return
@@ -207,9 +252,7 @@ class admin(ConsolePlugin):
 		if superuser:
 			self.superCommand(message, **kwargs)
 		
-		#Attempt to recover proper player number
-		
-
+		#Matches for normal admins
 		restart = re.match("admin restart", message, flags=re.IGNORECASE)
 		shuffle = re.match("admin shuffle", message, flags=re.IGNORECASE)
 		kick = re.match("admin kick (\S+)", message, flags=re.IGNORECASE)
@@ -356,7 +399,7 @@ class admin(ConsolePlugin):
 		stack = round(self.evaluateBalance(teamone, teamtwo),1)
 		kwargs['Broadcast'].broadcast(\
 		"SendMessage %s ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s. ^yStack value: ^r%s" \
-		 % (clinum, teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'],1), round(teamtwostats['median'], 1), stack))
+		 % (clinum, teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'],1), round(teamtwostats['median'], 1), abs(stack)))
 
 	def reportBalance(self, **kwargs):
 		
@@ -380,7 +423,7 @@ class admin(ConsolePlugin):
 		stack = round(self.evaluateBalance(teamone, teamtwo), 1)
 		kwargs['Broadcast'].broadcast(\
 		"SendMessage -1 ^y Team One (%s players) Avg. SF is ^r%s^y median is ^r%s^y, Team Two (%s players) Avg. SF is ^r%s^y median is ^r%s.^y Stack value: ^r%s" \
-		 % (teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'], 1), round(teamtwostats['median'],1), stack))
+		 % (teamonestats['size'], round(teamonestats['avg'],1), round(teamonestats['median'],1), teamtwostats['size'], round(teamtwostats['avg'], 1), round(teamtwostats['median'],1), abs(stack)))
 
 	def superCommand(self, message, **kwargs):
 		#This allows superuser to issue any console command
@@ -667,11 +710,12 @@ class admin(ConsolePlugin):
 		teamoneshare = teamonestats['total']/(teamonestats['total'] + teamtwostats['total'])
 		diffmedone = teamonestats['median']/(teamonestats['median'] + teamtwostats['median'])
 		stack = teamoneshare + diffmedone
-		return abs(stack - 1) * 100
+		#positive if team one is stacked, negative if team two is stacked
+		return (stack - 1) * 100
 
 	def onCommResign(self, *args, **kwargs):
-		name = args[0]
-		
+	
+		name = args[0]	
 		client = self.getPlayerByName(name)
 		client['commander'] = False
 		
